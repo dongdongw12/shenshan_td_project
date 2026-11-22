@@ -39,7 +39,7 @@ md(r"""
 code(r'''
 # ① 参数
 DRIVE_DIR = "/content/drive/MyDrive/shenshan_td"
-ASSET_IDS = ["house_lv2_tile", "tower_bamboo", "prop_pine_tree"]  # 留空 [] = gen_3d_jobs.json 里全部
+ASSET_IDS = ["house_lv2_tile", "tower_bamboo", "prop_pine_tree"]  # 留空 [] = gen_3d_jobs.json 里全部 method=ai 的资产（共 19 件）
 SYNC_FROM_GITHUB = True    # 从公开仓库拉最新 manifest / 烘培脚本 / 任务表到云盘，避免云盘版本落后
 GITHUB_RAW = "https://raw.githubusercontent.com/dongdongw12/shenshan_td_project/main"
 HY3D_COMMIT = "f8db63096c8282cb27354314d896feba5ba6ff8a"  # 固定 Hunyuan3D-2 版本，保证可复现
@@ -104,6 +104,10 @@ all_assets = {a["id"]: a for a in jobs["assets"]}
 ids = ASSET_IDS or list(all_assets)
 missing = [i for i in ids if i not in all_assets]
 assert not missing, f"gen_3d_jobs.json 里没有这些 id：{missing}"
+proc = [i for i in ids if all_assets[i].get("method", "ai") != "ai"]
+if proc:
+    print("程序化资产不走图生 3D（由 colab_bake_sprites.ipynb 用 make_proxy_assets.py 生成）：", proc)
+ids = [i for i in ids if i not in proc]
 
 def job_cfg(asset_id):
     cfg = dict(jobs["defaults"])

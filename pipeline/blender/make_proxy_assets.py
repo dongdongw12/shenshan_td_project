@@ -1,5 +1,5 @@
 """
-程序化生成 3 件样张的“替身模型”（.glb），用于：
+程序化生成模型（.glb）：3 件样张的“替身模型”+ 5 件正式程序化资产（稻田青苗/金穗、篱笆、青砖墙、捕兽夹）。替身用于：
 1. 不依赖 Colab / 图生 3D，在本机回归测试 烘培 → 风格化 全链路与画风参数；
 2. 图生 3D 搞不定的件（多半是竹箭楼）可以在此基础上手工细化，作为正式低模。
 
@@ -23,7 +23,7 @@ PALETTE = {
     "lime_white": "#ede3cc", "tile_dark": "#3e4552", "tile_light": "#6b7482", "stone": "#7d8a8c",
     "malachite": "#3f8a63", "malachite_light": "#7fb98a", "pine_deep": "#24574a", "ochre": "#9a5a35",
     "ochre_light": "#c88f5f", "wood_dark": "#5c3a26", "cinnabar": "#b8352a", "gamboge": "#d9a838",
-    "straw": "#c9a66b", "bamboo": "#6f9a52", "rope": "#a8743f",
+    "straw": "#c9a66b", "bamboo": "#6f9a52", "rope": "#a8743f", "water": "#5d8fb6",
 }
 _materials = {}
 
@@ -251,10 +251,102 @@ def build_prop_pine_tree():
         assign(rock, "stone")
 
 
+def _rice_field(ripe):
+    """2×2 格稻田：田埂围一圈、田面水光、成行的稻丛（青苗 / 金穗）。正式资产就用程序化版本。"""
+    size = 3.8
+    h = size / 2
+    box("paddy_water", (size - 0.3, size - 0.3, 0.06), (0, 0, 0.03), "water")
+    # 田埂：四条土埂
+    box("ridge_s", (size, 0.32, 0.22), (0, -h + 0.16, 0.11), "ochre_light")
+    box("ridge_n", (size, 0.32, 0.22), (0, h - 0.16, 0.11), "ochre_light")
+    box("ridge_w", (0.32, size, 0.22), (-h + 0.16, 0, 0.11), "ochre_light")
+    box("ridge_e", (0.32, size, 0.22), (h - 0.16, 0, 0.11), "ochre_light")
+    # 稻丛：每丛 6 片向外斜伸的细叶（青苗）/ 叶 + 低垂稻穗（金穗）；行距放宽，露出田面水光
+    blade = "straw" if ripe else "malachite_light"
+    blade2 = "gamboge" if ripe else "malachite"
+    rows, cols = 5, 5
+    for r in range(rows):
+        for c in range(cols):
+            x = -h + 0.75 + c * (size - 1.5) / (cols - 1)
+            y = -h + 0.75 + r * (size - 1.5) / (rows - 1)
+            hgt = (0.75 if ripe else 0.55) * (0.9 + 0.2 * ((r * 7 + c * 3) % 5) / 4)
+            for k in range(6):
+                ang = k * math.pi / 3 + (r + c) * 0.4
+                tilt = 0.32 + 0.1 * (k % 2)
+                top = (x + math.cos(ang) * hgt * tilt, y + math.sin(ang) * hgt * tilt, 0.06 + hgt)
+                rod(f"blade_{r}_{c}_{k}", (x, y, 0.06), top, 0.028, blade if k % 2 else blade2, verts=5)
+                if ripe and k % 2 == 0:  # 低垂的稻穗：从叶尖向外下垂
+                    droop = (top[0] + math.cos(ang) * 0.12, top[1] + math.sin(ang) * 0.12, top[2] - 0.14)
+                    rod(f"ear_{r}_{c}_{k}", top, droop, 0.045, "gamboge", verts=6)
+
+
+def build_farm_rice_young():
+    _rice_field(False)
+
+
+def build_farm_rice_ripe():
+    _rice_field(True)
+
+
+def build_fence_wood():
+    """1 格一段的尖木篱笆（沿 X 方向）：五根削尖木桩 + 两道横木 + 麻绳。"""
+    for k in range(5):
+        x = -0.8 + k * 0.4
+        hgt = 1.45 + ((k * 37) % 5) * 0.05
+        cyl(f"stake{k}", 0.11, hgt, (x, 0, hgt / 2), "wood_dark", verts=8)
+        bpy.ops.mesh.primitive_cone_add(vertices=8, radius1=0.11, radius2=0.0, depth=0.35, location=(x, 0, hgt + 0.175))
+        tip = bpy.context.active_object
+        tip.name = f"tip{k}"
+        assign(tip, "ochre_light")
+    for k, z in enumerate((0.45, 1.05)):
+        rod(f"rail{k}", (-0.95, -0.12, z), (0.95, -0.12, z), 0.05, "ochre")
+        for m in range(5):
+            cyl(f"rope{k}_{m}", 0.125, 0.06, (-0.8 + m * 0.4, 0, z), "rope", verts=8)
+
+
+def build_wall_brick():
+    """1 格一段的青砖墙（沿 X 方向）：石基 + 砖墙身 + 小青瓦墙帽。"""
+    box("wall_base", (2.0, 0.7, 0.35), (0, 0, 0.175), "stone")
+    box("wall_body", (2.0, 0.55, 2.0), (0, 0, 1.35), "tile_light")
+    # 砖缝：几道浅凹的横向线脚，给内墨线一点结构
+    for k in range(1, 5):
+        box(f"course{k}", (2.02, 0.57, 0.04), (0, 0, 0.35 + k * 0.4), "stone")
+    box("wall_cap_base", (2.1, 0.75, 0.12), (0, 0, 2.41), "tile_dark")
+    gable_roof("wall_cap", 2.2, 0.48, 2.45, 2.75, 0.08, "tile_dark", curve=0.1)
+
+
+def build_trap_bear():
+    """精铁捕兽夹：一对带齿的半圆铁颚 + 底盘 + 铁链和地钉。"""
+    cyl("trap_plate", 0.35, 0.05, (0, 0, 0.025), "tile_dark", verts=16)
+    for side in (-1, 1):
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.45, minor_radius=0.04, location=(0, 0, 0.12), rotation=(math.radians(90 + side * 35), 0, 0))
+        jaw = bpy.context.active_object
+        jaw.name = f"jaw{side}"
+        assign(jaw, "tile_light")
+        for k in range(7):
+            ang = math.pi * (k + 0.5) / 7
+            x = 0.45 * math.cos(ang)
+            bpy.ops.mesh.primitive_cone_add(vertices=4, radius1=0.04, radius2=0.0, depth=0.16, location=(x, side * 0.18, 0.12 + 0.3 * math.sin(ang) * 0.6),
+                                            rotation=(math.radians(-side * 50), 0, 0))
+            t = bpy.context.active_object
+            t.name = f"tooth{side}_{k}"
+            assign(t, "stone")
+    for k in range(4):
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.06, minor_radius=0.015, location=(0.5 + k * 0.1, 0, 0.04), rotation=(0, math.radians(90 * (k % 2)), 0))
+        assign(bpy.context.active_object, "tile_light")
+    cyl("stake", 0.035, 0.3, (0.95, 0, 0.12), "wood_dark", verts=6)
+
+
 BUILDERS = {
     "house_lv2_tile": build_house_lv2_tile,
     "tower_bamboo": build_tower_bamboo,
     "prop_pine_tree": build_prop_pine_tree,
+    # 以下是正式资产（规整/重复/很薄，程序化比图生 3D 更好）
+    "farm_rice_young": build_farm_rice_young,
+    "farm_rice_ripe": build_farm_rice_ripe,
+    "fence_wood": build_fence_wood,
+    "wall_brick": build_wall_brick,
+    "trap_bear": build_trap_bear,
 }
 
 

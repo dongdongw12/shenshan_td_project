@@ -21,8 +21,8 @@
     { "id": "hunt_lodge", "name": "林间猎棚", "stage": 2, "footprint": "2x2", "target_height_m": 3.0, "night_light": { "enabled": true, "energy": 45, "z": 1.1 } },
     { "id": "granary", "name": "防潮粮仓", "stage": 3, "footprint": "2x2", "target_height_m": 3.8, "night_light": { "enabled": true, "energy": 40, "z": 1.2 } },
 
-    { "id": "fence_wood", "name": "尖木篱笆", "stage": 1, "footprint": "2x1", "target_height_m": 1.8, "night_light": { "enabled": false }, "angles": [0, 90] },
-    { "id": "wall_brick", "name": "青砖围墙", "stage": 3, "footprint": "2x1", "target_height_m": 2.8, "night_light": { "enabled": true, "energy": 50, "z": 2.2 }, "angles": [0, 90] },
+    { "id": "fence_wood", "name": "尖木篱笆", "stage": 1, "footprint": "1x1", "target_height_m": 1.8, "night_light": { "enabled": false }, "angles": [0, 90] },
+    { "id": "wall_brick", "name": "青砖围墙", "stage": 3, "footprint": "1x1", "target_height_m": 2.4, "night_light": { "enabled": true, "energy": 50, "z": 2.2 }, "angles": [0, 90] },
     { "id": "tower_bamboo", "name": "竹箭楼", "stage": 1, "footprint": "1x1", "target_height_m": 5.0, "night_light": { "enabled": true, "energy": 65, "z": 3.6 } },
     { "id": "tower_crossbow", "name": "强弩箭楼", "stage": 2, "footprint": "1x1", "target_height_m": 5.6, "night_light": { "enabled": true, "energy": 85, "z": 4.0 } },
     { "id": "tower_oil_fire", "name": "火油连弩塔", "stage": 3, "footprint": "1x1", "target_height_m": 6.0, "night_light": { "enabled": true, "energy": 130, "z": 4.3 } },

@@ -224,17 +224,33 @@ async function boot(): Promise<void> {
 
   // ---------------------------------------------------------------- 场景同步
   const scene = new Scene(map.cols, map.rows, atlas);
+  const isWallAt = (i: number, j: number) => {
+    const id = g.grid.occupant(i, j);
+    return !!id && g.buildings.get(id)?.category === "wall";
+  };
   const spriteFor = (b: Building): string | null => {
-    if (b.category === "house") return g.houseLevel === 2 && atlas.sprites.house_lv2_tile ? "house_lv2_tile" : null;
-    if ((b.kind === "tower_bamboo" || b.kind === "tower_crossbow") && atlas.sprites.tower_bamboo) return "tower_bamboo";
+    const has = (s: string) => (atlas.sprites[s] ? s : null);
+    if (b.category === "house") return g.houseLevel === 2 ? has("house_lv2_tile") : null;
+    if (b.kind === "tower_bamboo" || b.kind === "tower_crossbow") return has("tower_bamboo");
+    if (b.category === "wall") {
+      // 只和 ±Y 方向的墙相连 → 用 90° 那张，墙段就能接成一条线
+      const alongY = (isWallAt(b.i, b.j - 1) || isWallAt(b.i, b.j + 1)) && !(isWallAt(b.i - 1, b.j) || isWallAt(b.i + 1, b.j));
+      const base = b.kind === "wall_brick" ? "wall_brick" : "fence_wood";
+      return has(`${base}_a${alongY ? 90 : 0}`);
+    }
+    if (b.kind === "farm_rice") {
+      const ripe = b.cycleT / (cfg.economy.buildings.farm_rice!.cycleS ?? 1) > 0.65;
+      return has(ripe ? "farm_rice_ripe" : "farm_rice_young");
+    }
+    if (b.category === "trap") return has("trap_bear");
     return null;
   };
   const syncScene = () => {
     scene.objects.length = 0;
     if (atlas.sprites.prop_pine_tree) for (const d of decor) scene.addSprite("prop_pine_tree", d.i, d.j, `pine@${d.i},${d.j}`);
     for (const b of g.buildings.values()) {
-      if (b.category === "trap" || b.kind === "farm_rice" || b.kind === "fish_weir") continue; // 贴地图层
       const stem = spriteFor(b);
+      if (!stem && (b.category === "trap" || b.kind === "farm_rice" || b.kind === "fish_weir")) continue; // 没有精灵的贴地物件画在贴地图层
       if (stem) { scene.addSprite(stem, b.i, b.j, `b${b.id}`); continue; }
       const cx = (b.i + b.w / 2) * T, cy = (b.j + b.d / 2) * T;
       scene.addCustom({ id: `b${b.id}`, pos: { x: cx, y: cy, z: 0 }, radius: (Math.min(b.w, b.d) * T) / 2 - 0.01, draw: (c) => drawBuilding(c, b) });
@@ -285,6 +301,7 @@ async function boot(): Promise<void> {
   const drawDecals = (c: CanvasRenderingContext2D) => {
     const lw = Math.max(0.8, iso.cfg.pxPerMeter * cam.zoom * 0.035);
     for (const b of g.buildings.values()) {
+      if (spriteFor(b)) continue;
       if (b.kind === "farm_rice") drawFarmDecal(c, S, b.i, b.j, b.w, b.d, T, nightA, lw, b.cycleT / (cfg.economy.buildings.farm_rice!.cycleS ?? 1));
       else if (b.kind === "fish_weir") drawWeirDecal(c, S, b.i, b.j, b.w, b.d, T, nightA, lw, clock);
       else if (b.category === "trap") drawTrapDecal(c, S, b.i, b.j, T, nightA, lw, b.charges);

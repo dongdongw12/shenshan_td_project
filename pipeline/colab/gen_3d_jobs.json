@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "T2 第 1 周 3 件视觉样张的概念图提示词 + 图生 3D 参数。colab_gen_3d.ipynb 读取本文件；外部工具（即梦 / Midjourney / GPT-image / Gemini）请用 prompt_zh / prompt_en 长版并附加 style.prefix 与 style.negative。人类可读说明见 docs/art/T2_concept_prompts.md。",
+  "note": "T2 第 1 周 3 件视觉样张的概念图提示词 + 图生 3D 参数。colab_gen_3d.ipynb 读取本文件；外部工具（即梦 / Midjourney / GPT-image / Gemini）请用 prompt_zh / prompt_en 长版并附加 style.prefix 与 style.negative。人类可读说明见 docs/art/T2_concept_prompts.md。 method：ai = 概念图 → Hunyuan3D-2；procedural = pipeline/blender/make_proxy_assets.py 程序化建模（规整/重复/很薄的物件，AI 反而做不好）。",
   "style": {
     "prefix_zh": "中国明清木刻版画与矿物重彩工笔风格的游戏建筑道具，单个物体完整居中，纯白背景，从正面偏右约 25° 的三分之四视角、略微俯视约 20°，柔和均匀的漫射光，几乎无投影；饱和矿物颜料平涂色块：石青、石绿、赭石、朱砂、黛瓦深灰、蛎灰米白；造型简洁结实、比例略微敦实可爱，轮廓清晰。",
     "prefix_en": "Single game-asset prop in the style of Ming-Qing Chinese woodblock print with mineral-pigment gongbi colors, one object fully in frame and centered on a pure white background, three-quarter view rotated about 25 degrees from the front, camera slightly above at about 20 degrees, soft even diffuse lighting with almost no cast shadow, flat saturated mineral colors: azurite blue, malachite green, red ochre, cinnabar red, dark slate-grey roof tiles, warm lime-white plaster, chunky slightly stylized proportions, clean readable silhouette.",
@@ -31,7 +31,8 @@
       "prompt_en": "A three-bay traditional Chinese tiled farmhouse (newlyweds' house): gabled roof of small dark slate-grey tiles with gently upturned ridge ends, cinnabar-red timber columns and square lattice windows under the eaves, warm lime-white plaster walls, red-ochre wooden door with a big red double-happiness paper sign, a pair of red lanterns beside the door, a low bluestone plinth with three steps, cozy and sturdy.",
       "gen": {
         "auto_align_yaw": true
-      }
+      },
+      "method": "ai"
     },
     {
       "id": "tower_bamboo",
@@ -42,7 +43,9 @@
       "gen": {
         "auto_align_yaw": true,
         "note": "细杆件是图生 3D 的弱项：若出现蹼状粘连，换 t2i 种子或让概念图竹柱更粗、斜撑更少。"
-      }
+      },
+      "method": "ai",
+      "method_note": "竹箭楼细杆件多，图生 3D 可能糊；pipeline/blender/make_proxy_assets.py 里有程序化版本可直接烘培（method 可改成 procedural）"
     },
     {
       "id": "prop_pine_tree",
@@ -53,7 +56,214 @@
       "gen": {
         "auto_align_yaw": false,
         "note": "树没有明确朝向，跳过自动对齐。"
+      },
+      "method": "ai"
+    },
+    {
+      "id": "house_lv1_thatch",
+      "name": "漏风茅草屋",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，破旧的山野茅草屋，夯土墙，茅草屋顶有补丁，歪斜木门，屋檐下挂着蓑衣和斗笠",
+      "prompt_zh": "一间破旧的山野茅草屋（开局的家）：黄褐色夯土墙有裂缝，厚厚的金黄茅草屋顶，局部有深色补丁和压草的木杆，歪斜的赭石木门，一扇小方窗糊着发黄窗纸，屋檐下挂着蓑衣和斗笠，墙角堆着几捆柴。简陋但敦实。",
+      "prompt_en": "A shabby mountain thatched hut (the starting home): cracked rammed-earth walls in yellow-brown, a thick golden thatched roof with darker patches and wooden pressing poles, a crooked red-ochre wooden door, one small square window with yellowed paper, a straw rain cape and conical hat hanging under the eaves, a few bundles of firewood by the wall. Humble but sturdy.",
+      "gen": {
+        "auto_align_yaw": true
       }
+    },
+    {
+      "id": "house_wing_room",
+      "name": "家族厢房",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，农家小厢房，青瓦单坡顶，白灰墙，木格窗，门口挂小红灯笼，窗台晒着小孩衣物",
+      "prompt_zh": "一间农家小厢房（子女住的偏房）：比正房矮小，小青瓦单坡屋顶，蛎灰白墙，赭石木框格子窗，门口挂一盏小红灯笼，窗下竹竿晾着孩子的小衣服，门边放一个木摇篮。温馨的生活气息。",
+      "prompt_en": "A small family wing room (side house for the children): lower than the main house, single-pitch roof of small dark tiles, lime-white plaster walls, red-ochre lattice windows, a small red lantern by the door, children's clothes drying on a bamboo pole under the window, a wooden cradle beside the door. Warm and homely.",
+      "gen": {
+        "auto_align_yaw": true
+      }
+    },
+    {
+      "id": "house_lv3_courtyard",
+      "name": "青砖大院",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，青砖围合的小四合院，正房与两侧厢房青瓦顶，朱红大门，门口一对石狮，院里一棵树",
+      "prompt_zh": "一座青砖围合的小四合院（家族兴旺后的大院）：灰青色砖墙围出方正院落，正房与左右厢房都是小青瓦硬山顶、屋脊两端起翘，朱砂红大门带门钉，门口一对小石狮和两盏红灯笼，院子中央一棵小树和水缸。规整、殷实。",
+      "prompt_en": "A small walled courtyard compound of blue-grey bricks (the prosperous family estate): a square yard enclosed by brick walls, main hall and two side wings with dark tiled gable roofs and upturned ridge ends, a cinnabar-red main gate with door studs, a pair of small stone lions and two red lanterns at the gate, a small tree and a water vat in the yard. Orderly and well-off.",
+      "gen": {
+        "auto_align_yaw": true
+      }
+    },
+    {
+      "id": "ancestral_hall",
+      "name": "家族祠堂",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，乡间小祠堂，歇山青瓦顶，朱红立柱，石台阶，门楣挂黑底金字匾额，门前香炉",
+      "prompt_zh": "一座乡间家族小祠堂：歇山式青瓦屋顶，屋脊两端鸱吻、四角微翘，前廊四根朱砂红立柱，木格门扇，门楣挂黑底金字匾额（无具体文字），三级青石台阶，门前一尊青铜香炉冒着细烟。庄重。",
+      "prompt_en": "A small rural ancestral hall: a hip-and-gable roof of dark tiles with ridge ornaments and slightly upturned corners, four cinnabar-red columns along the front porch, lattice wooden doors, a black plaque with gold border above the door (no readable text), three bluestone steps, a bronze incense burner with a thin wisp of smoke in front. Solemn.",
+      "gen": {
+        "auto_align_yaw": true
+      }
+    },
+    {
+      "id": "fish_weir",
+      "name": "溪边鱼梁与水车",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，溪水里的竹木鱼梁，一排竹桩围着鱼篓，旁边一架小木水车，浅水，石头",
+      "prompt_zh": "溪边的鱼梁与小水车：浅溪里打下一排竹桩与木栅，中间放着几个竹编鱼篓，旁边一架赭石色小木水车，水车轮半浸在石青色的溪水里，岸边几块青灰卵石。不要画大片水面，只画鱼梁、水车和脚下一小片浅水。",
+      "prompt_en": "A fish weir with a small waterwheel in a mountain stream: a row of bamboo stakes and a wooden fence in shallow water with several woven bamboo fish traps, a small red-ochre wooden waterwheel half dipped in azurite water, a few blue-grey pebbles on the bank. Only the weir, wheel and a small patch of shallow water, not a large water surface.",
+      "gen": {
+        "auto_align_yaw": true
+      }
+    },
+    {
+      "id": "hunt_lodge",
+      "name": "林间猎棚",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，林间木棚，树皮屋顶，墙上挂着兽皮和弓箭，门口木架晾着肉干，柴堆",
+      "prompt_zh": "一座林间猎棚：原木搭的小屋，树皮与茅草覆顶，外墙挂着两张兽皮和一张长弓、箭囊，门口木架上晾着肉干，旁边一堆劈好的柴和一个树墩。野趣、粗犷。",
+      "prompt_en": "A hunter's lodge in the woods: a small log cabin with a bark-and-thatch roof, two animal hides and a longbow with a quiver hanging on the outer wall, strips of jerky drying on a wooden rack by the door, a pile of split firewood and a tree stump beside it. Rustic and rugged.",
+      "gen": {
+        "auto_align_yaw": true
+      }
+    },
+    {
+      "id": "granary",
+      "name": "防潮粮仓",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，木柱架高的防潮粮仓，木板仓体，茅草四坡顶，木梯，门口几个麻袋",
+      "prompt_zh": "一座架高的防潮粮仓：四根粗木柱把仓体架离地面，柱顶有防鼠的圆石盘，浅赭色木板仓体，金黄茅草四坡顶，斜搭一架木梯，仓门前堆着几个鼓鼓的麻袋。",
+      "prompt_en": "A raised granary: four thick wooden posts lifting the storehouse off the ground with round stone rat-guards on top of the posts, light ochre plank walls, a golden thatched hip roof, a wooden ladder leaning against it, several bulging hemp sacks piled by the door.",
+      "gen": {
+        "auto_align_yaw": true
+      }
+    },
+    {
+      "id": "tower_crossbow",
+      "name": "强弩箭楼",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，木构方形箭楼，石砌底座，二层射台有木栏和弩机，小青瓦顶，红旗",
+      "prompt_zh": "一座强化过的木构箭楼：青石砌的方形底座，上面是粗木柱搭的两层楼，第二层是带木护栏的射台，架着一具大弩，顶上小青瓦四坡顶，檐角挂一面小红三角旗。结实、军事感。",
+      "prompt_en": "A reinforced wooden crossbow tower: a square bluestone base, a two-storey frame of thick timber posts above it, the upper level a shooting platform with a wooden parapet and a large mounted crossbow, a small dark-tiled hip roof on top, a small red triangular flag at one eave corner. Sturdy and martial.",
+      "gen": {
+        "auto_align_yaw": true
+      }
+    },
+    {
+      "id": "tower_oil_fire",
+      "name": "火油连弩塔",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，砖木塔楼，顶层架着连弩，挂着火油陶罐，朱红四坡顶，火盆燃着",
+      "prompt_zh": "一座砖木混合的火油连弩塔：下层青砖、上层木构，顶层平台架着多发连弩，旁边挂着几个黑陶火油罐，平台一角的铁火盆燃着橙色火焰，朱砂红四坡顶。压迫感强但不血腥。",
+      "prompt_en": "A brick-and-timber fire-oil repeating crossbow tower: blue-grey brick lower storey and timber upper storey, a multi-shot repeating crossbow on the top platform, several black clay fire-oil jars hanging beside it, an iron brazier with an orange flame at one corner of the platform, a cinnabar-red hip roof. Imposing but not gory.",
+      "gen": {
+        "auto_align_yaw": true
+      }
+    },
+    {
+      "id": "tower_rolling_log",
+      "name": "滚木礌石楼",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，宽大的木石防御楼，顶上平台堆着滚木和礌石，绳索木闸，青瓦顶",
+      "prompt_zh": "一座宽大的滚木礌石楼（守寨重器）：下半截是青石垒的厚墙，上半截木构平台，平台边缘堆着一排粗圆滚木和一堆圆石，用麻绳和木闸拦住，随时可以放下去，顶上小青瓦歇山顶。厚重。",
+      "prompt_en": "A broad log-and-boulder defense tower (heavy fortress weapon): a thick bluestone wall for the lower half, a timber platform above with a row of thick round logs and a heap of round boulders stacked at the edge, held back by hemp ropes and a wooden gate ready to be released, a small dark-tiled hip-and-gable roof on top. Massive.",
+      "gen": {
+        "auto_align_yaw": true
+      }
+    },
+    {
+      "id": "prop_bamboo_clump",
+      "name": "翠竹丛",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，一丛翠竹，七八根青绿竹竿，竹叶成团，根部有竹笋和小石头",
+      "prompt_zh": "一丛翠竹：七八根粗细不一的青绿竹竿，竹节清楚，略向一侧倾斜，竹叶在上部聚成几团块面分明的叶簇（石绿与松青两色），根部冒出两三个竹笋和几块小石头。版画里的竹子那样块面清楚。",
+      "prompt_en": "A clump of green bamboo: seven or eight malachite-green culms of varied thickness with clear nodes, leaning slightly to one side, leaves gathered into a few bold, distinct clusters near the top (malachite and pine green), two or three bamboo shoots and a few small rocks at the base. Bold masses like bamboo in a woodblock print.",
+      "gen": {
+        "auto_align_yaw": false
+      }
+    },
+    {
+      "id": "prop_wood_bridge",
+      "name": "溪上木桥",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，跨溪的小木桥，木板桥面，两侧木栏杆，桥墩是石头，桥下一点溪水",
+      "prompt_zh": "一座跨小溪的木桥：赭石色木板桥面微微拱起，两侧简单木栏杆，两端搭在青石垒的桥墩上，桥下露出一小段石青色溪水和卵石。只画桥和桥下一小段水。",
+      "prompt_en": "A small wooden footbridge over a stream: a slightly arched red-ochre plank deck, simple wooden railings on both sides, both ends resting on stacked bluestone abutments, a short stretch of azurite stream and pebbles visible underneath. Only the bridge and a little water beneath it.",
+      "gen": {
+        "auto_align_yaw": true
+      }
+    },
+    {
+      "id": "prop_stone_lantern",
+      "name": "山道石灯笼",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，山道边的石灯笼，青石雕成，方形灯室有窗孔，宝珠顶，长着苔藓",
+      "prompt_zh": "一座山道边的石灯笼：青灰石雕成，方形底座、立柱、带窗孔的方形灯室、四角起翘的石盖和宝珠顶，石面上长着几块石绿色苔藓，灯室里透出一点暖光。古朴。",
+      "prompt_en": "A stone lantern by a mountain path: carved from blue-grey stone with a square base, a pillar, a square light chamber with window openings, a stone cap with upturned corners and a jewel finial, patches of malachite-green moss on the stone, a faint warm glow inside the chamber. Rustic and old.",
+      "gen": {
+        "auto_align_yaw": false
+      }
+    },
+    {
+      "id": "prop_peddler_cart",
+      "name": "进山货郎担",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，货郎的担子和独轮推车，竹筐里有布匹针线和糖人，插着小旗和拨浪鼓",
+      "prompt_zh": "一副进山货郎的独轮推车：木制独轮车上绑着两个竹编货筐，筐里有花布匹、针线、木梳、糖葫芦，车把上插一面写着“货”字形状的小幌子（不要真实文字，可用简单纹样）和一个拨浪鼓，车边挂一盏小灯笼。热闹讨喜。",
+      "prompt_en": "A traveling peddler's wheelbarrow: a wooden single-wheel cart with two woven bamboo baskets of patterned cloth, needles and thread, wooden combs and candied hawthorn sticks, a small shop pennant (simple pattern, no real text) and a rattle drum on the handle, a small lantern hanging at the side. Lively and charming.",
+      "gen": {
+        "auto_align_yaw": true
+      }
+    },
+    {
+      "id": "prop_beacon_brazier",
+      "name": "守夜烽火盆",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，铁三脚架上的大火盆，木柴熊熊燃烧，旁边石头围着，一捆备用柴",
+      "prompt_zh": "一个守夜用的烽火盆：粗铁三脚架托着一口黑铁大火盆，盆里木柴燃着橙红火焰，三脚架脚下用青石围了一圈，旁边靠着一捆备用的柴。火焰造型块面化、像版画里的火。",
+      "prompt_en": "A night-watch beacon brazier: a heavy iron tripod holding a large black iron fire bowl with logs burning in orange-red flames, a ring of bluestones around the tripod's feet, a spare bundle of firewood leaning beside it. Flames drawn as bold flat shapes like fire in a woodblock print.",
+      "gen": {
+        "auto_align_yaw": false
+      }
+    },
+    {
+      "id": "prop_plum_tree",
+      "name": "院墙红梅树",
+      "method": "ai",
+      "t2i_zh": "斜侧视角，一棵红梅树，黑褐色虬曲枝干，满枝朱红梅花，没有叶子，根部小石头",
+      "prompt_zh": "一棵红梅：黑褐色虬曲的枝干向两侧伸展，枝上开满朱砂红与朱膘色的梅花（成团成簇，块面清楚），没有叶子，根部两三块小青石。像工笔画里的梅花。",
+      "prompt_en": "A red plum blossom tree: twisting dark brown branches spreading to both sides, covered with cinnabar and vermilion plum blossoms in bold clusters, no leaves, two or three small bluestones at the roots. Like plum blossoms in a gongbi painting.",
+      "gen": {
+        "auto_align_yaw": false
+      }
+    },
+    {
+      "id": "farm_rice_young",
+      "name": "开荒稻田（青苗）",
+      "method": "procedural",
+      "method_note": "平地上的秧行，程序化建模更规整（make_proxy_assets.py）"
+    },
+    {
+      "id": "farm_rice_ripe",
+      "name": "开荒稻田（金穗）",
+      "method": "procedural",
+      "method_note": "同上，稻穗换金黄"
+    },
+    {
+      "id": "fence_wood",
+      "name": "尖木篱笆",
+      "method": "procedural",
+      "method_note": "重复的削尖木桩，程序化建模；1 格一段，烘 0°/90° 两个方向"
+    },
+    {
+      "id": "wall_brick",
+      "name": "青砖围墙",
+      "method": "procedural",
+      "method_note": "规整砖墙，程序化建模；1 格一段，烘 0°/90° 两个方向"
+    },
+    {
+      "id": "trap_bear",
+      "name": "精铁捕兽夹",
+      "method": "procedural",
+      "method_note": "很小的贴地道具，程序化建模"
     }
   ],
   "t2i_note": "HunyuanDiT 实测（2026-11-23 第一次 Colab 运行）：'箭楼' 会被画成多层楼阁/宝塔，'正房' 会被画成红墙庙宇，且默认正面视角。短提示词已改为避开这些词并强调斜侧视角；正式美术仍推荐外部工具按 prompt_zh 长版出图。"

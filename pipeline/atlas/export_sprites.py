@@ -35,12 +35,15 @@ def main():
     p.add_argument("--out", required=True)
     p.add_argument("--scale", type=float, default=0.5)
     p.add_argument("--only", default="", help="逗号分隔 stem")
+    p.add_argument("--merge", action="store_true", help="合并进已有的 sprites.json（不删除其他精灵）")
     args = p.parse_args()
     src, out = Path(args.sprites), Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     only = {s for s in args.only.split(",") if s}
 
     index = {"scale": args.scale, "px_per_meter": None, "sprites": {}}
+    if args.merge and (out / "sprites.json").exists():
+        index = json.load(open(out / "sprites.json", encoding="utf-8"))
     for meta_path in sorted(src.glob("*_meta.json")):
         stem = meta_path.name[: -len("_meta.json")]
         if only and stem not in only:
