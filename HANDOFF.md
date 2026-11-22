@@ -43,7 +43,7 @@
 ## 4. 跨电脑 & 跨模型协同规范
 
 ### 文件同步边界
-- **GitHub 仓库（代码、配置、文档、小体积脚本）**：每台电脑开工前必跑 `git pull`，收工前必跑 `git add/commit/push` 并更新本文件底部日志。
+- **GitHub 仓库（代码、配置、文档、小体积脚本）**：`https://github.com/dongdongw12/shenshan_td_project.git`（主分支 `main`）。每台电脑开工前必跑 `git pull`，收工前必跑 `git add/commit/push` 并更新本文件底部日志。
 - **Google Drive（大体积 3D 资产与烘培图）**：统一存放在 `Google Drive/MyDrive/shenshan_td/`（[云盘目录链接](https://drive.google.com/drive/folders/1eoE7aVdFmsn79JN-U3fkxy1DiwpEbhe8)）：
   - `raw_models/`：Colab 生成的原始 `.glb`（命名必须严格对应 `assets_manifest.json` 的 `id`）
   - `baked_sprites/`：Blender 烘培出的 `_day.png`、`_night.png`、`_meta.json`
@@ -63,10 +63,10 @@
 
 ## 5. 下一步任务队列（Next Actions — 按顺序认领）
 
-- [ ] **T1 · 独立建仓与环境同步**（仅差 `git push` 到 GitHub）
+- [x] **T1 · 独立建仓与环境同步**
   - [x] 将 `shenshan_td_project/` 移至 `~/Projects/shenshan_td_project/`，将 `mountain_td_mvp/` 归档到 `docs/prototype_v0/`，并初始化本地独立 Git 仓库（`main` 分支）
   - [x] 在 Google Drive 创建 `MyDrive/shenshan_td/raw_models/` 与 `baked_sprites/`，上传 `assets_manifest.json`、`bake_isometric_sprites.py` 与 `colab_bake_sprites.ipynb`
-  - [ ] 创建 GitHub 远程仓库并执行 `git push -u origin main`
+  - [x] 绑定 GitHub 远程仓库 `https://github.com/dongdongw12/shenshan_td_project.git` 并推送 `main` 分支
 - [ ] **T2 · 编写 Colab 图生 3D 笔记本 + 第 1 周视觉样张（3 件）**
   - 准备统一“明清木刻粗墨线重彩”概念图提示词，先做 3 件核心样张：`house_lv2_tile`（青瓦正房）、`tower_bamboo`（竹箭楼）、`prop_pine_tree`（深山古松）。
   - 在 `pipeline/colab/` 新建 `colab_gen_3d.ipynb`（Hunyuan3D / TRELLIS）批量生成 `.glb` 到 `raw_models/`。
@@ -95,3 +95,10 @@
 ### 2026-11-22 · Gemini（本机初始化）
 - **已完成**：敲定《深山传家：开荒守寨》1 页纸策划案（含 4 阶段家族成长、驻守羁绊、10 天波次、IAA 埋点）；建成前 3 天浏览器可玩原型（`mountain_td_mvp/`）；建成路线 B 独立项目骨架（`shenshan_td_project/`），含 24 件 `assets_manifest.json`、Blender 粗墨线双光影烘培脚本与 Colab 笔记本（均已通过语法校验）。
 - **未完成 / 下一棒**：请接手方直接从 **T1（独立建仓）** 或 **T2（3 件核心样张概念图 + Colab 图生 3D 笔记本）** 开始。
+
+### 2026-11-22 · Antigravity（完成 T1 独立建仓与云端同步）
+- **已完成**：
+  - 将工程从 `RemotionVideo/` 迁出至独立目录 `~/Projects/shenshan_td_project/`，并将前 3 天原型归档至 `docs/prototype_v0/`；同步更新 `.gitignore`（补充忽略 `pipeline/baked_sprites/` 散图并保留 `.gitkeep`）、`README.md` 与 `HANDOFF.md`。
+  - 在 Google Drive 建好 `MyDrive/shenshan_td/`（`raw_models/`、`baked_sprites/`）并上传 `assets_manifest.json`、`bake_isometric_sprites.py`、`colab_bake_sprites.ipynb`（Colab 类型）。
+  - 初始化独立 Git 仓库并推送至 `https://github.com/dongdongw12/shenshan_td_project.git`（`main` 分支）。
+- **未完成 / 下一棒**：**T1 已全部完成**。请接手方直接从 **T2（3 件核心样张概念图提示词 + `pipeline/colab/colab_gen_3d.ipynb` + 首批 `.glb` 生成与单件试烘培验收）** 开始。
