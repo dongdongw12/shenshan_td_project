@@ -530,26 +530,92 @@ def build_prop_beacon_brazier():
         cyl(f"spare{k}", 0.06, 0.7, (0.75, -0.45 + k * 0.12, 0.35), "ochre", rot=(0, math.radians(20), 0), verts=6)
 
 
+def _canopy(name, clusters, tex_name="leaf_clouds"):
+    """云头状树冠：几团扁椭球 + 云纹置换（同古松的针叶团做法，边缘起伏像版画里的一簇簇叶子）。"""
+    tex = bpy.data.textures.get(tex_name) or bpy.data.textures.new(tex_name, type="CLOUDS")
+    tex.noise_scale = 0.3
+    for i, (c, r, m) in enumerate(clusters):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3, radius=r, location=c)
+        o = bpy.context.active_object
+        o.name = f"{name}{i}"
+        o.scale = (1.0, 0.9, 0.55)
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+        mod = o.modifiers.new("clouds", "DISPLACE")
+        mod.texture = tex
+        mod.strength = 0.2 * r
+        mod.mid_level = 0.5
+        bpy.ops.object.shade_smooth()
+        assign(o, m)
+
+
 def build_house_lv3_courtyard():
-    """青砖大院（3×3）：砖墙围合 + 正房与两厢青瓦顶 + 朱红大门 + 石狮 + 院中小树"""
+    """青砖大院（3×3）：砖墙围合（墙帽 + 砖缝）+ 正房（朱柱前廊、格窗、门）与东西厢房（青瓦顶、格窗）
+    + 朱红双扇大门（门钉、匾额、门楼）+ 石狮一对 + 院中石榴树（多子多福）+ 太平缸"""
     L = 5.6
     for k, (sx, sy, w, d) in enumerate(((0, -1, L, 0.3), (0, 1, L, 0.3), (-1, 0, 0.3, L), (1, 0, 0.3, L))):
-        box(f"cwall{k}", (w, d, 1.6), (sx * (L / 2 - 0.15), sy * (L / 2 - 0.15), 0.8), "tile_light")
-        box(f"cwall_cap{k}", (w + 0.1, d + 0.2, 0.15), (sx * (L / 2 - 0.15), sy * (L / 2 - 0.15), 1.68), "tile_dark")
-    box("gate", (1.2, 0.4, 2.0), (0, -L / 2 + 0.15, 1.0), "cinnabar")
-    box("gate_roof", (1.6, 0.7, 0.18), (0, -L / 2 + 0.15, 2.1), "tile_dark")
+        cx, cy = sx * (L / 2 - 0.15), sy * (L / 2 - 0.15)
+        box(f"cwall{k}", (w, d, 1.6), (cx, cy, 0.8), "tile_light")
+        box(f"cwall_cap{k}", (w + 0.12, d + 0.24, 0.12), (cx, cy, 1.66), "tile_dark")
+        box(f"cwall_ridge{k}", (w + 0.02, 0.1 if d < w else d + 0.02, 0.1) if d < w else (0.1, d + 0.02, 0.1), (cx, cy, 1.77), "tile_dark")
+        box(f"cwall{k}_base", (w + 0.06, d + 0.06, 0.5), (cx, cy, 0.25), "stone")  # 青石下碱
+    # 门楼 + 双扇朱门 + 门钉 + 匾额
+    gy = -L / 2 + 0.15
     for sd in (-1, 1):
-        box(f"lion{sd}", (0.3, 0.4, 0.5), (sd * 0.9, -L / 2 - 0.25, 0.25), "stone")
-        sphere(f"lantern{sd}", 0.13, (sd * 0.5, -L / 2 - 0.15, 1.7), "cinnabar", scale=(1, 1, 1.25), seg=8)
-    box("main_hall", (4.2, 1.6, 2.0), (0, 1.6, 1.0), "lime_white")
-    gable_roof("main_roof", 4.6, 1.2, 2.0, 3.2, 0.14, "tile_dark")
-    obj = bpy.context.active_object
-    obj.location.y += 1.6
+        box(f"gate_pier{sd}", (0.3, 0.5, 2.1), (sd * 0.78, gy, 1.05), "tile_light")
+        box(f"gate_leaf{sd}", (0.62, 0.08, 1.75), (sd * 0.32, gy - 0.2, 0.88), "cinnabar")
+        for r in range(3):
+            for c in range(2):
+                sphere(f"stud{sd}_{r}{c}", 0.035, (sd * (0.18 + 0.2 * c), gy - 0.25, 0.5 + 0.38 * r), "gamboge", seg=6)
+    box("gate_lintel", (1.9, 0.55, 0.22), (0, gy, 2.0), "wood_dark")
+    box("gate_plaque", (0.8, 0.05, 0.3), (0, gy - 0.3, 1.93), "ink")
+    box("gate_plaque_rim", (0.88, 0.04, 0.36), (0, gy - 0.28, 1.93), "gamboge")
+    gable_roof("gate_roof", 2.3, 0.6, 2.1, 2.6, 0.1, "tile_dark", curve=0.2)
+    bpy.context.active_object.location.y += gy
+    for sd in (-1, 1):  # 石狮：须弥座 + 蹲身 + 圆头
+        box(f"lion_base{sd}", (0.4, 0.5, 0.18), (sd * 1.2, gy - 0.45, 0.09), "stone")
+        box(f"lion_body{sd}", (0.28, 0.36, 0.34), (sd * 1.2, gy - 0.42, 0.35), "stone")
+        sphere(f"lion_head{sd}", 0.17, (sd * 1.2, gy - 0.52, 0.62), "stone", seg=10)
+        sphere(f"lantern{sd}", 0.13, (sd * 0.55, gy - 0.35, 1.62), "cinnabar", scale=(1, 1, 1.25), seg=8)
+    # 正房：台基 + 墙 + 前廊朱柱 + 门 + 两侧格窗 + 双坡顶
+    hy = 1.6
+    box("main_plinth", (4.4, 1.9, 0.22), (0, hy, 0.11), "stone")
+    box("main_hall", (4.0, 1.4, 1.9), (0, hy + 0.15, 1.17), "lime_white")
+    for i, x in enumerate((-1.85, -0.65, 0.65, 1.85)):
+        cyl(f"main_col{i}", 0.08, 1.95, (x, hy - 0.72, 1.19), "cinnabar", verts=8)
+    box("main_door", (0.7, 0.05, 1.35), (0, hy - 0.57, 0.9), "ochre")
+    for i, x in enumerate((-1.25, 1.25)):
+        box(f"main_win{i}", (0.8, 0.05, 0.6), (x, hy - 0.57, 1.3), "wood_dark")
+        for j in range(4):
+            box(f"main_win{i}_m{j}", (0.03, 0.03, 0.56), (x - 0.3 + 0.2 * j, hy - 0.6, 1.3), "ochre_light")
+    gable_roof("main_roof", 4.5, 1.1, 2.05, 2.95, 0.12, "tile_dark")
+    bpy.context.active_object.location.y += hy
+    box("main_ridge", (4.1, 0.16, 0.14), (0, hy, 3.1), "tile_light")
+    # 东西厢房：墙 + 朝院心的格窗 + 青瓦双坡（屋脊沿 Y）
     for sd in (-1, 1):
-        box(f"wing{sd}", (1.3, 2.4, 1.7), (sd * 2.0, -0.4, 0.85), "lime_white")
-    cyl("tree_trunk", 0.12, 1.4, (0, -0.6, 0.7), "wood_dark", verts=8)
-    sphere("tree_top", 0.7, (0, -0.6, 1.8), "malachite", scale=(1, 1, 0.7))
-    cyl("vat", 0.3, 0.5, (0.9, -1.3, 0.25), "tile_dark", verts=12)
+        wx = sd * 2.05
+        box(f"wing{sd}", (1.05, 2.2, 1.5), (wx, -0.35, 0.85), "lime_white")
+        box(f"wing{sd}_plinth", (1.4, 2.4, 0.18), (wx, -0.35, 0.09), "stone")
+        for k, yy in enumerate((-1.0, 0.3)):
+            box(f"wing{sd}_win{k}", (0.05, 0.6, 0.5), (wx - sd * 0.54, -0.35 + yy * 0.8, 1.1), "wood_dark")
+            for j in range(3):
+                box(f"wing{sd}_win{k}_m{j}", (0.03, 0.03, 0.46), (wx - sd * 0.57, -0.35 + yy * 0.8 - 0.2 + 0.2 * j, 1.1), "ochre_light")
+        gable_roof(f"wing{sd}_roof", 2.5, 0.72, 1.6, 2.15, 0.1, "tile_dark")
+        r = bpy.context.active_object
+        r.rotation_euler = (0, 0, math.radians(90))
+        r.location = (wx, -0.35, 0)
+    # 院中石榴树：曲干 + 三团云头树冠 + 朱砂石榴果
+    rod("tree_trunk0", (0.35, -0.75, 0.0), (0.25, -0.7, 0.9), 0.1, "wood_dark", verts=8)
+    rod("tree_trunk1", (0.25, -0.7, 0.9), (0.45, -0.75, 1.5), 0.08, "wood_dark", verts=8)
+    rod("tree_branch", (0.25, -0.7, 1.0), (-0.2, -0.8, 1.45), 0.06, "wood_dark", verts=8)
+    _canopy("pom_leaves", [((0.45, -0.75, 1.75), 0.55, "malachite"), ((-0.15, -0.8, 1.6), 0.45, "pine_deep"),
+                           ((0.15, -0.7, 2.1), 0.42, "malachite_light")])
+    for k, (x, y, z) in enumerate(((0.75, -1.15, 1.6), (0.1, -1.15, 1.85), (-0.4, -1.1, 1.5), (0.5, -1.0, 2.15), (0.95, -0.8, 1.9))):
+        sphere(f"pomegranate{k}", 0.07, (x, y, z), "cinnabar", seg=8)
+    box("tree_bed", (0.9, 0.9, 0.16), (0.3, -0.75, 0.08), "stone")
+    cyl("vat", 0.32, 0.55, (-0.95, -1.35, 0.28), "tile_dark", verts=14)
+    cyl("vat_water", 0.27, 0.02, (-0.95, -1.35, 0.55), "water", verts=14)
+    # 院心青石板甬道
+    box("path", (0.9, 2.6, 0.04), (0, -1.3, 0.02), "stone")
 
 
 def build_ancestral_hall():

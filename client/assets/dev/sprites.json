@@ -738,16 +738,16 @@
       "name": "青砖大院",
       "angle": 0,
       "resolution": [
-        592,
-        456
+        584,
+        440
       ],
       "anchor_uv": [
-        0.45009,
-        0.69325
+        0.45275,
+        0.68706
       ],
       "anchor_px": [
-        266.45,
-        316.12
+        264.4,
+        302.31
       ],
       "px_per_meter": 64.0,
       "camera_elevation_deg": 30.0,
@@ -760,10 +760,10 @@
       "footprint": "3x3",
       "fit_limited_by": "footprint",
       "target_height_m": 5.2,
-      "actual_height_m": 3.18,
+      "actual_height_m": 2.97,
       "actual_size_m": [
-        5.427,
-        5.855
+        5.331,
+        5.844
       ],
       "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
       "mode": "stylized",
