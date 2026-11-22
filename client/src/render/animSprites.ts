@@ -45,16 +45,17 @@ export function drawAnimFrame(ctx: CanvasRenderingContext2D, meta: AnimMeta, img
   const frame = Math.floor(timeS * fps) % frames;
   const k = (pxPerMeter / meta.px_per_meter) * scale;
   const [ax, ay] = meta.anchor_px;
+  const base = ctx.globalAlpha; // 调用方设的整体透明度（淡出、受击闪白）要乘进去
   ctx.save();
   ctx.translate(p.x, p.y);
   if (flip) ctx.scale(-1, 1);
   const draw = (src: ImageLike, alpha: number) => {
     if (alpha <= 0.002) return;
-    ctx.globalAlpha = alpha;
+    ctx.globalAlpha = alpha * base;
     ctx.drawImage(src, frame * fw, 0, fw, fh, -ax * k, -ay * k, fw * k, fh * k);
   };
   draw(sheet[dir].day, 1);
   draw(sheet[dir].night, night);
   ctx.restore();
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha = base;
 }

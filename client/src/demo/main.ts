@@ -157,6 +157,8 @@ async function boot(): Promise<void> {
   const lastPos = new Map<number, Vec2>();
   const facing = new Map<number, number>();
   const animFacing = new Map<number, { dir: "front" | "back"; flip: boolean }>();
+  /** 敌人最近一次被打中的时刻（受击闪白） */
+  const hitAt = new Map<number, number>();
 
   // ---------------------------------------------------------------- 家人（纯表现层：白天走动干活，夜里当家的守门）
   interface Villager {
@@ -458,7 +460,15 @@ async function boot(): Promise<void> {
             // 脚下墨色小地影
             c.globalAlpha = 0.3 * (1 - 0.4 * nightA); c.fillStyle = "#1f2740";
             c.beginPath(); c.ellipse(p.x, p.y, ppm * 0.45 * CHAR_SCALE, ppm * 0.18 * CHAR_SCALE, 0, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
-            drawAnimFrame(c, anim, animImg, p, ppm, CHAR_SCALE, f.dir, f.flip, tb ? clock : clock * e.def.speed / 1.8, nightA, tb ? "attack" : "walk");
+            const animT = tb ? clock : clock * e.def.speed / 1.8, act = tb ? "attack" : "walk";
+            drawAnimFrame(c, anim, animImg, p, ppm, CHAR_SCALE, f.dir, f.flip, animT, nightA, act);
+            // 受击：叠加混合再画一遍同一帧，闪一下白（0.12 秒内淡掉）
+            const since = clock - (hitAt.get(e.id) ?? -9);
+            if (since < 0.12) {
+              c.save(); c.globalCompositeOperation = "lighter"; c.globalAlpha = 0.55 * (1 - since / 0.12);
+              drawAnimFrame(c, anim, animImg, p, ppm, CHAR_SCALE, f.dir, f.flip, animT, 0, act);
+              c.restore();
+            }
             if (e.hp < e.maxHp) {
               const w = ppm * 0.7 * CHAR_SCALE, h = Math.max(2, ppm * 0.07), y = p.y - anim.anchor_px[1] * (ppm / anim.px_per_meter) * CHAR_SCALE - 4;
               c.fillStyle = "rgba(28,21,16,0.75)"; c.fillRect(p.x - w / 2 - 1, y - 1, w + 2, h + 2);
@@ -598,7 +608,8 @@ async function boot(): Promise<void> {
   // ---------------------------------------------------------------- 事件 → 特效 / 提示
   const handleEvents = () => {
     for (const e of drainEvents(g)) {
-      if (e.type === "shot") {
+      if (e.type === "hit") hitAt.set(e.target, clock);
+      else if (e.type === "shot") {
         const b = g.buildings.get(e.tower);
         if (b) fx.push({ kind: "arrow", fromX: (b.i + b.w / 2) * T, fromY: (b.j + b.d / 2) * T, x: e.x, y: e.y, t0: clock, life: 0.35 / speed, fire: b.kind === "tower_oil_fire" });
       } else if (e.type === "enemyFled") {
@@ -609,7 +620,7 @@ async function boot(): Promise<void> {
         if (animIndex?.chars[e.enemy]) fx.push({ kind: "flee", enemy: e.enemy, x: e.x, y: e.y, vx: (ax / al) * fleeSpeed, vy: (ay / al) * fleeSpeed, t0: clock, life: 0.8 });
         fx.push({ kind: "smoke", x: e.x, y: e.y, t0: clock, life: 0.9 });
         if (e.reward.coin) fx.push({ kind: "text", x: e.x, y: e.y, t0: clock, life: 1.1, text: `+${e.reward.coin}`, color: "#d9a838" });
-        lastPos.delete(e.id); facing.delete(e.id); animFacing.delete(e.id);
+        lastPos.delete(e.id); facing.delete(e.id); animFacing.delete(e.id); hitAt.delete(e.id);
       } else if (e.type === "nightStart") toast(e.title);
       else if (e.type === "married") toast("修好青瓦正房，迎娶阿莲！");
       else if (e.type === "peddler") toast("货郎进山了！可以卖掉余粮余木");
