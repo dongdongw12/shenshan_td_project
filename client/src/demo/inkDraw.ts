@@ -374,3 +374,47 @@ export function drawLampGlow(ctx: CanvasRenderingContext2D, p: Vec2, r: number, 
   ctx.fill();
   ctx.restore();
 }
+
+/** 炊烟：淡墨色烟团从屋脊上袅袅升起、向右上飘散（白天，傍晚更浓）。p = 烟囱口屏幕点，u = 0.1 米像素 */
+export function drawChimneySmoke(ctx: CanvasRenderingContext2D, p: Vec2, u: number, t: number, a: number): void {
+  if (a <= 0.01) return;
+  ctx.save();
+  for (let n = 0; n < 6; n++) {
+    const k = (t * 0.18 + n / 6) % 1;
+    const x = p.x + u * (6 * k + 3 * Math.sin(k * 5 + t * 0.7)) + u * 10 * k * k;
+    const y = p.y - u * 26 * k;
+    const al = Math.min(1, a) * Math.sin(Math.PI * Math.min(1, k * 1.4)) * (1 - k * 0.5);
+    // 木刻里的烟：浅色烟团 + 细墨线勾一圈（只靠灰色在草地 / 茅草上几乎看不见）
+    ctx.globalAlpha = al * 0.6;
+    ctx.fillStyle = "#f3eee3";
+    ctx.beginPath();
+    ctx.ellipse(x, y, u * (1.6 + 4.5 * k), u * (1.2 + 3 * k), -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = al * 0.45;
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = Math.max(0.6, u * 0.28);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** 萤火虫：田边几点藤黄光点慢慢游走、明灭（夜里） */
+export function drawFireflies(ctx: CanvasRenderingContext2D, center: Vec2, spread: number, t: number, seed: number, a: number, u: number): void {
+  if (a <= 0.05) return;
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for (let n = 0; n < 4; n++) {
+    const s = seed * 13.7 + n * 4.1;
+    const x = center.x + Math.sin(t * 0.35 + s) * spread + Math.sin(t * 0.9 + s * 2) * spread * 0.25;
+    const y = center.y + Math.cos(t * 0.28 + s * 1.3) * spread * 0.45 - u * 4;
+    const blink = Math.max(0, Math.sin(t * 1.6 + s * 3));
+    if (blink < 0.05) continue;
+    const r = u * 1.6;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.5);
+    g.addColorStop(0, `rgba(255,230,140,${0.9 * a * blink})`);
+    g.addColorStop(1, "rgba(255,200,80,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, r * 2.5, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}

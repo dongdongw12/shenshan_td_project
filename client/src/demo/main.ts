@@ -17,7 +17,7 @@ import {
 import { botDay, botFamily } from "../game/bot";
 import { drawAnimFrame, facingFromScreenDelta, type AnimImages, type AnimIndex } from "../render/animSprites";
 import {
-  drawArrow, drawEnemy, drawFarmDecal, drawFence, drawFloatText, drawFlames, drawHouseLike, drawHpBar, drawLampGlow, drawSmoke, drawTrapDecal, drawWeirDecal,
+  drawArrow, drawEnemy, drawFarmDecal, drawFence, drawFloatText, drawFlames, drawHouseLike, drawChimneySmoke, drawFireflies, drawHpBar, drawLampGlow, drawSmoke, drawTrapDecal, drawWeirDecal,
   isoBox, hipRoof, PAL, tone, type ToScreen,
 } from "./inkDraw";
 
@@ -529,6 +529,19 @@ async function boot(): Promise<void> {
 
   const drawOverlay = (c: CanvasRenderingContext2D, _S: unknown, ppm: number) => {
     const u = ppm * 0.1;
+    // 白天主屋 / 厢房屋脊冒炊烟（快天黑时最浓，夜里散掉）；夜里稻田边几点萤火
+    const dayA = 1 - nightA;
+    for (const b of g.buildings.values()) {
+      if (b.category === "house" || b.kind === "wing_room") {
+        const stem = spriteFor(b);
+        const hgt = (stem ? atlas.sprites[stem]?.actual_height_m : undefined) ?? 3;
+        const dusk = g.phase === "day" && g.dayLeft < 12 ? 1.4 : 1;
+        const sp = S((b.i + b.w * 0.65) * T, (b.j + b.d * 0.55) * T, hgt * 0.92);
+        drawChimneySmoke(c, sp, u, clock + b.id * 2.3, dayA * dusk);
+      } else if (b.kind === "farm_rice" && nightA > 0.3) {
+        drawFireflies(c, S((b.i + b.w / 2) * T, (b.j + b.d / 2) * T, 0.6), ppm * 0.9, clock, b.id, (nightA - 0.3) / 0.7, u);
+      }
+    }
     // 夜里灯笼光晕轻轻闪：位置与烘培夜灯一致（正面偏左、约 0.4 倍高）
     if (nightA > 0.05) {
       const flick = (seed: number) => 0.82 + 0.12 * Math.sin(clock * 8.3 + seed * 1.7) + 0.06 * Math.sin(clock * 21 + seed * 3.1);
