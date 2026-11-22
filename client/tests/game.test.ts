@@ -284,3 +284,31 @@ describe("货郎与激励视频", () => {
     expect(adReward(g, "last_stand").ok).toBe(false);
   });
 });
+
+describe("陷阱", () => {
+  it("敌人真正踩到陷阱格才触发，触发后掉血减速、次数减一", () => {
+    const cfg = withOverrides(testConfig(), (c) => {
+      c.waves.nights[0]!.groups = [{ type: "boar", count: 1, interval: 1 }];
+      c.family.hero.guardRadius = 0; // 当家的不出手（damage=0 仍有保底 1 点伤害，所以直接把守卫半径设 0）
+      c.map.spawns = [c.map.spawns[1]!]; // 只留一个山口，路线确定
+    });
+    const g = createGame(cfg, 4);
+    rich(g);
+    const path = pathFromSpawn(g, 0);
+    const spot = path[5]!;
+    const trap = build(g, "trap_bear", spot.i, spot.j);
+    if (!trap.ok) throw new Error("trap");
+    startNight(g);
+    let firstHitTile: { i: number; j: number } | null = null;
+    for (let k = 0; k < 30 * 60 && g.phase === "night" && !firstHitTile; k++) {
+      const before = g.enemies[0]?.hp;
+      step(g, 1 / 30);
+      const e = g.enemies[0];
+      if (e && before !== undefined && before - e.hp >= 50) firstHitTile = { i: Math.floor(e.x / 2), j: Math.floor(e.y / 2) };
+    }
+    expect(firstHitTile).toEqual({ i: spot.i, j: spot.j });
+    const b = g.buildings.get(trap.id!);
+    expect(b?.charges).toBe(2);
+    expect(g.enemies[0]!.slowUntil).toBeGreaterThan(g.t);
+  });
+});

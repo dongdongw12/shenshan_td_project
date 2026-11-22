@@ -564,7 +564,8 @@ function tickEnemies(g: GameState, dt: number): void {
           else moveToward(e, (nx.i + 0.5) * T, (nx.j + 0.5) * T, effSpeed(g, e, aura.speedMul) * dt);
         } else {
           moveToward(e, (nx.i + 0.5) * T, (nx.j + 0.5) * T, effSpeed(g, e, aura.speedMul) * dt);
-          checkTrap(g, e, nx);
+          // 真正踩到陷阱格才触发（以前对“下一格”判定，会隔一格就夹到）
+          checkTrap(g, e, { i: Math.floor(e.x / T), j: Math.floor(e.y / T) });
         }
       }
     }
