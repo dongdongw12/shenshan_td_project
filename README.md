@@ -25,12 +25,13 @@ shenshan_td_project/
 │   │   ├── style_profile.json             # 画风参数唯一来源（色板、墨线、光影、比例）
 │   │   ├── stylize_sprites.py             # 明清木刻 + 矿物重彩工笔风格化后处理
 │   │   └── compose_preview.py             # 场景预览（按锚点摆到地块网格）
-│   ├── atlas/export_sprites.py            # 母版精灵按统一倍率导出给客户端 + sprites.json
+│   ├── atlas/export_sprites.py            # 母版精灵按统一倍率导出给客户端 + sprites.json（--merge 增量合并）
+│   ├── atlas/export_chars.py              # 角色序列帧合并进客户端 chars.json
 │   ├── tests/                             # python3 -m unittest discover -s pipeline/tests
 │   ├── blender/
 │   │   ├── bake_isometric_sprites.py      # Blender 5.x 归一化 + 固定比例等距相机 + 渲染通道（v2）
-│   │   ├── make_proxy_assets.py           # 程序化模型：3 件样张替身 + 5 件正式程序化资产（稻田/篱笆/墙/陷阱）
-│   │   ├── make_characters.py             # 程序化角色（狼/野猪/熊王/斥候/刀匪/盾匪/纵火贼/二当家/大当家）：骨骼 + 行走循环
+│   │   ├── make_proxy_assets.py           # 程序化模型：19 件建筑 / 道具替身（过渡美术 + 图生 3D 兜底）+ 5 件正式程序化资产（稻田/篱笆/墙/陷阱）
+│   │   ├── make_characters.py             # 程序化角色（9 种敌人 + 当家的/阿莲/孩子）：骨骼 + 行走 / 攻击 / 干活循环
 │   │   └── bake_sprite_anim.py            # 角色序列帧烘培：逐帧渲染 → 同一套工笔风格化 → 横排精灵表（两个朝向 + 镜像）
 │   ├── raw_models/                        # Colab 生成的原始 .glb 建筑模型（.gitignore 忽略，走 Google Drive）
 │   └── baked_sprites/                     # Blender 烘培出的高清 _day.png / _night.png / _meta.json（.gitignore 忽略，走 Google Drive）
@@ -63,8 +64,8 @@ shenshan_td_project/
 ## 3. 本机命令（Blender 5.3：`/Applications/Blender.app/Contents/MacOS/Blender`）
 
 ```bash
-# 生成 3 件程序化替身模型（不依赖 Colab，回归测试画风用）
-blender -b -P pipeline/blender/make_proxy_assets.py -- --out pipeline/raw_models
+# 生成程序化模型（全部替身 + 正式程序化资产；--ids 只生成指定几件）
+blender -b -P pipeline/blender/make_proxy_assets.py -- --out pipeline/raw_models [--ids house_lv3_courtyard,prop_plum_tree]
 
 # 半比例快速预览（墨线同比缩放）
 blender -b -P pipeline/blender/bake_isometric_sprites.py -- \
@@ -79,8 +80,15 @@ blender -b -P pipeline/blender/bake_isometric_sprites.py -- \
 /Applications/Blender.app/Contents/Resources/5.3/python/bin/python3.13 pipeline/style/stylize_sprites.py \
   --passes pipeline/baked_sprites/_passes --out pipeline/baked_sprites [--debug]
 
-# 角色序列帧（8 帧行走 × 两个朝向；夜晚版由白昼版调色）
-blender -b -P pipeline/blender/bake_sprite_anim.py -- --chars wolf,swordsman --out pipeline/baked_sprites/chars --scale 0.5 --samples 16
+# 角色序列帧（行走 8 帧 + 攻击 6 帧，家人再加干活 8 帧；两个朝向 + 镜像；夜晚版由白昼版调色）
+blender -b -P pipeline/blender/bake_sprite_anim.py -- --chars wolf,swordsman,hero --out pipeline/baked_sprites/chars --scale 0.5 --samples 16
+
+# 导出到客户端开发台（增量合并，同 id 覆盖）
+/Applications/Blender.app/Contents/Resources/5.3/python/bin/python3.13 pipeline/atlas/export_sprites.py --sprites pipeline/baked_sprites --out client/assets/dev --merge
+python3 pipeline/atlas/export_chars.py --anims pipeline/baked_sprites/chars --out client/assets/dev/chars
+
+# 客户端开发台：可玩演示 /play.html（?auto=1 AI 自动玩、?speed=4、?seed=、?rich=1）、精灵图鉴 /gallery.html
+npm --prefix client run dev
 
 # 场景预览：按锚点摆到 2:1 地块网格上看整体效果
 /Applications/Blender.app/Contents/Resources/5.3/python/bin/python3.13 pipeline/style/compose_preview.py \
