@@ -1,0 +1,135 @@
+{
+  "scale": 0.5,
+  "px_per_meter": 64.0,
+  "sprites": {
+    "house_lv2_tile": {
+      "id": "house_lv2_tile",
+      "name": "青瓦正房（喜房）",
+      "angle": 0,
+      "resolution": [
+        432,
+        408
+      ],
+      "anchor_uv": [
+        0.41528,
+        0.76754
+      ],
+      "anchor_px": [
+        179.4,
+        313.15
+      ],
+      "px_per_meter": 64.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        181.02,
+        90.51
+      ],
+      "footprint": "2x2",
+      "fit_limited_by": "footprint",
+      "target_height_m": 4.2,
+      "actual_height_m": 3.939,
+      "actual_size_m": [
+        3.951,
+        3.533
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "house_lv2_tile_day.png",
+      "night_file": "house_lv2_tile_night.png",
+      "shadow_file": "house_lv2_tile_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 0.5
+    },
+    "prop_pine_tree": {
+      "id": "prop_pine_tree",
+      "name": "深山古松",
+      "angle": 0,
+      "resolution": [
+        452,
+        504
+      ],
+      "anchor_uv": [
+        0.38077,
+        0.81892
+      ],
+      "anchor_px": [
+        172.1,
+        412.74
+      ],
+      "px_per_meter": 64.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        181.02,
+        90.51
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 5.8,
+      "actual_height_m": 5.8,
+      "actual_size_m": [
+        4.905,
+        2.222
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "prop_pine_tree_day.png",
+      "night_file": "prop_pine_tree_night.png",
+      "shadow_file": "prop_pine_tree_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 0.5
+    },
+    "tower_bamboo": {
+      "id": "tower_bamboo",
+      "name": "竹箭楼",
+      "angle": 0,
+      "resolution": [
+        500,
+        492
+      ],
+      "anchor_uv": [
+        0.40708,
+        0.78163
+      ],
+      "anchor_px": [
+        203.54,
+        384.56
+      ],
+      "px_per_meter": 64.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        181.02,
+        90.51
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 5.0,
+      "actual_height_m": 5.0,
+      "actual_size_m": [
+        4.257,
+        4.257
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "tower_bamboo_day.png",
+      "night_file": "tower_bamboo_night.png",
+      "shadow_file": "tower_bamboo_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 0.5
+    }
+  }
+}

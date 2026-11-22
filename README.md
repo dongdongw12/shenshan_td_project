@@ -25,13 +25,14 @@ shenshan_td_project/
 │   │   ├── style_profile.json             # 画风参数唯一来源（色板、墨线、光影、比例）
 │   │   ├── stylize_sprites.py             # 明清木刻 + 矿物重彩工笔风格化后处理
 │   │   └── compose_preview.py             # 场景预览（按锚点摆到地块网格）
+│   ├── atlas/export_sprites.py            # 母版精灵按统一倍率导出给客户端 + sprites.json
 │   ├── tests/                             # python3 -m unittest discover -s pipeline/tests
 │   ├── blender/
 │   │   ├── bake_isometric_sprites.py      # Blender 5.x 归一化 + 固定比例等距相机 + 渲染通道（v2）
 │   │   └── make_proxy_assets.py           # 3 件样张的程序化替身模型（回归测试 / 低模兜底）
 │   ├── raw_models/                        # Colab 生成的原始 .glb 建筑模型（.gitignore 忽略，走 Google Drive）
 │   └── baked_sprites/                     # Blender 烘培出的高清 _day.png / _night.png / _meta.json（.gitignore 忽略，走 Google Drive）
-├── client/                                # 游戏客户端（Cocos Creator 3.8+ 或 TypeScript 微信小游戏）
+├── client/                                # 游戏客户端：引擎无关 TS 渲染核心 + 浏览器开发台（见 client/README.md）
 │   ├── assets/
 │   │   ├── atlases/                       # 打包压缩后的 2.5D 图集（主包 + 分包）
 │   │   ├── audio/                         # 五声古风音乐与环境/打击音效

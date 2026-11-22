@@ -85,7 +85,11 @@
   - [~] **Colab 首跑（2026-11-23）**：T4（L4 不可用）上安装、custom_rasterizer 编译、HunyuanDiT 概念图都通过；加载形状模型时系统内存（12.7GB）OOM 崩溃重启，随后浏览器 Google 账号被登出，未能继续。已修：概念图改独立子进程、只下载实际加载的 fp16 权重（43GB→16GB）、权重缓存到云盘、启动时检查内存；新增 Qwen-Image 概念图选项
   - [ ] **用户在 Colab（A100 或 L4 + 勾选「高 RAM」）重跑 `colab_gen_3d.ipynb`**，看第 ⑦⑧ 格体检图与 `baked_sprites/_preview/`，按验收清单确认 3 件样张；不达标按清单末尾的调整顺序迭代
   - [ ] 样张通过后：把其余 21 件补进 `gen_3d_jobs.json`，批量生成 + `colab_bake_sprites.ipynb` 正式 768px 烘培
-- [ ] **T3 · 搭建 `client/` 2.5D 等距昼夜渲染底座**
+- [~] **T3 · 搭建 `client/` 2.5D 等距昼夜渲染底座**（2026-11-23 核心已完成，见 `client/README.md`）
+  - [x] 先做**引擎无关**的 TypeScript 核心（`client/src/render/`）：2:1 投影（与烘培相机一致）、多格建筑 + 单位的拓扑遮挡排序、昼夜时钟 + 逐户点灯、精灵元数据校验、Canvas2D 渲染器（地影单独一层）；平台层分浏览器 / 微信小游戏；Vite 开发台 + 19 项 Vitest 单测
+  - [x] `pipeline/atlas/export_sprites.py`：母版精灵按统一倍率导出 + `sprites.json` 索引（开发台用 0.5× = 64 px/m）
+  - [ ] 最终引擎二选一（直接微信小游戏 Canvas / Cocos Creator 3.8+）——核心两边都能用，建议等 T4 玩法规模明确再定
+  - [ ] 微信开发者工具真机跑通 `src/platform/wechat.ts`、触屏手势、正式图集打包（TexturePacker / Cocos 自动图集）
   - 确定客户端框架（推荐 **Cocos Creator 3.8+ TypeScript** 一键导微信小游戏，或轻量 TypeScript Canvas 过渡）。
   - 实现读取 `_meta.json` 脚点锚点、Y-Sort 遮挡排序、以及 `_day.png` / `_night.png` 透明度平滑切换。
   - 精灵约定（v2）：全部 **128 px/m** 同一比例（无需逐张缩放，打图集时统一乘 0.5–0.75）；1 格 = 2m，菱形 362×181px；按 `_meta.json.anchor_px` 对齐占地中心；**先画全部 `_shadow.png` 地影层，再按锚点 Y 排序画物体**；入夜夜晚图透明度 0→1、地影 ×`night_shadow_opacity`(0.6)；建筑正面朝画面左下，朝右下用水平镜像；宣纸纹理在客户端全屏叠加，不进精灵。
@@ -141,3 +145,15 @@
 - **修复（已推送）**：`t2i_concepts.py` 独立进程出图（退出即释放内存）；`T2I_MODEL=auto` 在 A100/L4 上用 Qwen-Image（Apache-2.0、无需登录、4bit 量化），T4 退回 HunyuanDiT；Hunyuan3D 只预下载 fp16 safetensors（形状目录原有 5 份同模型共 24.6GB，贴图 UNet 跳过 7.3GB .bin）；`HF_HOME` / `HY3DGEN_MODELS` 默认缓存到云盘（用户有 20TB）；启动时检测系统内存 < 20GB 给出“开高 RAM”提示。
 - **注意**：本机是 M1 MacBook Air 8GB，重活（全尺寸烘培、所有模型推理）一律放 Colab；本机只做代码、单测和半比例小样检查。
 - **下一棒**：用户登录 Colab 后，运行时类型选 A100（或 L4）并勾选高 RAM，`REGEN_CONCEPTS = ["house_lv2_tile", "tower_bamboo", "prop_pine_tree"]` 用 Qwen-Image 重出概念图，然后全部运行。
+
+### 2026-11-23 · Claude Opus（T3 渲染底座核心，夜间自主工作）
+- **背景**：Colab 账号被登出无法继续 T2，转做不依赖 GPU、本机（M1 8GB）也跑得动的 T3。
+- **已完成**：`client/`（TypeScript 5.9 + Vite 6 + Vitest 3）引擎无关渲染核心：
+  - `iso.ts` 投影与烘培相机逐项对齐（单测验证菱形 362.04×181.02 = meta.tile_px）；
+  - `depthSort.ts` 用“整体更靠 +X 或整体更靠 −Y 即在前 + 屏幕投影重叠才比较 + 拓扑排序”，解决简单 y 排序在长墙/多格建筑旁的错误（单测里有两个反例）；
+  - `dayNight.ts` 昼夜周期 + 每栋建筑按 id 哈希错开点灯（黄昏逐户亮、黎明逐户灭），支持 setPhase 供 T4 波次驱动；
+  - `renderer.ts` 天色 → 地块 → 全部地影 → 物体（白昼图 + 夜晚图淡入），只用小游戏也支持的 Canvas2D 子集；
+  - `platform/wechat.ts` 小游戏适配接口（未真机验证）。
+- **已验证**：19 项单测 + 类型检查 + 构建（核心 14.7KB JS）；浏览器开发台中锚点对齐格子、地影层、树/房遮挡、村民走到房后被挡住只露斗笠、黄昏逐户点灯；每帧绘制约 0.45ms（11 物体）。
+- **未验证**：微信真机、触屏、几百单位压力、正式图集。
+- **下一棒**：T2 仍需用户登录 Colab 重跑（见上一条）；T3 剩余项交给客户端落地方（真机 / 图集 / 引擎选型）；T4 可以直接基于 `Scene` + `DayNightClock.setPhase` 接波次。

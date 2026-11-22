@@ -1,0 +1,18 @@
+{
+  "name": "shenshan-client",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "《深山传家》2.5D 等距昼夜渲染底座（引擎无关 TypeScript 核心 + 浏览器开发台）",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^6.4.6",
+    "vitest": "^3.2.7"
+  }
+}
