@@ -19,7 +19,7 @@ def code(src):
 
 
 md(r"""
-# 《深山传家》Colab 图生 3D：概念图 → Hunyuan3D-2 → `.glb` → 512px 试烘培
+# 《深山传家》Colab 图生 3D：概念图 → Hunyuan3D-2 → `.glb` → 工笔风格化试烘培
 
 一键跑完 T2 第 1 周 3 件视觉样张：`house_lv2_tile`（青瓦正房）、`tower_bamboo`（竹箭楼）、`prop_pine_tree`（深山古松）。
 
@@ -31,6 +31,7 @@ md(r"""
 5. 最后一格自动释放运行时。
 
 **耗时参考（L4）**：首次安装 + 编译约 8–12 分钟（编译产物缓存到云盘，第二次约 2 分钟）；每件形状约 1 分钟、贴图约 2–3 分钟；试烘培每件约 1 分钟。
+**模型下载**：首次要从 Hugging Face 拉约 25GB 权重（HunyuanDiT 约 14.5GB + Hunyuan3D-2），未登录时约 7MB/s ≈ 30–60 分钟。自己用外部工具出概念图（`AUTO_T2I=False`）可省掉 HunyuanDiT 那 14.5GB；默认 `HF_CACHE_ON_DRIVE=True` 把权重缓存到云盘 `_cache/hf/`，第二次起直接从云盘读。
 
 **许可**：Hunyuan3D-2 为腾讯混元 3D 社区许可，中国大陆可商用（不含欧盟/英国/韩国；版本发布时月活 > 100 万需另行申请），腾讯不主张生成物权利。游戏只分发烘培后的 PNG，不分发模型本身。
 """)
@@ -44,6 +45,7 @@ GITHUB_RAW = "https://raw.githubusercontent.com/dongdongw12/shenshan_td_project/
 HY3D_COMMIT = "f8db63096c8282cb27354314d896feba5ba6ff8a"  # 固定 Hunyuan3D-2 版本，保证可复现
 
 AUTO_T2I = True            # 缺概念图时用 HunyuanDiT 自动出候选；False 则要求云盘里已有 concepts/<id>.png
+REGEN_CONCEPTS = []        # 填 id（如 ["tower_bamboo"]）= 强制重新出这些资产的 HunyuanDiT 候选并覆盖 concepts/<id>.png
 SHAPE_MODEL = "standard"   # "standard" = DiT-v2-0（质量优先，50 步）| "turbo" = DiT-v2-0-turbo + FlashVDM（5 步，快很多）
 TEXTURE = True             # False = 只出白模（反复调形状时省时间）
 LOW_VRAM = "auto"          # "auto"：显存 < 20GB 时贴图模型启用 CPU offload
@@ -53,6 +55,7 @@ RUN_TEST_BAKE = True       # 生成完直接用 Blender 烘培 + 工笔风格化
 BLENDER = "5.3.0"          # 与本机 Blender 版本一致（脚本也兼容 5.0.x）
 BAKE_SCALE, BAKE_SAMPLES = 0.5, 24   # 0.5 = 半比例预览（墨线同比缩放，观感一致）；正式烘培用 1.0 / 48
 RELEASE_RUNTIME = True     # 最后一格释放 GPU，防止空转扣费
+HF_CACHE_ON_DRIVE = True   # 模型权重缓存到云盘 _cache/hf（约 25GB），首次之后每次省去约 30–60 分钟下载
 ''')
 
 code(r'''
@@ -77,6 +80,10 @@ if SYNC_FROM_GITHUB:
     print("已从 GitHub 同步：", ", ".join(SYNC_FILES.values()))
 for dst in SYNC_FILES.values():
     assert os.path.exists(f"{DRIVE_DIR}/{dst}"), f"云盘缺少 {dst}：请开启 SYNC_FROM_GITHUB 或手动上传"
+
+if HF_CACHE_ON_DRIVE:  # 必须在任何 huggingface / diffusers import 之前设置
+    os.environ["HF_HOME"] = f"{DRIVE_DIR}/_cache/hf"
+    os.makedirs(os.environ["HF_HOME"], exist_ok=True)
 
 sys.path.insert(0, DRIVE_DIR)
 import importlib, gen3d_utils
@@ -138,7 +145,7 @@ code(r'''
 from PIL import Image
 import matplotlib.pyplot as plt
 
-need_t2i = [i for i in ids if not os.path.exists(concept_path(i))]
+need_t2i = [i for i in ids if i in REGEN_CONCEPTS or not os.path.exists(concept_path(i))]
 print("已有概念图：", [i for i in ids if i not in need_t2i], "| 需要生成：", need_t2i)
 
 if need_t2i:

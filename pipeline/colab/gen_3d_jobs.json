@@ -9,7 +9,12 @@
     "why_no_outline": "概念图只喂给图生 3D：黑描边会被 Hunyuan3D-Paint 当成颜色涂进贴图，形成脏黑条纹；最终的明清粗墨线统一由 Blender Freestyle 在烘培阶段生成（2.6px #1c1510）。"
   },
   "defaults": {
-    "t2i_seeds": [7, 42, 2024, 8848],
+    "t2i_seeds": [
+      7,
+      42,
+      2024,
+      8848
+    ],
     "shape_seed": 12345,
     "octree_resolution": 384,
     "num_inference_steps": 50,
@@ -21,26 +26,35 @@
     {
       "id": "house_lv2_tile",
       "name": "青瓦正房（喜房）",
-      "t2i_zh": "明清木刻重彩风格的中式青瓦正房，三开间硬山顶，朱红木柱与格子窗，门挂红灯笼贴喜字，青石台基",
+      "t2i_zh": "斜侧视角，朴素的山村农舍，三间青瓦平房，白色石灰墙，红木柱，门口挂两个红灯笼，石头台基",
       "prompt_zh": "一座三开间的中式青瓦正房（新婚喜房）：小青瓦硬山屋顶，正脊两端微微起翘，黛瓦深灰；屋檐下朱砂红木柱与方格木窗，蛎灰米白的石灰墙，赭石色木门上贴大红喜字，门两侧挂一对红灯笼；三级青石台阶与低矮青石台基，整体敦实温馨。",
       "prompt_en": "A three-bay traditional Chinese tiled farmhouse (newlyweds' house): gabled roof of small dark slate-grey tiles with gently upturned ridge ends, cinnabar-red timber columns and square lattice windows under the eaves, warm lime-white plaster walls, red-ochre wooden door with a big red double-happiness paper sign, a pair of red lanterns beside the door, a low bluestone plinth with three steps, cozy and sturdy.",
-      "gen": { "auto_align_yaw": true }
+      "gen": {
+        "auto_align_yaw": true
+      }
     },
     {
       "id": "tower_bamboo",
       "name": "竹箭楼",
-      "t2i_zh": "明清木刻重彩风格的竹制箭楼，四根粗竹立柱带斜撑，顶部竹栏平台与茅草小顶，挂火把，结构粗壮",
+      "t2i_zh": "斜侧视角，简陋的竹竿哨塔，四根粗竹竿撑起一个方形小平台，平台上茅草小棚，竹梯，挂火把",
       "prompt_zh": "一座方形竹木箭楼：四根粗壮的青绿竹立柱，中段有交叉斜撑，竹篾绑扎处为赭石色麻绳；顶部是带竹栏护墙的方形瞭望平台，上覆金黄茅草四坡小顶，平台一角插火把；一侧斜靠竹梯。结构粗壮厚实，避免细碎镂空。",
       "prompt_en": "A square bamboo archer watchtower: four thick malachite-green bamboo posts with crossed diagonal braces tied with red-ochre rope, a square lookout platform with a bamboo railing wall on top, a small golden thatched hip roof above it, a torch mounted on one platform corner, a bamboo ladder leaning on one side; chunky sturdy construction, avoid thin fragile openwork.",
-      "gen": { "auto_align_yaw": true, "note": "细杆件是图生 3D 的弱项：若出现蹼状粘连，换 t2i 种子或让概念图竹柱更粗、斜撑更少。" }
+      "gen": {
+        "auto_align_yaw": true,
+        "note": "细杆件是图生 3D 的弱项：若出现蹼状粘连，换 t2i 种子或让概念图竹柱更粗、斜撑更少。"
+      }
     },
     {
       "id": "prop_pine_tree",
       "name": "深山古松",
-      "t2i_zh": "明清木刻重彩风格的苍劲古松，虬曲赭褐树干，层叠云朵状石绿针叶团，根部少许山石",
+      "t2i_zh": "斜侧视角，一棵苍劲的松树，弯曲的褐色树干，层叠的扁平松针团，根部没有大石头",
       "prompt_zh": "一棵苍劲的深山古松：粗壮虬曲的赭褐色树干带鳞状树皮，向一侧舒展的枝干，树冠由数团层叠的扁平云朵状针叶簇组成（石绿与深青两色），根部盘绕两三块青灰小山石。像明清版画里的松树，块面分明。",
       "prompt_en": "An ancient gnarled mountain pine: thick twisting red-ochre trunk with scaly bark, branches reaching to one side, canopy made of several stacked flat cloud-shaped needle clusters in malachite green and deep teal, two or three small blue-grey rocks around the roots; like a pine in a Ming-Qing woodblock print, with bold distinct masses.",
-      "gen": { "auto_align_yaw": false, "note": "树没有明确朝向，跳过自动对齐。" }
+      "gen": {
+        "auto_align_yaw": false,
+        "note": "树没有明确朝向，跳过自动对齐。"
+      }
     }
-  ]
+  ],
+  "t2i_note": "HunyuanDiT 实测（2026-11-23 第一次 Colab 运行）：'箭楼' 会被画成多层楼阁/宝塔，'正房' 会被画成红墙庙宇，且默认正面视角。短提示词已改为避开这些词并强调斜侧视角；正式美术仍推荐外部工具按 prompt_zh 长版出图。"
 }
