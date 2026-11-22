@@ -261,6 +261,39 @@ def build_bandit(variant="swordsman", frames=8, action="walk"):
         parts.append((_cone("b_hat", 0.3, 0.02, 0.18, (0, 0, 1.77), "hat"), "head"))
     for o, b in parts:
         _bind(arm, o, b)
+    if action == "work":
+        # 干活（只给家人）：当家的双手抡锄头刨地；阿莲 / 孩子弯腰插秧、两手交替往下点
+        for f in range(frames + 1):
+            ph = f / frames
+            if variant == "hero":
+                if ph < 0.5:
+                    a = -120 * (ph / 0.5)                         # 慢慢举锄过肩
+                    bend = 6 * (ph / 0.5)
+                elif ph < 0.7:
+                    k = (ph - 0.5) / 0.2
+                    a = -120 + 165 * k                           # 猛地刨下去
+                    bend = 6 - 34 * k
+                else:
+                    k = (ph - 0.7) / 0.3
+                    a = 45 * (1 - k)                             # 拔锄回正
+                    bend = -28 * (1 - k)
+                _key(arm, "arm_r", f + 1, rot=(a, 0, 0))
+                _key(arm, "arm_l", f + 1, rot=(a * 0.85, 0, -12))
+                _key(arm, "chest", f + 1, rot=(bend, 0, 0))
+                _key(arm, "leg_l", f + 1, rot=(-16, 0, 0))
+                _key(arm, "leg_r", f + 1, rot=(14, 0, 0))
+                _key(arm, "hips", f + 1, loc=(0, 0, -0.05 * max(0.0, -bend) / 28))
+            else:
+                t = ph * 2 * math.pi
+                _key(arm, "chest", f + 1, rot=(-38 + 5 * math.sin(t), 0, 0))
+                _key(arm, "head", f + 1, rot=(18, 0, 0))
+                _key(arm, "arm_l", f + 1, rot=(35 + 50 * max(0.0, math.sin(t)), 0, 8))
+                _key(arm, "arm_r", f + 1, rot=(35 + 50 * max(0.0, -math.sin(t)), 0, -8))
+                _key(arm, "leg_l", f + 1, rot=(-10, 0, 0))
+                _key(arm, "leg_r", f + 1, rot=(10, 0, 0))
+                _key(arm, "hips", f + 1, loc=(0, 0.04, -0.06))
+        _cyclic(arm)
+        return arm, [o for o, _ in parts], frames
     if action == "attack":
         # 劈砍：右臂举过头顶 → 猛劈下；盾匪用盾顶撞；身体随之前倾，弓步站定
         for f in range(frames + 1):

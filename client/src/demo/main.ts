@@ -146,6 +146,10 @@ async function boot(): Promise<void> {
   let hoverTile: { i: number; j: number } | null = null;
   let selected: number | null = null;
   let speed = Number(qs.get("speed") ?? 1);
+  // 开发台截图用：控制台里 __demo.speed = 1 / __demo.g 查看状态（只在 dev server 里存在）
+  if (import.meta.env?.DEV) {
+    Object.defineProperty(globalThis, "__demo", { configurable: true, value: { get g() { return g; }, get villagers() { return villagers; }, get speed() { return speed; }, set speed(v: number) { speed = v; } } });
+  }
   const auto = qs.get("auto") === "1";
   let nightA = 0;
   let clock = 0;
@@ -155,7 +159,12 @@ async function boot(): Promise<void> {
   const animFacing = new Map<number, { dir: "front" | "back"; flip: boolean }>();
 
   // ---------------------------------------------------------------- 家人（纯表现层：白天走动干活，夜里当家的守门）
-  interface Villager { key: string; kind: "hero" | "wife" | "child"; x: number; y: number; tx: number; ty: number; wait: number; face: { dir: "front" | "back"; flip: boolean }; attackT: number }
+  interface Villager {
+    key: string; kind: "hero" | "wife" | "child"; x: number; y: number; tx: number; ty: number; wait: number;
+    face: { dir: "front" | "back"; flip: boolean }; attackT: number;
+    /** 走到稻田边后干活（当家的刨地、妻儿插秧），面朝田的中心 */
+    workAt: Vec2 | null;
+  }
   const villagers = new Map<string, Villager>();
   const houseDoor = () => { const h = g.buildings.get(g.houseId)!; return { x: (h.i + h.w / 2) * T, y: h.j * T - 0.6 }; };
   const frontOf = (b: Building) => ({ x: (b.i + b.w / 2) * T + (vrand() - 0.5) * T * 0.6, y: b.j * T - 0.5 });
@@ -165,7 +174,7 @@ async function boot(): Promise<void> {
     const want: { key: string; kind: Villager["kind"] }[] = [{ key: "hero", kind: "hero" }];
     if (g.married) want.push({ key: "wife", kind: "wife" });
     g.members.filter((m) => m.kind === "child").forEach((m) => want.push({ key: `c${m.id}`, kind: "child" }));
-    for (const w of want) if (!villagers.has(w.key)) { const d = houseDoor(); villagers.set(w.key, { ...w, x: d.x, y: d.y, tx: d.x, ty: d.y, wait: vrand() * 2, face: { dir: "front", flip: false }, attackT: 0 }); }
+    for (const w of want) if (!villagers.has(w.key)) { const d = houseDoor(); villagers.set(w.key, { ...w, x: d.x, y: d.y, tx: d.x, ty: d.y, wait: vrand() * 2, face: { dir: "front", flip: false }, attackT: 0, workAt: null }); }
     for (const k of [...villagers.keys()]) if (!want.some((w) => w.key === k)) villagers.delete(k);
     const day = g.phase === "day";
     const work = [...g.buildings.values()].filter((b) => b.category === "production" || b.category === "tower");
@@ -173,6 +182,7 @@ async function boot(): Promise<void> {
     for (const v of villagers.values()) {
       v.attackT = Math.max(0, v.attackT - dt);
       if (!day) {
+        v.workAt = null;
         const d = houseDoor();
         v.tx = d.x + (v.kind === "hero" ? 0 : 0.01); v.ty = d.y;
         if (v.kind === "hero") {
@@ -184,9 +194,24 @@ async function boot(): Promise<void> {
       } else {
         v.wait -= dt;
         if (v.wait <= 0 && Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1) {
-          const pool = v.kind === "wife" ? (fields.length ? fields : work) : v.kind === "hero" ? work : [];
-          const pick = pool.length ? frontOf(pool[Math.floor(vrand() * pool.length)]!) : { x: houseDoor().x + (vrand() - 0.5) * 4, y: houseDoor().y - vrand() * 2 };
-          v.tx = pick.x; v.ty = pick.y; v.wait = 2 + vrand() * 3;
+          const farms = fields.filter((b) => b.kind === "farm_rice");
+          // 当家的一半时间下田、一半时间在各处转；阿莲多半在田里；孩子在门口玩，偶尔跟着下田
+          const pool = v.kind === "wife" ? (fields.length ? fields : work)
+            : v.kind === "hero" ? (farms.length && vrand() < 0.5 ? farms : work)
+            : farms.length && vrand() < 0.35 ? farms : [];
+          const b = pool.length ? pool[Math.floor(vrand() * pool.length)]! : null;
+          // 闲逛点只落在谷地里能走的空格上（主屋门前就是山石，别走到石头上去）
+          const wander = () => {
+            for (let tries = 0; tries < 8; tries++) {
+              const p = { x: houseDoor().x + (vrand() - 0.5) * 5, y: houseDoor().y + (vrand() - 0.5) * 4 };
+              const ti = Math.floor(p.x / T), tj = Math.floor(p.y / T);
+              if (freeTile(ti, tj)) return p;
+            }
+            return houseDoor();
+          };
+          const pick = b ? frontOf(b) : wander();
+          v.workAt = b && b.kind === "farm_rice" ? { x: (b.i + b.w / 2) * T, y: (b.j + b.d / 2) * T } : null;
+          v.tx = pick.x; v.ty = pick.y; v.wait = (v.workAt ? 4 : 2) + vrand() * 3;
         }
       }
       const dx = v.tx - v.x, dy = v.ty - v.y, dist = Math.hypot(dx, dy);
@@ -195,6 +220,9 @@ async function boot(): Promise<void> {
         const k = Math.min(1, sp / dist);
         v.x += dx * k; v.y += dy * k;
         v.face = facingFromScreenDelta(dx + dy, dx - dy, v.face);
+      } else if (v.workAt) {
+        const fx = v.workAt.x - v.x, fy = v.workAt.y - v.y;
+        v.face = facingFromScreenDelta(fx + fy, fx - fy, v.face);
       }
     }
   };
@@ -210,8 +238,11 @@ async function boot(): Promise<void> {
         draw: (c, p, ppm) => {
           c.globalAlpha = 0.3 * (1 - 0.4 * nightA); c.fillStyle = "#1f2740";
           c.beginPath(); c.ellipse(p.x, p.y, ppm * 0.35 * CHAR_SCALE, ppm * 0.14 * CHAR_SCALE, 0, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
-          const action = v.attackT > 0 ? "attack" : "walk";
-          drawAnimFrame(c, meta, img, p, ppm, CHAR_SCALE, v.face.dir, v.face.flip, action === "walk" && !moving ? 0 : clock, nightA, action);
+          const working = !moving && v.workAt && g.phase === "day" && meta.actions?.work && img.actions?.work;
+          const action = v.attackT > 0 ? "attack" : working ? "work" : "walk";
+          // 各人干活节奏错开一点，免得全村齐刷刷同一帧
+          const phase = v.key.length * 0.37 + (v.kind === "child" ? 0.5 : 0);
+          drawAnimFrame(c, meta, img, p, ppm, CHAR_SCALE, v.face.dir, v.face.flip, action === "walk" && !moving ? 0 : clock + phase, nightA, action);
         },
       });
     }

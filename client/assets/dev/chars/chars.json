@@ -226,12 +226,12 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        72,
+        80,
         112
       ],
       "anchor_px": [
-        37.71,
-        90.61
+        38.72,
+        91.09
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -272,6 +272,20 @@
               "night": "child_back_attack_night.png"
             }
           }
+        },
+        "work": {
+          "frames": 8,
+          "fps": 8,
+          "dirs": {
+            "front": {
+              "day": "child_front_work_day.png",
+              "night": "child_front_work_night.png"
+            },
+            "back": {
+              "day": "child_back_work_day.png",
+              "night": "child_back_work_night.png"
+            }
+          }
         }
       },
       "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
@@ -281,12 +295,12 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        120,
+        128,
         184
       ],
       "anchor_px": [
-        64.31,
-        146.38
+        69.62,
+        147.08
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -325,6 +339,20 @@
             "back": {
               "day": "hero_back_attack_day.png",
               "night": "hero_back_attack_night.png"
+            }
+          }
+        },
+        "work": {
+          "frames": 8,
+          "fps": 8,
+          "dirs": {
+            "front": {
+              "day": "hero_front_work_day.png",
+              "night": "hero_front_work_night.png"
+            },
+            "back": {
+              "day": "hero_back_work_day.png",
+              "night": "hero_back_work_night.png"
             }
           }
         }
@@ -556,12 +584,12 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        96,
+        104,
         160
       ],
       "anchor_px": [
-        50.57,
-        130.17
+        50.38,
+        129.73
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -600,6 +628,20 @@
             "back": {
               "day": "wife_back_attack_day.png",
               "night": "wife_back_attack_night.png"
+            }
+          }
+        },
+        "work": {
+          "frames": 8,
+          "fps": 8,
+          "dirs": {
+            "front": {
+              "day": "wife_front_work_day.png",
+              "night": "wife_front_work_night.png"
+            },
+            "back": {
+              "day": "wife_back_work_day.png",
+              "night": "wife_back_work_night.png"
             }
           }
         }

@@ -31,6 +31,13 @@ import stylize_sprites as st  # noqa: E402
 
 DIRS = {"front": 0.0, "back": -90.0}
 ACTIONS = {"walk": 8, "attack": 6}  # 动作: 帧数
+VILLAGER_ACTIONS = {**ACTIONS, "work": 8}  # 家人多一个“干活”（刨地 / 插秧）
+VILLAGERS = {"hero", "wife", "child"}
+ACTION_FPS = {"attack": 12, "work": 8}
+
+
+def actions_for(name):
+    return VILLAGER_ACTIONS if name in VILLAGERS else ACTIONS
 
 
 def parse_args():
@@ -75,7 +82,7 @@ def bake_char(name, out, profile, profile_path, args):
 
     # 先算两个朝向所有帧的联合包围盒，保证两个朝向画布一致
     all_pts = []
-    for action, nfr in ACTIONS.items():
+    for action, nfr in actions_for(name).items():
         for yaw in DIRS.values():
             bk.reset_scene(True)
             arm, meshes, frames = mc.build(name, nfr, action)
@@ -84,7 +91,7 @@ def bake_char(name, out, profile, profile_path, args):
             all_pts += frame_bbox(meshes, frames)
 
     meta = None
-    for action, nfr in ACTIONS.items():
+    for action, nfr in actions_for(name).items():
       for dname, yaw in DIRS.items():
         t0 = time.time()
         scene = bk.reset_scene(True)
@@ -127,7 +134,7 @@ def bake_char(name, out, profile, profile_path, args):
         files = {"day": f"{name}_{dname}{suffix}_day.png", "night": f"{name}_{dname}{suffix}_night.png"}
         if action == "walk":
             meta["dirs"][dname] = files
-        act = meta["actions"].setdefault(action, {"frames": frames, "fps": args.fps if action == "walk" else 12, "dirs": {}})
+        act = meta["actions"].setdefault(action, {"frames": frames, "fps": ACTION_FPS.get(action, args.fps), "dirs": {}})
         act["dirs"][dname] = files
         print(f"BAKED_ANIM {name}/{action}/{dname} {frames}f {res_x}x{res_y} in {time.time() - t0:.1f}s", flush=True)
     with open(out / f"{name}_anim.json", "w", encoding="utf-8") as fp:
