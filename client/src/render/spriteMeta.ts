@@ -24,6 +24,8 @@ export interface SpriteMeta {
   /** 夜晚地影透明度倍率（默认 0.6） */
   night_shadow_opacity?: number;
   actual_height_m?: number;
+  /** 一格地块菱形的屏幕宽高（像素，母版比例） */
+  tile_px?: [number, number];
 }
 
 export interface SpriteAtlasIndex {

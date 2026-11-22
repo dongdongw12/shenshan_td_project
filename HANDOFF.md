@@ -213,3 +213,4 @@
 - **炊烟 / 萤火**：白天主屋、厢房屋脊冒炊烟（浅色烟团 + 细墨线勾边，木刻画法；只用灰色在草地和茅草上几乎看不见），快天黑时更浓；夜里稻田上几点萤火明灭。
 - **受击闪白**：敌人被箭射中时叠加混合再画一遍同一帧，0.12 秒内淡掉。顺手修了 `drawAnimFrame` 会把调用方设的 `globalAlpha` 覆盖成 1 的问题（之前“掉头逃跑”的淡出其实不生效）。闪白太快没截到图，代码跑过无报错。
 - **Colab 烘培笔记本**：角色清单补上当家的 / 阿莲 / 孩子；新增 `PROXY_FALLBACK`（默认开）：`raw_models/` 里还没有 AI 模型的 16 件建筑 / 道具，先用程序化替身按同样参数烘到 `baked_sprites/_proxy/`。所以 T2 就算还卡着，在 Colab 跑一次烘培也能拿到正式比例（128px/m）的全套替身。导出顺序：`export_sprites.py --sprites baked_sprites/_proxy --merge` → `--sprites baked_sprites --merge`（AI 版覆盖替身）→ `export_chars.py --anims baked_sprites/chars`。
+- **精灵图鉴** `client/gallery.html`（`npm --prefix client run dev` → `/gallery.html`，只在开发台）：全部建筑 / 道具精灵按统一比例排开，可拖“入夜”看白昼→夜晚、切底色、显示占地框与锚点、开关地影；角色卡片实时播放行走 / 攻击 / 干活、四个朝向。T2 的 AI 资产导出后用它验收最快。截图 `docs/art/samples/gallery_v1.jpg`。

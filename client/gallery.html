@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>深山传家 · 精灵图鉴</title>
+    <style>
+      :root { --ink: #1c1510; --paper: #f1e8d4; --cinnabar: #b8352a; --gamboge: #d9a838; }
+      html, body { margin: 0; background: #e9e1cf; color: var(--ink); font-family: "PingFang SC", "Songti SC", serif; }
+      header { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 10px 16px;
+               background: rgba(241, 232, 212, 0.96); border-bottom: 2px solid var(--ink); font-size: 13px; }
+      header h1 { font-size: 17px; margin: 0 8px 0 0; letter-spacing: .1em; }
+      header label { display: inline-flex; gap: 6px; align-items: center; }
+      header input[type=range] { width: 140px; }
+      main { padding: 16px; }
+      h2 { font-size: 15px; margin: 18px 0 8px; letter-spacing: .08em; border-left: 4px solid var(--cinnabar); padding-left: 8px; }
+      .grid { display: flex; flex-wrap: wrap; gap: 12px; }
+      .card { background: rgba(255, 251, 242, .7); border: 1.5px solid var(--ink); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; align-items: center; }
+      .card canvas { display: block; }
+      .card .name { font-size: 13px; font-weight: 700; margin-top: 4px; }
+      .card .meta { font-size: 11px; opacity: .7; font-variant-numeric: tabular-nums; text-align: center; }
+      .card .warn { color: var(--cinnabar); font-size: 11px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>精灵图鉴</h1>
+      <label>入夜 <input id="night" type="range" min="0" max="1" step="0.01" value="0" /></label>
+      <label>缩放 <input id="zoom" type="range" min="0.3" max="1.5" step="0.05" value="0.6" /></label>
+      <label>底色 <select id="bg"><option value="grass">草地</option><option value="paper">宣纸</option><option value="dark">深色</option></select></label>
+      <label><input id="fp" type="checkbox" checked /> 占地框</label>
+      <label><input id="shadow" type="checkbox" checked /> 地影</label>
+      <label>角色动作 <select id="action"><option value="walk">行走</option><option value="attack">攻击</option><option value="work">干活（家人）</option></select></label>
+      <label>朝向 <select id="dir"><option value="front">正面（左下）</option><option value="back">背面（左上）</option><option value="frontR">正面镜像（右下）</option><option value="backR">背面镜像（右上）</option></select></label>
+      <span id="stat"></span>
+    </header>
+    <main>
+      <h2>建筑 / 道具（client/assets/dev/sprites.json）</h2>
+      <div id="sprites" class="grid"></div>
+      <h2>角色序列帧（client/assets/dev/chars/chars.json）</h2>
+      <div id="chars" class="grid"></div>
+    </main>
+    <script type="module" src="/src/dev/gallery.ts"></script>
+  </body>
+</html>
