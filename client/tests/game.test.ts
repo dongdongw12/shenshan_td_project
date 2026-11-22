@@ -312,3 +312,35 @@ describe("陷阱", () => {
     expect(g.enemies[0]!.slowUntil).toBeGreaterThan(g.t);
   });
 });
+
+describe("平衡 AI 攒大院", () => {
+  const atLv2 = (day: number) => {
+    const g = createGame(testConfig(), 3);
+    rich(g);
+    expect(upgradeHouse(g).ok).toBe(true); // lv1 → lv2（娶妻）
+    g.day = day;
+    return g;
+  };
+
+  it("正房修好后货郎来了不把大院要的木料 / 兽材卖光", async () => {
+    const { botDay } = await import("../src/game/bot");
+    const g = atLv2(6);
+    const lv3 = g.cfg.economy.house.lv3.cost;
+    g.res = { coin: 20, wood: 600, food: 50, hide: 30 };
+    g.peddler = true;
+    const log = botDay(g);
+    // 只看卖了多少（木料之后还会被必需的篱笆等花掉，那不算卖光）
+    const sold = (r: string) => log.map((l) => l.match(new RegExp(`卖给货郎 (\\d+)${r}`))).reduce((n, m) => n + (m ? Number(m[1]) : 0), 0);
+    expect(600 - sold("木")).toBeGreaterThanOrEqual(lv3.wood ?? 0);
+    expect(30 - sold("兽材")).toBeGreaterThanOrEqual(lv3.hide ?? 0);
+  });
+
+  it("第 6 天起钱粮够了先修大院，再花别的", async () => {
+    const { botDay } = await import("../src/game/bot");
+    const g = atLv2(6);
+    const lv3 = g.cfg.economy.house.lv3.cost;
+    g.res = { coin: (lv3.coin ?? 0) + 50, wood: (lv3.wood ?? 0) + 10, food: 200, hide: (lv3.hide ?? 0) + 1 };
+    botDay(g);
+    expect(g.houseLevel).toBe(3);
+  });
+});
