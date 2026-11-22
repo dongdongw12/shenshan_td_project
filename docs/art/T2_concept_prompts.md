@@ -16,7 +16,9 @@
 | 方式 | 做法 | 适合 |
 |---|---|---|
 | A. 外部工具（推荐） | 用即梦 / Midjourney / GPT-image / Gemini，按下方「完整提示词」出图，挑最满意的一张，存成 `MyDrive/shenshan_td/concepts/<id>.png` | 画风把控最好 |
-| B. 笔记本自动 | 不放概念图，`colab_gen_3d.ipynb` 里 `AUTO_T2I=True`，HunyuanDiT 按 `t2i_zh`（≤60 字）每件出 4 张候选到 `concepts/_candidates/`，默认选第 1 张 | 零手工、先跑通管线 |
+| B. 笔记本自动 | 不放概念图，`colab_gen_3d.ipynb` 里 `AUTO_T2I=True`，每件出 4 张候选到 `concepts/_candidates/`，默认选第 1 张。`T2I_MODEL="auto"`：A100/L4 用 **Qwen-Image**（Apache-2.0，读完整 `prompt_zh` 长提示词）；T4 只能用 HunyuanDiT（读 ≤60 字的 `t2i_zh`） | 零手工、先跑通管线 |
+
+> **HunyuanDiT 实测（2026-11-23 首次 Colab 运行）**：“竹制箭楼”被画成多层楼阁/宝塔，“青瓦正房”被画成红墙庙宇，且都是正面视角；古松尚可但带大块山石底座。短提示词已改为避开“楼/正房”、强调“斜侧视角/朴素/竹竿哨塔”，但正式美术仍建议 A 方式或 A100 上的 Qwen-Image。
 
 ## 3. 完整提示词（外部工具直接复制）
 

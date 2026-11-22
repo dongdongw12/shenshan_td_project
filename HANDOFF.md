@@ -82,7 +82,8 @@
   - [x] `pipeline/colab/colab_gen_3d.ipynb`（选定 **Hunyuan3D-2**，固定 commit `f8db630`；TRELLIS 在 Colab 依赖编译太脆弱，暂不接入）
   - [x] 修烘培脚本：相机俯角 35.264°→**30°**（原设置出的是 1.73:1 菱形，不是 2:1）；命令行 `--res/--samples` 现在优先于 manifest（原来试烘参数被 manifest 覆盖）；地面不再被描边；`_meta.json` 增加 `px_per_meter` / `tile_px_per_meter`
   - [x] **画面精细化（工笔风格化管线 v2）**：美术圣经 + `style_profile.json`；烘培改为固定比例 + 渲染通道；新增 `stylize_sprites.py`（平涂、归色、色阶、内线、分染、夜灯晕、独立地影层）；用 3 件程序化替身在本机 Blender 5.3 实跑并迭代 5 轮，样张见 `docs/art/samples/`
-  - [ ] **用户在 Colab（L4 推荐）运行 `colab_gen_3d.ipynb`**，看第 ⑦⑧ 格体检图与 `baked_sprites/_preview/`，按验收清单确认 3 件样张；不达标按清单末尾的调整顺序迭代
+  - [~] **Colab 首跑（2026-11-23）**：T4（L4 不可用）上安装、custom_rasterizer 编译、HunyuanDiT 概念图都通过；加载形状模型时系统内存（12.7GB）OOM 崩溃重启，随后浏览器 Google 账号被登出，未能继续。已修：概念图改独立子进程、只下载实际加载的 fp16 权重（43GB→16GB）、权重缓存到云盘、启动时检查内存；新增 Qwen-Image 概念图选项
+  - [ ] **用户在 Colab（A100 或 L4 + 勾选「高 RAM」）重跑 `colab_gen_3d.ipynb`**，看第 ⑦⑧ 格体检图与 `baked_sprites/_preview/`，按验收清单确认 3 件样张；不达标按清单末尾的调整顺序迭代
   - [ ] 样张通过后：把其余 21 件补进 `gen_3d_jobs.json`，批量生成 + `colab_bake_sprites.ipynb` 正式 768px 烘培
 - [ ] **T3 · 搭建 `client/` 2.5D 等距昼夜渲染底座**
   - 确定客户端框架（推荐 **Cocos Creator 3.8+ TypeScript** 一键导微信小游戏，或轻量 TypeScript Canvas 过渡）。
@@ -133,3 +134,10 @@
 - **已验证**：本机 Blender 5.3.0（Metal）全链路实跑，3 件替身昼/夜/地影出图，场景预览中比例与锚点对齐；12 项单测通过。单件渲染 25–110s（首次运行 Metal 编译内核约 5 分钟），风格化 20–35s。
 - **未验证**：Colab 上的 Blender 5.3 Linux 版是否自带 OpenImageIO（笔记本已做自动回退到 Colab Python + OpenEXR）；真实 AI 模型（贴图斑驳、网格噪声）下内线去噪与平涂力度是否合适——需要 T2 Colab 实跑后用真实 `.glb` 再调 `style_profile.json`。
 - **下一棒**：先 push，再在 Colab 跑 `colab_gen_3d.ipynb`，用真实模型按 `docs/art/T2_concept_prompts.md` 第 4 节验收；调画风只改 profile，用 `stylize_sprites.py` 单独重跑即可，不必重新渲染。
+
+### 2026-11-23 · Claude Opus（T2 Colab 首跑 + 稳定性修复，夜间自主工作）
+- **首跑结果**（T4 14.6GB / 系统内存 12.7GB / torch 2.14 + CUDA 13）：同步脚本、安装、custom_rasterizer 编译（wheel 已缓存到云盘 `_cache/hy3d_wheels/`）、HunyuanDiT 12 张概念候选（已存到云盘 `concepts/`）全部成功；进入形状生成后加载 4.9GB 模型时**系统内存 OOM，运行时崩溃重启**，之后内置浏览器里的 Google 账号被登出（需用户重新登录），本轮未产出 `.glb`。
+- **概念图质量**：HunyuanDiT 把竹箭楼画成宝塔、正房画成红墙庙宇、全是正面视角 → 不能作正式美术。
+- **修复（已推送）**：`t2i_concepts.py` 独立进程出图（退出即释放内存）；`T2I_MODEL=auto` 在 A100/L4 上用 Qwen-Image（Apache-2.0、无需登录、4bit 量化），T4 退回 HunyuanDiT；Hunyuan3D 只预下载 fp16 safetensors（形状目录原有 5 份同模型共 24.6GB，贴图 UNet 跳过 7.3GB .bin）；`HF_HOME` / `HY3DGEN_MODELS` 默认缓存到云盘（用户有 20TB）；启动时检测系统内存 < 20GB 给出“开高 RAM”提示。
+- **注意**：本机是 M1 MacBook Air 8GB，重活（全尺寸烘培、所有模型推理）一律放 Colab；本机只做代码、单测和半比例小样检查。
+- **下一棒**：用户登录 Colab 后，运行时类型选 A100（或 L4）并勾选高 RAM，`REGEN_CONCEPTS = ["house_lv2_tile", "tower_bamboo", "prop_pine_tree"]` 用 Qwen-Image 重出概念图，然后全部运行。

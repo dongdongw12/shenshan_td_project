@@ -24,14 +24,14 @@ md(r"""
 一键跑完 T2 第 1 周 3 件视觉样张：`house_lv2_tile`（青瓦正房）、`tower_bamboo`（竹箭楼）、`prop_pine_tree`（深山古松）。
 
 **流程**
-1. 菜单「代码执行程序 → 更改运行时类型」选 **GPU**：**L4（24GB）推荐**；T4（15GB）也能跑，会自动开 CPU offload，贴图慢 2–3 倍；A100 最快。
-2. 概念图：云盘 `shenshan_td/concepts/<id>.png` 存在就直接用（推荐用即梦 / Midjourney 等按 `docs/art/T2_concept_prompts.md` 出图后放进去）；不存在且 `AUTO_T2I=True` 时，用 HunyuanDiT 按 `gen_3d_jobs.json` 的 `t2i_zh` 每件出 4 张候选，默认选第 1 张。
+1. 菜单「代码执行程序 → 更改运行时类型」选 **GPU**，并勾选 **高 RAM**：**A100 推荐**（可用 Qwen-Image 出概念图，最快）；L4 次之；T4（15GB）也能跑（自动 CPU offload，概念图只能用 HunyuanDiT）。**普通 RAM（12.7GB）会在加载模型时崩溃重启**。
+2. 概念图：云盘 `shenshan_td/concepts/<id>.png` 存在就直接用（也可用即梦 / Midjourney 等按 `docs/art/T2_concept_prompts.md` 出图后放进去）；不存在且 `AUTO_T2I=True` 时自动出 4 张候选（`T2I_MODEL="auto"`：A100/L4 用 Qwen-Image，T4 用 HunyuanDiT），默认选第 1 张。
 3. 想换候选：把 `concepts/_candidates/` 里更满意的那张复制成 `concepts/<id>.png`，设 `OVERWRITE=True` 从「③ 生成白模」重跑。
 4. 输出：`raw_models/<id>.glb`（贴图 + 已对齐墙面朝向）、`raw_models/<id>.gen.json`（种子/参数记录）、`raw_models/_debug/`（白模与抠图），以及 `baked_sprites/_preview/` 的半比例昼/夜工笔风格化试烘培图。
 5. 最后一格自动释放运行时。
 
 **耗时参考（L4）**：首次安装 + 编译约 8–12 分钟（编译产物缓存到云盘，第二次约 2 分钟）；每件形状约 1 分钟、贴图约 2–3 分钟；试烘培每件约 1 分钟。
-**模型下载**：首次要从 Hugging Face 拉约 25GB 权重（HunyuanDiT 约 14.5GB + Hunyuan3D-2），未登录时约 7MB/s ≈ 30–60 分钟。自己用外部工具出概念图（`AUTO_T2I=False`）可省掉 HunyuanDiT 那 14.5GB；默认 `HF_CACHE_ON_DRIVE=True` 把权重缓存到云盘 `_cache/hf/`，第二次起直接从云盘读。
+**模型下载**：Hunyuan3D-2 只预下载实际加载的 fp16 权重（约 16GB，原来整目录要 43GB）；概念图模型另算（HunyuanDiT 14.5GB / Qwen-Image 58GB）。默认 `HF_CACHE_ON_DRIVE=True` 全部缓存到云盘 `_cache/`，第二次起直接从云盘读。
 
 **许可**：Hunyuan3D-2 为腾讯混元 3D 社区许可，中国大陆可商用（不含欧盟/英国/韩国；版本发布时月活 > 100 万需另行申请），腾讯不主张生成物权利。游戏只分发烘培后的 PNG，不分发模型本身。
 """)
@@ -44,8 +44,9 @@ SYNC_FROM_GITHUB = True    # 从公开仓库拉最新 manifest / 烘培脚本 / 
 GITHUB_RAW = "https://raw.githubusercontent.com/dongdongw12/shenshan_td_project/main"
 HY3D_COMMIT = "f8db63096c8282cb27354314d896feba5ba6ff8a"  # 固定 Hunyuan3D-2 版本，保证可复现
 
-AUTO_T2I = True            # 缺概念图时用 HunyuanDiT 自动出候选；False 则要求云盘里已有 concepts/<id>.png
-REGEN_CONCEPTS = []        # 填 id（如 ["tower_bamboo"]）= 强制重新出这些资产的 HunyuanDiT 候选并覆盖 concepts/<id>.png
+AUTO_T2I = True            # 缺概念图时自动出候选；False 则要求云盘里已有 concepts/<id>.png
+T2I_MODEL = "auto"         # "auto"：原生 bf16 GPU（A100/L4）用 Qwen-Image，否则 HunyuanDiT | "qwen-image" | "hunyuandit"
+REGEN_CONCEPTS = []        # 填 id（如 ["tower_bamboo"]）= 强制重新出候选并覆盖 concepts/<id>.png
 SHAPE_MODEL = "standard"   # "standard" = DiT-v2-0（质量优先，50 步）| "turbo" = DiT-v2-0-turbo + FlashVDM（5 步，快很多）
 TEXTURE = True             # False = 只出白模（反复调形状时省时间）
 LOW_VRAM = "auto"          # "auto"：显存 < 20GB 时贴图模型启用 CPU offload
@@ -71,6 +72,7 @@ SYNC_FILES = {  # 仓库路径 -> 云盘文件名
     "pipeline/blender/bake_isometric_sprites.py": "bake_isometric_sprites.py",
     "pipeline/colab/gen_3d_jobs.json": "gen_3d_jobs.json",
     "pipeline/colab/gen3d_utils.py": "gen3d_utils.py",
+    "pipeline/colab/t2i_concepts.py": "t2i_concepts.py",
     "pipeline/style/stylize_sprites.py": "stylize_sprites.py",
     "pipeline/style/style_profile.json": "style_profile.json",
 }
@@ -81,9 +83,17 @@ if SYNC_FROM_GITHUB:
 for dst in SYNC_FILES.values():
     assert os.path.exists(f"{DRIVE_DIR}/{dst}"), f"云盘缺少 {dst}：请开启 SYNC_FROM_GITHUB 或手动上传"
 
-if HF_CACHE_ON_DRIVE:  # 必须在任何 huggingface / diffusers import 之前设置
-    os.environ["HF_HOME"] = f"{DRIVE_DIR}/_cache/hf"
-    os.makedirs(os.environ["HF_HOME"], exist_ok=True)
+# 模型缓存：必须在任何 huggingface / diffusers / hy3dgen import 之前设置（子进程也会继承）
+CACHE_ROOT = f"{DRIVE_DIR}/_cache" if HF_CACHE_ON_DRIVE else "/content/cache"
+os.environ["HF_HOME"] = f"{CACHE_ROOT}/hf"
+os.environ["HY3DGEN_MODELS"] = f"{CACHE_ROOT}/hy3dgen"
+for k in ("HF_HOME", "HY3DGEN_MODELS"):
+    os.makedirs(os.environ[k], exist_ok=True)
+
+ram_gb = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 1024**3
+print(f"系统内存 {ram_gb:.1f}GB")
+if ram_gb < 20:
+    print("⚠️ 系统内存不足 20GB：加载 Hunyuan3D 时很可能 OOM 崩溃重启。请在「更改运行时类型」里勾选「高 RAM」后重新连接。")
 
 sys.path.insert(0, DRIVE_DIR)
 import importlib, gen3d_utils
@@ -123,6 +133,11 @@ if not os.path.exists(HY3D_DIR):
 !cd {HY3D_DIR} && git checkout -q {HY3D_COMMIT} && git log -1 --format="Hunyuan3D-2 @ %h (%cs)"
 # 只补依赖，不动 Colab 自带的 torch / torchvision
 !pip install -q diffusers transformers accelerate einops omegaconf opencv-python trimesh pymeshlab pygltflib xatlas rembg onnxruntime sentencepiece protobuf ninja pybind11
+!pip install -q bitsandbytes
+try:  # Qwen-Image 需要 diffusers ≥ 0.35；已满足就不动，避免影响 Hunyuan3D-Paint 的自定义管线
+    from diffusers import QwenImagePipeline  # noqa: F401
+except ImportError:
+    !pip install -q -U "diffusers>=0.35"
 !pip install -q --no-deps -e {HY3D_DIR}
 if HY3D_DIR not in sys.path:
     sys.path.insert(0, HY3D_DIR)
@@ -137,11 +152,22 @@ if TEXTURE:
     assert cached, "custom_rasterizer 编译失败，往上翻看 nvcc 报错"
     !pip install -q --force-reinstall --no-deps "{cached[0]}"
     import custom_rasterizer_kernel  # 冒烟测试：能 import 说明 CUDA 扩展可用
+
+# 只下载实际会加载的权重：形状模型 5 份同模型只要 fp16 safetensors；贴图 UNet 跳过 7.3GB 的 .bin
+from huggingface_hub import snapshot_download
+shape_sub = "hunyuan3d-dit-v2-0-turbo" if SHAPE_MODEL == "turbo" else "hunyuan3d-dit-v2-0"
+patterns = [f"{shape_sub}/config.yaml", f"{shape_sub}/model.fp16.safetensors"]
+if TEXTURE:
+    patterns += ["hunyuan3d-delight-v2-0/*", "hunyuan3d-paint-v2-0-turbo/*"]
+t0 = time.time()
+snapshot_download("tencent/Hunyuan3D-2", local_dir=f"{os.environ['HY3DGEN_MODELS']}/tencent/Hunyuan3D-2",
+                  allow_patterns=patterns, ignore_patterns=["*unet/diffusion_pytorch_model.bin"])
+print(f"Hunyuan3D-2 权重就绪（{time.time() - t0:.0f}s，缓存在 {os.environ['HY3DGEN_MODELS']}）")
 print("Hunyuan3D-2 就绪")
 ''')
 
 code(r'''
-# ④ 概念图：已有就用，没有就 HunyuanDiT 出 4 张候选（默认选第 1 张）
+# ④ 概念图：已有就用，没有就在独立进程里出 4 张候选（默认选第 1 张；进程退出后内存全部释放）
 from PIL import Image
 import matplotlib.pyplot as plt
 
@@ -150,23 +176,13 @@ print("已有概念图：", [i for i in ids if i not in need_t2i], "| 需要生�
 
 if need_t2i:
     assert AUTO_T2I, "缺概念图：请按 docs/art/T2_concept_prompts.md 出图后放到云盘 concepts/<id>.png，或设 AUTO_T2I=True"
-    from hy3dgen.text2image import HunyuanDiTPipeline
-    t2i = HunyuanDiTPipeline("Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled")
-    for i in need_t2i:
-        prompt = all_assets[i]["t2i_zh"]
-        assert len(prompt) <= 60, f"{i} 的 t2i_zh 有 {len(prompt)} 字，HunyuanDiT 只读前 60 字"
-        cands = []
-        for seed in job_cfg(i)["t2i_seeds"]:
-            p = f"{DRIVE_DIR}/concepts/_candidates/{i}_s{seed}.png"
-            t2i(prompt, seed=seed).save(p)
-            cands.append(p)
-        shutil.copy(cands[0], concept_path(i))
-        print(f"{i}: 默认选用 {os.path.basename(cands[0])}")
-    del t2i
-    gc.collect(); torch.cuda.empty_cache()
+    regen = ",".join(i for i in need_t2i if i in REGEN_CONCEPTS)
+    !cd {HY3D_DIR} && python "{DRIVE_DIR}/t2i_concepts.py" --jobs "{DRIVE_DIR}/gen_3d_jobs.json" --out "{DRIVE_DIR}/concepts" --ids "{','.join(need_t2i)}" --model {T2I_MODEL} --regen "{regen}" 2>&1 | grep -vE "it/s\]|s/it\]|^\s*$"
+    assert all(os.path.exists(concept_path(i)) for i in need_t2i), "概念图生成失败，往上翻看报错"
 
 for i in ids:
-    imgs = [concept_path(i)] + sorted(glob.glob(f"{DRIVE_DIR}/concepts/_candidates/{i}_s*.png"))
+    imgs = [concept_path(i)] + sorted(glob.glob(f"{DRIVE_DIR}/concepts/_candidates/{i}_*s*.png"),
+                                      key=os.path.getmtime, reverse=True)[:8]
     fig, axes = plt.subplots(1, len(imgs), figsize=(3.2 * len(imgs), 3.4), squeeze=False)
     for ax, p in zip(axes[0], imgs):
         ax.imshow(Image.open(p)); ax.axis("off")
