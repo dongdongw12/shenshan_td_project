@@ -1,7 +1,7 @@
 /**
  * 竖屏可玩演示：T4 玩法核心（src/game）+ T3 渲染底座（src/render）+ 程序化墨线占位（inkDraw）。
  * 操作：底栏选建筑 → 点地块放置（绿色可放、红色不可）；拖动平移；点“入夜”开战。
- * URL：?auto=1 让平衡 AI 自己玩（看效果用），?seed=数字，?speed=2
+ * URL：?auto=1 让平衡 AI 自己玩（看效果用），?seed=数字，?speed=2，?rich=1 开局多给资源（截图看后期建筑用，不影响平衡）
  */
 import { BrowserPlatform } from "../platform/browser";
 import { IsoProjection, type Vec2 } from "../render/iso";
@@ -70,6 +70,7 @@ async function boot(): Promise<void> {
   const cfg = defaultConfig();
   const seed = Number(qs.get("seed") ?? 7);
   let g: GameState = createGame(cfg, seed);
+  if (qs.get("rich") === "1") Object.assign(g.res, { coin: 9000, wood: 3000, food: 800, hide: 120 });
   const T = cfg.tileSize;
   const iso = new IsoProjection({ pxPerMeter: atlas.px_per_meter, tileSize: T, elevationDeg: 30 });
   const map = parseGroundMap(cfg.map.terrain);
@@ -83,6 +84,21 @@ async function boot(): Promise<void> {
   const decor: { i: number; j: number }[] = [];
   for (let j = 0; j < map.rows; j++) for (let i = 0; i < map.cols; i++) {
     if (map.terrain[j]![i] === "r" && (i * 7 + j * 13) % 5 === 0) decor.push({ i, j });
+  }
+
+  // 路的两头（谷口 / 村口）各在最近的山石上立一对石灯
+  const lanterns: { i: number; j: number }[] = [];
+  {
+    const road: { i: number; j: number }[] = [], rock: { i: number; j: number }[] = [];
+    for (let j = 0; j < map.rows; j++) for (let i = 0; i < map.cols; i++) {
+      const t = map.terrain[j]![i];
+      if (t === "d") road.push({ i, j });
+      else if (t === "r" && !decor.some((d) => d.i === i && d.j === j)) rock.push({ i, j });
+    }
+    const d2 = (a: { i: number; j: number }, b: { i: number; j: number }) => (a.i - b.i) ** 2 + (a.j - b.j) ** 2;
+    let ends: [typeof road[0], typeof road[0]] | null = null, best = -1;
+    for (const a of road) for (const b of road) if (d2(a, b) > best) { best = d2(a, b); ends = [a, b]; }
+    for (const e of ends ?? []) lanterns.push(...[...rock].sort((a, b) => d2(a, e) - d2(b, e)).slice(0, 2));
   }
 
   // ---------------------------------------------------------------- 相机
@@ -335,9 +351,9 @@ async function boot(): Promise<void> {
   };
   const spriteFor = (b: Building): string | null => {
     const has = (s: string) => (atlas.sprites[s] ? s : null);
-    if (b.category === "house") return g.houseLevel === 1 ? has("house_lv1_thatch") : g.houseLevel === 2 ? has("house_lv2_tile") : null;
-    if (b.kind === "tower_bamboo" || b.kind === "tower_crossbow") return has("tower_bamboo");
-    if (["house_wing_room", "hunt_lodge", "granary", "tower_oil_fire"].includes(spriteKind(b.kind))) return has(spriteKind(b.kind));
+    if (b.category === "house") return has(["house_lv1_thatch", "house_lv2_tile", "house_lv3_courtyard"][g.houseLevel - 1]!);
+    if (b.kind === "tower_crossbow") return has("tower_crossbow") ?? has("tower_bamboo");
+    if (["tower_bamboo", "house_wing_room", "hunt_lodge", "granary", "tower_oil_fire", "tower_rolling_log", "ancestral_hall", "fish_weir"].includes(spriteKind(b.kind))) return has(spriteKind(b.kind));
     if (b.category === "wall") {
       // 只和 ±Y 方向的墙相连 → 用 90° 那张，墙段就能接成一条线
       const alongY = (isWallAt(b.i, b.j - 1) || isWallAt(b.i, b.j + 1)) && !(isWallAt(b.i - 1, b.j) || isWallAt(b.i + 1, b.j));
@@ -351,9 +367,23 @@ async function boot(): Promise<void> {
     if (b.category === "trap") return has("trap_bear");
     return null;
   };
+  /** 纯装饰：路口两侧山石上的石灯（山石格不可建，不会和玩家的建筑打架）；货郎来的白天，门前停一辆货郎车。只占空地，不进玩法 */
+  const freeTile = (i: number, j: number) =>
+    i >= 0 && j >= 0 && i < map.cols && j < map.rows && map.terrain[j]![i] !== "r" && map.terrain[j]![i] !== "w" && !g.grid.occupant(i, j);
+  const addHouseProps = () => {
+    const h = g.buildings.get(g.houseId);
+    if (!h) return;
+    const front = h.j - 1; // 正面朝画面左下 = −j 方向
+    if (atlas.sprites.prop_stone_lantern) for (const l of lanterns) scene.addSprite("prop_stone_lantern", l.i, l.j, `lantern@${l.i},${l.j}`);
+    if (atlas.sprites.prop_peddler_cart && g.phase === "day" && g.peddler) {
+      const spot = [[h.i + h.w, front], [h.i - 1, front], [h.i + h.w, h.j], [h.i, front - 1]].find(([i, j]) => freeTile(i!, j!));
+      if (spot) scene.addSprite("prop_peddler_cart", spot[0]!, spot[1]!, "peddler_cart");
+    }
+  };
   const syncScene = () => {
     scene.objects.length = 0;
     if (atlas.sprites.prop_pine_tree) for (const d of decor) scene.addSprite("prop_pine_tree", d.i, d.j, `pine@${d.i},${d.j}`);
+    addHouseProps();
     for (const b of g.buildings.values()) {
       const stem = spriteFor(b);
       if (!stem && (b.category === "trap" || b.kind === "farm_rice" || b.kind === "fish_weir")) continue; // 没有精灵的贴地物件画在贴地图层

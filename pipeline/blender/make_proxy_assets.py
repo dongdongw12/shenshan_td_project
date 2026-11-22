@@ -23,7 +23,7 @@ PALETTE = {
     "lime_white": "#ede3cc", "tile_dark": "#3e4552", "tile_light": "#6b7482", "stone": "#7d8a8c",
     "malachite": "#3f8a63", "malachite_light": "#7fb98a", "pine_deep": "#24574a", "ochre": "#9a5a35",
     "ochre_light": "#c88f5f", "wood_dark": "#5c3a26", "cinnabar": "#b8352a", "gamboge": "#d9a838",
-    "straw": "#c9a66b", "bamboo": "#6f9a52", "rope": "#a8743f", "water": "#5d8fb6",
+    "straw": "#c9a66b", "bamboo": "#6f9a52", "rope": "#a8743f", "water": "#5d8fb6", "azurite": "#2e5f8f", "ink": "#1c1510",
 }
 _materials = {}
 
@@ -440,7 +440,162 @@ def build_tower_oil_fire():
     _pyramid("oil_roof", 1.55, 1.0, (0, 0, 5.05), "cinnabar")
 
 
+def build_tower_crossbow():
+    """强弩箭楼：青石方座 + 粗木两层 + 带护栏射台 + 大弩 + 小青瓦四坡顶 + 红三角旗"""
+    box("stone_base", (1.6, 1.6, 1.2), (0, 0, 0.6), "stone")
+    for k, (x, y) in enumerate(((-0.65, -0.65), (0.65, -0.65), (0.65, 0.65), (-0.65, 0.65))):
+        cyl(f"post{k}", 0.1, 2.4, (x, y, 2.4), "wood_dark", verts=8)
+    for z in (2.0, 3.55):
+        box(f"deck{z}", (1.7, 1.7, 0.14), (0, 0, z), "ochre")
+    for k, (sx, sy, rx) in enumerate(((0, -1, 1), (0, 1, 1), (-1, 0, 0), (1, 0, 0))):
+        box(f"rail{k}", (1.7, 0.08, 0.5) if rx else (0.08, 1.7, 0.5), (sx * 0.81, sy * 0.81, 3.87), "wood_dark")
+    rod("brace_a", (-0.65, -0.68, 1.2), (0.65, -0.68, 1.95), 0.05, "wood_dark")
+    rod("brace_b", (0.65, -0.68, 1.2), (-0.65, -0.68, 1.95), 0.05, "wood_dark")
+    box("bow_stock", (0.16, 1.0, 0.12), (0, -0.45, 3.85), "wood_dark")
+    rod("bow_arm", (-0.55, -0.85, 3.88), (0.55, -0.85, 3.88), 0.035, "ochre")
+    for k, (x, y) in enumerate(((-0.75, -0.75), (0.75, -0.75), (0.75, 0.75), (-0.75, 0.75))):
+        cyl(f"rpost{k}", 0.05, 0.8, (x, y, 4.0), "wood_dark", verts=8)
+    _pyramid("roof", 1.45, 0.85, (0, 0, 4.8), "tile_dark")
+    rod("flagpole", (0.95, -0.95, 4.3), (0.95, -0.95, 5.5), 0.025, "wood_dark")
+    mesh_from("flag", [(0.95, -0.95, 5.45), (0.95, -0.95, 5.1), (0.95, -1.5, 5.3)], [(0, 1, 2)], "cinnabar")
+
+
+def build_fish_weir():
+    """溪边鱼梁：浅水 + 一排竹桩木栅 + 竹篓 + 小水车（2×1 格，沿 X）"""
+    box("shallow", (3.8, 1.7, 0.05), (0, 0, 0.025), "water")
+    for k in range(9):
+        cyl(f"stake{k}", 0.05, 0.75, (-1.6 + k * 0.4, -0.2, 0.37), "bamboo", verts=6)
+    rod("rail", (-1.7, -0.2, 0.55), (1.7, -0.2, 0.55), 0.04, "ochre")
+    for k in range(3):
+        bpy.ops.mesh.primitive_cone_add(vertices=10, radius1=0.17, radius2=0.08, depth=0.4, location=(-1.0 + k * 0.7, 0.15, 0.2), rotation=(math.radians(90), 0, 0))
+        assign(bpy.context.active_object, "straw")
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.6, minor_radius=0.05, location=(1.3, 0.4, 0.55), rotation=(0, math.radians(90), 0))
+    assign(bpy.context.active_object, "ochre")
+    for k in range(6):
+        ang = k * math.pi / 3
+        rod(f"spoke{k}", (1.3, 0.4, 0.55), (1.3, 0.4 + 0.6 * math.cos(ang), 0.55 + 0.6 * math.sin(ang)), 0.03, "wood_dark")
+    cyl("axle_post", 0.06, 0.9, (1.3, 0.85, 0.45), "wood_dark", verts=6)
+    for k in range(3):
+        sphere(f"pebble{k}", 0.13, (-1.5 + k * 1.1, 0.7, 0.06), "stone", scale=(1.3, 1, 0.5), seg=8)
+
+
+def build_prop_peddler_cart():
+    """进山货郎担：独轮车 + 两个竹货筐（花布、糖葫芦）+ 小幌子 + 灯笼"""
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.28, minor_radius=0.05, location=(0, -0.55, 0.3), rotation=(0, math.radians(90), 0))
+    assign(bpy.context.active_object, "wood_dark")
+    box("cart_bed", (0.7, 1.1, 0.08), (0, 0, 0.55), "ochre")
+    rod("handle_l", (-0.25, 0.4, 0.55), (-0.3, 1.0, 0.75), 0.03, "wood_dark")
+    rod("handle_r", (0.25, 0.4, 0.55), (0.3, 1.0, 0.75), 0.03, "wood_dark")
+    for k, y in enumerate((-0.25, 0.25)):
+        cyl(f"basket{k}", 0.28, 0.4, (0, y, 0.8), "straw", verts=12)
+    for k, c in enumerate(("cinnabar", "azurite", "malachite_light")):
+        box(f"cloth{k}", (0.32, 0.12, 0.08), (0, -0.25, 1.02 + k * 0.06), c)
+    for k in range(3):
+        rod(f"stick{k}", (0.1 * (k - 1), 0.25, 0.9), (0.1 * (k - 1), 0.25, 1.4), 0.015, "wood_dark")
+        for m in range(4):
+            sphere(f"haw{k}{m}", 0.04, (0.1 * (k - 1), 0.25, 1.15 + m * 0.07), "cinnabar", seg=6)
+    rod("pennant_pole", (0.3, 0.55, 0.6), (0.3, 0.55, 1.8), 0.02, "wood_dark")
+    box("pennant", (0.03, 0.35, 0.45), (0.3, 0.38, 1.55), "lime_white")
+    box("pennant_mark", (0.035, 0.12, 0.12), (0.3, 0.38, 1.58), "cinnabar")
+    sphere("cart_lantern", 0.08, (-0.3, 0.9, 0.95), "cinnabar", scale=(1, 1, 1.3), seg=8)
+
+
+def build_prop_stone_lantern():
+    """山道石灯笼：方座 + 立柱 + 带窗孔灯室 + 起翘石盖 + 宝珠顶 + 苔点"""
+    box("base", (0.55, 0.55, 0.2), (0, 0, 0.1), "stone")
+    cyl("pillar", 0.12, 0.7, (0, 0, 0.55), "stone", verts=8)
+    box("plate", (0.5, 0.5, 0.08), (0, 0, 0.94), "stone")
+    box("chamber", (0.36, 0.36, 0.34), (0, 0, 1.15), "stone")
+    box("window", (0.16, 0.38, 0.16), (0, 0, 1.15), "gamboge")
+    _pyramid("cap", 0.48, 0.3, (0, 0, 1.47), "tile_light")
+    sphere("jewel", 0.07, (0, 0, 1.66), "stone", seg=8)
+    for k in range(3):
+        sphere(f"moss{k}", 0.05, (0.2 - k * 0.15, -0.28, 0.2 + k * 0.4), "malachite", scale=(1.3, 0.5, 0.7), seg=6)
+
+
+def build_prop_beacon_brazier():
+    """守夜烽火盆：铁三脚架 + 黑铁火盆 + 块面火焰 + 石圈 + 备用柴"""
+    for k in range(3):
+        ang = k * 2 * math.pi / 3
+        rod(f"leg{k}", (0.45 * math.cos(ang), 0.45 * math.sin(ang), 0), (0.15 * math.cos(ang), 0.15 * math.sin(ang), 1.1), 0.04, "tile_dark")
+    bpy.ops.mesh.primitive_cone_add(vertices=14, radius1=0.25, radius2=0.45, depth=0.32, location=(0, 0, 1.25))
+    assign(bpy.context.active_object, "tile_dark")
+    for k, (r, h) in enumerate(((0.32, 0.55), (0.2, 0.75), (0.12, 0.9))):
+        bpy.ops.mesh.primitive_cone_add(vertices=7, radius1=r, radius2=0.0, depth=h, location=(0.05 * (k - 1), 0, 1.4 + h / 2))
+        assign(bpy.context.active_object, "gamboge" if k else "cinnabar")
+    for k in range(7):
+        ang = k * 2 * math.pi / 7
+        sphere(f"ring{k}", 0.12, (0.6 * math.cos(ang), 0.6 * math.sin(ang), 0.07), "stone", scale=(1.2, 1, 0.6), seg=8)
+    for k in range(3):
+        cyl(f"spare{k}", 0.06, 0.7, (0.75, -0.45 + k * 0.12, 0.35), "ochre", rot=(0, math.radians(20), 0), verts=6)
+
+
+def build_house_lv3_courtyard():
+    """青砖大院（3×3）：砖墙围合 + 正房与两厢青瓦顶 + 朱红大门 + 石狮 + 院中小树"""
+    L = 5.6
+    for k, (sx, sy, w, d) in enumerate(((0, -1, L, 0.3), (0, 1, L, 0.3), (-1, 0, 0.3, L), (1, 0, 0.3, L))):
+        box(f"cwall{k}", (w, d, 1.6), (sx * (L / 2 - 0.15), sy * (L / 2 - 0.15), 0.8), "tile_light")
+        box(f"cwall_cap{k}", (w + 0.1, d + 0.2, 0.15), (sx * (L / 2 - 0.15), sy * (L / 2 - 0.15), 1.68), "tile_dark")
+    box("gate", (1.2, 0.4, 2.0), (0, -L / 2 + 0.15, 1.0), "cinnabar")
+    box("gate_roof", (1.6, 0.7, 0.18), (0, -L / 2 + 0.15, 2.1), "tile_dark")
+    for sd in (-1, 1):
+        box(f"lion{sd}", (0.3, 0.4, 0.5), (sd * 0.9, -L / 2 - 0.25, 0.25), "stone")
+        sphere(f"lantern{sd}", 0.13, (sd * 0.5, -L / 2 - 0.15, 1.7), "cinnabar", scale=(1, 1, 1.25), seg=8)
+    box("main_hall", (4.2, 1.6, 2.0), (0, 1.6, 1.0), "lime_white")
+    gable_roof("main_roof", 4.6, 1.2, 2.0, 3.2, 0.14, "tile_dark")
+    obj = bpy.context.active_object
+    obj.location.y += 1.6
+    for sd in (-1, 1):
+        box(f"wing{sd}", (1.3, 2.4, 1.7), (sd * 2.0, -0.4, 0.85), "lime_white")
+    cyl("tree_trunk", 0.12, 1.4, (0, -0.6, 0.7), "wood_dark", verts=8)
+    sphere("tree_top", 0.7, (0, -0.6, 1.8), "malachite", scale=(1, 1, 0.7))
+    cyl("vat", 0.3, 0.5, (0.9, -1.3, 0.25), "tile_dark", verts=12)
+
+
+def build_ancestral_hall():
+    """家族祠堂：高台基 + 朱红立柱前廊 + 歇山青瓦顶（简化为双坡加起翘）+ 匾额 + 香炉"""
+    box("terrace", (3.6, 3.0, 0.5), (0, 0, 0.25), "stone")
+    for k in range(3):
+        box(f"step{k}", (1.4, 0.3, 0.16), (0, -1.6 - 0.3 * (2 - k) + 0.6, 0.08 + 0.16 * k), "stone")
+    box("hall", (3.0, 2.0, 2.2), (0, 0.3, 1.6), "lime_white")
+    for i, x in enumerate((-1.35, -0.45, 0.45, 1.35)):
+        cyl(f"col{i}", 0.11, 2.2, (x, -0.95, 1.6), "cinnabar", verts=10)
+    box("plaque", (0.9, 0.06, 0.35), (0, -0.96, 2.45), "ink")
+    box("plaque_rim", (0.98, 0.04, 0.42), (0, -0.94, 2.45), "gamboge")
+    gable_roof("hall_roof", 3.9, 1.75, 2.7, 3.9, 0.16, "tile_dark", curve=0.22)
+    for sd in (-1, 1):
+        box(f"chiwen{sd}", (0.28, 0.24, 0.5), (sd * 1.75, 0, 4.1), "tile_light", rot=(0, math.radians(-sd * 15), 0))
+    box("ridge", (3.4, 0.24, 0.2), (0, 0, 3.98), "tile_light")
+    cyl("censer", 0.22, 0.3, (0, -2.2, 0.55), "tile_dark", verts=10)
+    for k in range(3):
+        rod(f"incense{k}", ((k - 1) * 0.06, -2.2, 0.7), ((k - 1) * 0.06, -2.2, 1.05), 0.012, "cinnabar")
+
+
+def build_tower_rolling_log():
+    """滚木礌石楼（2×2）：青石厚墙 + 木构平台 + 一排滚木 + 圆石堆 + 绳闸 + 青瓦顶"""
+    box("stone_mass", (3.2, 3.2, 2.6), (0, 0, 1.3), "stone")
+    for k in range(4):
+        box(f"course{k}", (3.22, 3.22, 0.05), (0, 0, 0.55 + k * 0.6), "tile_light")
+    box("deck", (3.4, 3.4, 0.16), (0, 0, 2.7), "ochre")
+    for k in range(6):
+        rod(f"log{k}", (-1.3 + k * 0.5, -1.55, 3.0), (-1.3 + k * 0.5, -0.4, 3.0), 0.2, "wood_dark")
+    for k in range(5):
+        sphere(f"boulder{k}", 0.25, (0.9 + (k % 2) * 0.4, 0.5 + (k // 2) * 0.35, 3.0 + (k // 4) * 0.3), "stone", seg=10)
+    rod("gate_bar", (-1.6, -1.65, 3.25), (1.6, -1.65, 3.25), 0.06, "rope")
+    for k, (x, y) in enumerate(((-1.5, -1.5), (1.5, -1.5), (1.5, 1.5), (-1.5, 1.5))):
+        cyl(f"rp{k}", 0.08, 1.4, (x, y, 3.45), "wood_dark", verts=8)
+    gable_roof("rl_roof", 3.8, 1.9, 4.1, 5.0, 0.15, "tile_dark", curve=0.15)
+
+
 BUILDERS = {
+    "tower_crossbow": build_tower_crossbow,
+    "fish_weir": build_fish_weir,
+    "prop_peddler_cart": build_prop_peddler_cart,
+    "prop_stone_lantern": build_prop_stone_lantern,
+    "prop_beacon_brazier": build_prop_beacon_brazier,
+    "house_lv3_courtyard": build_house_lv3_courtyard,
+    "ancestral_hall": build_ancestral_hall,
+    "tower_rolling_log": build_tower_rolling_log,
     "house_lv1_thatch": build_house_lv1_thatch,
     "house_wing_room": build_house_wing_room,
     "hunt_lodge": build_hunt_lodge,
