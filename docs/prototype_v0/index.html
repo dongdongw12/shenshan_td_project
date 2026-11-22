@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>深山传家：开荒守寨（3天可玩原型）</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="game-shell">
+      <!-- 顶部资源栏 -->
+      <header id="hud-top">
+        <div class="hud-day">
+          <span id="day-badge">第 1 天</span>
+          <span id="phase-badge" class="phase-day">白昼 · 开荒</span>
+          <span id="timer-text">35s</span>
+        </div>
+        <div class="hud-resources">
+          <div class="res-pill" title="铜钱（攒够200可修房娶妻）">
+            <span class="res-icon">🪙</span><span id="res-coin">80</span>
+          </div>
+          <div class="res-pill" title="木材（修篱笆、建房）">
+            <span class="res-icon">🪵</span><span id="res-wood">45</span>
+          </div>
+          <div class="res-pill" title="口粮（余粮黎明卖给货郎）">
+            <span class="res-icon">🌾</span><span id="res-food">20</span>
+          </div>
+          <div class="res-pill" title="兽材（造捕兽夹、升强弩）">
+            <span class="res-icon">🦴</span><span id="res-hide">0</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- 主画布 -->
+      <main id="canvas-wrap">
+        <canvas id="game-canvas" width="430" height="650"></canvas>
+
+        <!-- 目标进度提示条 -->
+        <div id="goal-banner">
+          <span id="goal-text">目标：点击空地建稻田/鱼梁/箭楼，攒够 200 铜钱修青瓦房娶妻</span>
+        </div>
+
+        <!-- 选中地块弹出操作卡片 -->
+        <div id="slot-popover" class="hidden">
+          <div class="pop-header">
+            <strong id="pop-title">空地</strong>
+            <button id="pop-close" type="button">✕</button>
+          </div>
+          <p id="pop-desc" class="pop-desc"></p>
+          <div id="pop-actions" class="pop-actions"></div>
+        </div>
+
+        <!-- 全屏遮罩弹窗（开场 / 娶妻 / 黎明 / 胜负） -->
+        <div id="overlay" class="overlay">
+          <div class="scroll-card" id="overlay-card">
+            <div class="seal-tag" id="ov-seal">深山立业</div>
+            <h1 id="ov-title">深山传家：开荒守寨</h1>
+            <p id="ov-body">
+              乱世流落深山，你只有一间漏风草棚与一把柴刀。<br />
+              白天<b>开荒种地、溪边捕鱼、林间打猎</b>攒铜钱；<br />
+              修起青瓦正房<b>迎娶发妻</b>，携手筑起箭楼与篱笆，<br />
+              守住<b>连续三夜的饿狼、野猪与黑熊王夜袭</b>！
+            </p>
+            <div id="ov-stats" class="ov-stats hidden"></div>
+            <div id="ov-buttons" class="ov-buttons">
+              <button id="btn-start" class="btn-primary" type="button">踏入深山 · 开始开荒</button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- 底部快捷操作栏 -->
+      <footer id="hud-bottom">
+        <button id="btn-chop" class="act-btn" type="button">
+          <span class="act-emoji">🪓</span>
+          <span class="act-label">砍柴 +8木</span>
+        </button>
+        <button id="btn-marry" class="act-btn act-special" type="button">
+          <span class="act-emoji">🏮</span>
+          <span class="act-label" id="marry-label">修房娶妻 200钱</span>
+        </button>
+        <button id="btn-ad" class="act-btn act-ad" type="button">
+          <span class="act-emoji">🎁</span>
+          <span class="act-label">货郎奇遇 +100钱</span>
+        </button>
+        <button id="btn-night" class="act-btn act-night" type="button">
+          <span class="act-emoji">🌙</span>
+          <span class="act-label" id="night-label">提前入夜</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <script defer src="src/config.js"></script>
+  <script defer src="src/audio.js"></script>
+  <script defer src="src/renderer.js"></script>
+  <script defer src="src/game.js"></script>
+</body>
+</html>
