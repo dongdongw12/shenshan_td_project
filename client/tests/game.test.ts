@@ -9,6 +9,18 @@ import { autoPlay } from "../src/game/bot";
 
 const rich = (g: GameState) => { g.res = { coin: 99999, wood: 99999, food: 9999, hide: 999 }; };
 
+/** 单测固定用的旧版谷地地图（与正式地图解耦，正式地图怎么改都不影响这些用例） */
+const TEST_MAP = {
+  terrain: [
+    "ggfffgggggggw", "ggfffggggggww", "gggggggggggwg", "ggggggddggwwg", "ggggggdgggwgg", "gggggddggwwgg", "rggggdgggwggr",
+    "rrgggdggwwggr", "rrggddggwgggr", "rrggdgggwggrr", "rrrgdggwwggrr", "rrrgdgggwgrrr", "rrrrdggwwgrrr", "rrrrddggwrrrr",
+  ],
+  house: { i: 5, j: 1 },
+  spawns: [{ i: 4, j: 13 }, { i: 5, j: 13 }, { i: 6, j: 13 }],
+};
+const testConfig = () => withOverrides(defaultConfig(), (c) => { c.map = JSON.parse(JSON.stringify(TEST_MAP)); });
+
+
 describe("流场寻路", () => {
   const cost = (grid: Grid, blocked: Set<string>, blockCost = 20) => (i: number, j: number) =>
     grid.terrainAt(i, j) === "r" ? INF : blocked.has(`${i},${j}`) ? blockCost : 1;
@@ -59,7 +71,7 @@ describe("流场寻路", () => {
 
 describe("建造规则", () => {
   it("地形、占用、山口、前置条件、价格", () => {
-    const g = createGame(defaultConfig(), 1);
+    const g = createGame(testConfig(), 1);
     rich(g);
     expect(build(g, "tower_bamboo", 0, 6).ok).toBe(false); // 山石
     expect(build(g, "fish_weir", 2, 3).ok).toBe(false);    // 鱼梁必须在水上
@@ -72,7 +84,7 @@ describe("建造规则", () => {
   });
 
   it("塔越多越贵（+8%/座），升级不受影响", () => {
-    const g = createGame(defaultConfig(), 1);
+    const g = createGame(testConfig(), 1);
     rich(g);
     expect(buildCost(g, "tower_bamboo")!.coin).toBe(60);
     build(g, "tower_bamboo", 3, 6);
@@ -86,7 +98,7 @@ describe("建造规则", () => {
 
 describe("娶妻与家族", () => {
   it("修青瓦正房 = 娶妻：主屋升级、阿莲入住、产量 +40%", () => {
-    const g = createGame(defaultConfig(), 1);
+    const g = createGame(testConfig(), 1);
     rich(g);
     expect(upgradeHouse(g).ok).toBe(true);
     expect(g.married).toBe(true);
@@ -96,7 +108,7 @@ describe("娶妻与家族", () => {
   });
 
   it("有厢房就添丁；两个黎明后按白天分工长成对应身份", () => {
-    const cfg = withOverrides(defaultConfig(), (c) => { c.waves.nights.forEach((n) => { n.groups = [{ type: "wolf", count: 1, interval: 1 }]; }); });
+    const cfg = withOverrides(testConfig(), (c) => { c.waves.nights.forEach((n) => { n.groups = [{ type: "wolf", count: 1, interval: 1 }]; }); });
     const g = createGame(cfg, 3);
     rich(g);
     upgradeHouse(g);
@@ -123,7 +135,7 @@ describe("驻守羁绊", () => {
   }
 
   it("猎户驻塔 = 神射手：破甲 0.6、射程 ×1.15、伤害 ×1.15、攻速 ×1.2", () => {
-    const g = createGame(defaultConfig(), 1);
+    const g = createGame(testConfig(), 1);
     rich(g);
     const t = build(g, "tower_bamboo", 6, 6);
     if (!t.ok) throw new Error("build failed");
@@ -138,7 +150,7 @@ describe("驻守羁绊", () => {
   });
 
   it("渔郎驻塔 = 撒网减速；塔位满了不能再驻", () => {
-    const g = createGame(defaultConfig(), 1);
+    const g = createGame(testConfig(), 1);
     rich(g);
     const t = build(g, "tower_bamboo", 6, 6);
     if (!t.ok) throw new Error("build failed");
@@ -149,7 +161,7 @@ describe("驻守羁绊", () => {
   });
 
   it("没长大的孩子不能驻守", () => {
-    const g = createGame(defaultConfig(), 1);
+    const g = createGame(testConfig(), 1);
     rich(g);
     const t = build(g, "tower_bamboo", 6, 6);
     const kid = { id: g.nextId++, name: "小", kind: "child" as const, bornDay: 1, role: null, work: "farm_rice", post: null };
@@ -160,7 +172,7 @@ describe("驻守羁绊", () => {
 
 describe("夜战", () => {
   const onlyNight = (groups: GameConfig["waves"]["nights"][number]["groups"]) =>
-    withOverrides(defaultConfig(), (c) => { c.waves.nights[0]!.groups = groups; });
+    withOverrides(testConfig(), (c) => { c.waves.nights[0]!.groups = groups; });
 
   it("纵火贼直奔生产建筑放火，而不是主屋", () => {
     // 关掉当家的（农田就在主屋旁，会被他先砍倒），只看纵火贼选目标
@@ -180,7 +192,7 @@ describe("夜战", () => {
   });
 
   it("第一夜：一座塔 + 当家的能守住", () => {
-    const g = createGame(defaultConfig(), 11);
+    const g = createGame(testConfig(), 11);
     build(g, "tower_bamboo", 6, 4);
     startNight(g);
     runUntilPhaseChange(g);
@@ -198,7 +210,7 @@ describe("夜战", () => {
   });
 
   it("出怪路线从山口通到主屋", () => {
-    const g = createGame(defaultConfig(), 1);
+    const g = createGame(testConfig(), 1);
     const p = pathFromSpawn(g, 1);
     expect(p[0]).toEqual({ i: 5, j: 13 });
     const last = p[p.length - 1]!;
@@ -209,8 +221,8 @@ describe("夜战", () => {
 
 describe("确定性与无尽", () => {
   it("同种子同策略 → 完全相同的结果", async () => {
-    const a = await autoPlay(defaultConfig(), 4, undefined, 42);
-    const b = await autoPlay(defaultConfig(), 4, undefined, 42);
+    const a = await autoPlay(testConfig(), 4, undefined, 42);
+    const b = await autoPlay(testConfig(), 4, undefined, 42);
     expect(a.map((r) => [r.houseHpPct, r.coin, r.towers])).toEqual(b.map((r) => [r.houseHpPct, r.coin, r.towers]));
   });
 

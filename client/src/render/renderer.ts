@@ -46,6 +46,10 @@ export interface RenderOptions {
   paperAlpha?: number;
   /** 格线（建造模式时打开） */
   showGrid?: boolean;
+  /** 贴地图层（农田、鱼梁、选址预览等）：画在地影之后、物体之前，不参与遮挡排序 */
+  drawDecals?: (ctx: CanvasRenderingContext2D, toScreen: (x: number, y: number, z?: number) => Vec2, pxPerMeter: number) => void;
+  /** 最上层（飘字、血条等），不参与排序 */
+  drawOverlay?: (ctx: CanvasRenderingContext2D, toScreen: (x: number, y: number, z?: number) => Vec2, pxPerMeter: number) => void;
 }
 
 export interface FrameStats {
@@ -112,6 +116,13 @@ export class IsoRenderer {
       ctx.drawImage(img.shadow, r.x, r.y, r.w, r.h);
     }
 
+    const toScreen = (x: number, y: number, z = 0) => {
+      const p = this.iso.worldToScreen({ x, y, z });
+      return { x: cam.x + p.x * cam.zoom, y: cam.y + p.y * cam.zoom };
+    };
+    const ppmScreen = this.iso.cfg.pxPerMeter * cam.zoom;
+    if (opts.drawDecals) { ctx.globalAlpha = 1; opts.drawDecals(ctx, toScreen, ppmScreen); }
+
     for (const s of ordered) {
       const o = s.obj;
       if (o.kind === "custom") {
@@ -134,6 +145,7 @@ export class IsoRenderer {
       }
       drawn++;
     }
+    if (opts.drawOverlay) { ctx.globalAlpha = 1; opts.drawOverlay(ctx, toScreen, ppmScreen); }
     if (opts.paper) {
       if (this.paperSrc !== opts.paper) {
         this.paperPattern = ctx.createPattern(opts.paper, "repeat");

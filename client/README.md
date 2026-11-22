@@ -18,7 +18,8 @@
 | `assets/configs/` | 玩法数值 JSON（经济、防御、敌人、家族、10 夜波次、地图） |
 | `scripts/` | `balance.ts` 自动对局平衡表、`tune.ts` 自动搜每夜难度倍率、`income.ts` 收入来源 |
 | `src/platform/` | 平台适配：`browser.ts`（开发台）、`wechat.ts`（小游戏，**未真机验证**） |
-| `src/dev/` | 浏览器开发台（替身精灵小山村 + 绕房走的村民） |
+| `src/dev/` | 浏览器开发台（替身精灵小山村 + 绕房走的村民）→ `index.html` |
+| `src/demo/` | **竖屏可玩演示** → `play.html`：玩法核心 + 渲染底座 + 程序化墨线占位（`inkDraw.ts`：未烘培的建筑、敌人、弹道、冒烟、飘字），HUD / 建造栏 / 点地块放置；`?auto=1` AI 自动玩、`?speed=4`、`?seed=` |
 | `assets/dev/` | 开发用替身精灵（`pipeline/atlas/export_sprites.py --scale 0.5` 导出，64 px/m） |
 | `tests/` | Vitest 单测（投影、排序、昼夜、元数据校验） |
 
@@ -28,7 +29,7 @@
 npm --prefix client install
 npm --prefix client test          # 单测
 npm --prefix client run typecheck
-npm --prefix client run dev       # http://127.0.0.1:5173
+npm --prefix client run dev       # 渲染台 http://127.0.0.1:5173 ，可玩演示 http://127.0.0.1:5173/play.html
 npm --prefix client run balance   # 10 夜自动对局平衡表（-- --write 写 docs/design/balance_v1.md）
 npm --prefix client run tune      # 自动搜每夜难度倍率（-- --write 写回 waves.json）
 ```

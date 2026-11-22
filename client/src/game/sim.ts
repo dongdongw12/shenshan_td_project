@@ -461,7 +461,7 @@ function tileCost(g: GameState) {
       const b = g.buildings.get(id);
       if (b && !b.walkable) return p.blockerBaseCost + (b.hp / 100) * p.blockerHpCostPer100;
     }
-    return t === "w" ? p.waterCost : 1;
+    return t === "w" ? p.waterCost : t === "d" ? p.roadCost ?? 1 : 1;
   };
 }
 

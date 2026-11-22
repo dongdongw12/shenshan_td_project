@@ -52,7 +52,7 @@ export interface GameConfig {
     towers: Record<string, TowerDef>;
     walls: Record<string, WallDef>;
     traps: Record<string, TrapDef>;
-    pathing: { blockerBaseCost: number; blockerHpCostPer100: number; waterCost: number };
+    pathing: { blockerBaseCost: number; blockerHpCostPer100: number; waterCost: number; roadCost?: number };
     towerCostScale?: number;
   };
   enemies: Record<string, EnemyDef>;

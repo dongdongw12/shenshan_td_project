@@ -139,11 +139,18 @@ export function botDay(g: GameState, opt: BotOptions = DEFAULT_BOT): string[] {
     }
   }
 
-  // 7) 家族：子女轮流分工；少年按身份驻守
+  log.push(...botFamily(g, towerScore));
+  return log;
+}
+
+/** 家族自动安排：子女轮流分工（猎/樵/渔/耕）；长成的少年按身份驻守到最合适的位置 */
+export function botFamily(g: GameState, towerScore?: (range: number) => (i: number, j: number) => number): string[] {
+  const log: string[] = [];
+  const score = towerScore ?? (() => () => 0);
   const rotation = ["hunt_lodge", "farmer", "fish_weir", "farm_rice"];
   g.members.filter((m) => m.kind === "child").forEach((m, k) => { if (!m.role) assignWork(g, m.id, rotation[k % rotation.length]!); });
   const towersByCover = [...g.buildings.values()].filter((b) => b.category === "tower")
-    .sort((a, b) => towerScore(towerStats(g, b).range)(b.i, b.j) - towerScore(towerStats(g, a).range)(a.i, a.j));
+    .sort((a, b) => score(towerStats(g, b).range)(b.i, b.j) - score(towerStats(g, a).range)(a.i, a.j));
   for (const m of g.members) {
     if (!m.role || m.post !== null) continue;
     const slot = g.cfg.family.roles[m.role]!.bond.slot;

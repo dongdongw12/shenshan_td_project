@@ -10,7 +10,7 @@ import { autoPlay } from "../src/game/bot";
 import { defaultConfig, withOverrides } from "../src/game/config";
 
 const TARGET: Record<number, number> = { 3: 0.55, 4: 0.85, 5: 0.75, 6: 0.7, 7: 0.5, 8: 0.65, 9: 0.6, 10: 0.4 };
-const SEEDS = [7, 21, 99];
+const SEEDS = [7, 21, 99, 123, 456];
 let cfg = defaultConfig();
 
 async function scoreAt(night: number, mul: number): Promise<number> {
@@ -26,7 +26,7 @@ async function scoreAt(night: number, mul: number): Promise<number> {
 
 const result: Record<number, number> = {};
 for (const n of Object.keys(TARGET).map(Number)) {
-  let lo = Math.log(0.6), hi = Math.log(8);
+  let lo = Math.log(0.4), hi = Math.log(8);
   for (let it = 0; it < 9; it++) {
     const mid = (lo + hi) / 2;
     const s = await scoreAt(n, Math.exp(mid));

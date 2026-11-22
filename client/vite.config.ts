@@ -38,7 +38,11 @@ function capturePlugin(): Plugin {
 export default defineConfig({
   root: ".",
   publicDir: "assets",
-  build: { outDir: "build/web", emptyOutDir: true },
+  build: {
+    outDir: "build/web",
+    emptyOutDir: true,
+    rollupOptions: { input: { main: resolve(__dirname, "index.html"), play: resolve(__dirname, "play.html") } },
+  },
   server: { strictPort: true },
   plugins: [capturePlugin()],
 });
