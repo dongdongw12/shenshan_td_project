@@ -358,3 +358,19 @@ export function drawHpBar(ctx: CanvasRenderingContext2D, p: Vec2, width: number,
   ctx.fillStyle = frac < 0.35 ? "#d9a838" : "#b8352a";
   ctx.fillRect(p.x - width / 2, p.y, width * Math.max(0, Math.min(1, frac)), h);
 }
+
+/** 夜里灯笼的暖光晕（叠加混合，轻微闪烁）：r = 光晕半径（像素），a = 0..1 强度 */
+export function drawLampGlow(ctx: CanvasRenderingContext2D, p: Vec2, r: number, a: number): void {
+  if (a <= 0.01 || r <= 1) return;
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+  g.addColorStop(0, `rgba(255,170,80,${0.32 * a})`);
+  g.addColorStop(0.35, `rgba(255,140,50,${0.14 * a})`);
+  g.addColorStop(1, "rgba(255,120,40,0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y, r, r * 0.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}

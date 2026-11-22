@@ -17,7 +17,7 @@ import {
 import { botDay, botFamily } from "../game/bot";
 import { drawAnimFrame, facingFromScreenDelta, type AnimImages, type AnimIndex } from "../render/animSprites";
 import {
-  drawArrow, drawEnemy, drawFarmDecal, drawFence, drawFloatText, drawFlames, drawHouseLike, drawHpBar, drawSmoke, drawTrapDecal, drawWeirDecal,
+  drawArrow, drawEnemy, drawFarmDecal, drawFence, drawFloatText, drawFlames, drawHouseLike, drawHpBar, drawLampGlow, drawSmoke, drawTrapDecal, drawWeirDecal,
   isoBox, hipRoof, PAL, tone, type ToScreen,
 } from "./inkDraw";
 
@@ -529,6 +529,21 @@ async function boot(): Promise<void> {
 
   const drawOverlay = (c: CanvasRenderingContext2D, _S: unknown, ppm: number) => {
     const u = ppm * 0.1;
+    // 夜里灯笼光晕轻轻闪：位置与烘培夜灯一致（正面偏左、约 0.4 倍高）
+    if (nightA > 0.05) {
+      const flick = (seed: number) => 0.82 + 0.12 * Math.sin(clock * 8.3 + seed * 1.7) + 0.06 * Math.sin(clock * 21 + seed * 3.1);
+      for (const b of g.buildings.values()) {
+        if (b.category === "wall" || b.category === "trap" || b.kind === "farm_rice" || b.kind === "fish_weir") continue;
+        const stem = spriteFor(b);
+        const hgt = (stem ? atlas.sprites[stem]?.actual_height_m : undefined) ?? 2.4;
+        const front = Math.max(1.2, (Math.max(b.w, b.d) * T / 2) * 0.88);
+        const lz = b.category === "tower" ? hgt * 0.62 : Math.max(1.0, hgt * 0.38);
+        const p = S((b.i + b.w / 2) * T - front * 0.25, (b.j + b.d / 2) * T - front * 0.95, lz);
+        drawLampGlow(c, p, ppm * (b.w >= 2 ? 1.6 : 1.1), nightA * flick(b.id));
+      }
+      for (const l of lanterns) drawLampGlow(c, S((l.i + 0.5) * T, (l.j + 0.5) * T, 1.15), ppm * 0.9, nightA * flick(l.i * 7 + l.j));
+      for (const bz of braziers) drawLampGlow(c, S((bz.i + 0.5) * T, (bz.j + 0.5) * T, 1.3), ppm * 1.5, nightA * flick(bz.i * 5 + bz.j) * 1.2);
+    }
     // 着火的建筑冒火（精灵本身是静态的，火焰叠在屋顶上）；夜里受损的建筑头顶显示血条（主屋看顶栏）
     for (const b of g.buildings.values()) {
       const stem = spriteFor(b);
