@@ -86,8 +86,8 @@ async function boot(): Promise<void> {
     if (map.terrain[j]![i] === "r" && (i * 7 + j * 13) % 5 === 0) decor.push({ i, j });
   }
 
-  // 路的两头（谷口 / 村口）各在最近的山石上立一对石灯
-  const lanterns: { i: number; j: number }[] = [];
+  // 路的两头：村口山石上一对石灯，谷口山石上一座烽火盆
+  const lanterns: { i: number; j: number }[] = [], braziers: { i: number; j: number }[] = [];
   {
     const road: { i: number; j: number }[] = [], rock: { i: number; j: number }[] = [];
     for (let j = 0; j < map.rows; j++) for (let i = 0; i < map.cols; i++) {
@@ -98,7 +98,15 @@ async function boot(): Promise<void> {
     const d2 = (a: { i: number; j: number }, b: { i: number; j: number }) => (a.i - b.i) ** 2 + (a.j - b.j) ** 2;
     let ends: [typeof road[0], typeof road[0]] | null = null, best = -1;
     for (const a of road) for (const b of road) if (d2(a, b) > best) { best = d2(a, b); ends = [a, b]; }
-    for (const e of ends ?? []) lanterns.push(...[...rock].sort((a, b) => d2(a, e) - d2(b, e)).slice(0, 2));
+    if (ends) {
+      // 靠主屋的一头是村口（一对石灯），靠出怪点的一头是谷口（烽火盆，入夜点燃示警）
+      const h = cfg.map.house;
+      const [village, gorge] = d2(ends[0], { i: h.i, j: h.j }) <= d2(ends[1], { i: h.i, j: h.j }) ? ends : [ends[1], ends[0]];
+      const near = (e: { i: number; j: number }) => [...rock].sort((a, b) => d2(a, e) - d2(b, e));
+      lanterns.push(...near(village).slice(0, 2));
+      const b = near(gorge).find((t) => !lanterns.some((l) => l.i === t.i && l.j === t.j));
+      if (b) braziers.push(b);
+    }
   }
 
   // ---------------------------------------------------------------- 相机
@@ -375,6 +383,7 @@ async function boot(): Promise<void> {
     if (!h) return;
     const front = h.j - 1; // 正面朝画面左下 = −j 方向
     if (atlas.sprites.prop_stone_lantern) for (const l of lanterns) scene.addSprite("prop_stone_lantern", l.i, l.j, `lantern@${l.i},${l.j}`);
+    if (atlas.sprites.prop_beacon_brazier) for (const b of braziers) scene.addSprite("prop_beacon_brazier", b.i, b.j, `beacon@${b.i},${b.j}`);
     if (atlas.sprites.prop_peddler_cart && g.phase === "day" && g.peddler) {
       const spot = [[h.i + h.w, front], [h.i - 1, front], [h.i + h.w, h.j], [h.i, front - 1]].find(([i, j]) => freeTile(i!, j!));
       if (spot) scene.addSprite("prop_peddler_cart", spot[0]!, spot[1]!, "peddler_cart");

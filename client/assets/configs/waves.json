@@ -79,7 +79,7 @@
         "wood": 50,
         "hide": 3
       },
-      "hpMul": 0.99
+      "hpMul": 1.03
     },
     {
       "night": 4,
@@ -108,7 +108,7 @@
         "wood": 60,
         "hide": 2
       },
-      "hpMul": 1.51
+      "hpMul": 1.53
     },
     {
       "night": 5,
@@ -137,7 +137,7 @@
         "wood": 70,
         "hide": 3
       },
-      "hpMul": 1.32
+      "hpMul": 1.27
     },
     {
       "night": 6,
@@ -172,7 +172,7 @@
         "wood": 80,
         "hide": 3
       },
-      "hpMul": 1.76
+      "hpMul": 1.86
     },
     {
       "night": 7,
@@ -208,7 +208,7 @@
         "wood": 110,
         "hide": 5
       },
-      "hpMul": 1.53
+      "hpMul": 1.56
     },
     {
       "night": 8,
@@ -243,7 +243,7 @@
         "wood": 110,
         "hide": 4
       },
-      "hpMul": 1.49
+      "hpMul": 1.39
     },
     {
       "night": 9,
@@ -284,7 +284,7 @@
         "wood": 130,
         "hide": 5
       },
-      "hpMul": 1.22
+      "hpMul": 1.09
     },
     {
       "night": 10,

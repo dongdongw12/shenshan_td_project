@@ -83,10 +83,18 @@ export function botDay(g: GameState, opt: BotOptions = DEFAULT_BOT): string[] {
   };
   const nearHouse = (i: number, j: number) => -Math.hypot((i + 1) * T - hc.x, (j + 1) * T - hc.y);
 
-  // 0) 货郎来了就卖掉结余：留两天口粮、150 木、12 兽材
+  // 正房修好后开始为青砖大院攒木料 / 兽材（不然货郎一来就卖光，永远修不起大院）
+  const lv3 = g.cfg.economy.house.lv3.cost ?? {};
+  const savingForCourtyard = g.houseLevel === 2 && g.day >= 5;
+
+  // 0) 货郎来了就卖掉结余：留两天口粮、150 木、12 兽材（攒大院时留够大院的量）
   if (opt.sellToPeddler && g.peddler) {
     const mouths = 1 + g.members.length;
-    const keep = { food: mouths * g.cfg.economy.upkeep.foodPerMemberPerDawn * 2 + 30, wood: 150, hide: 12 };
+    const keep = {
+      food: mouths * g.cfg.economy.upkeep.foodPerMemberPerDawn * 2 + 30,
+      wood: savingForCourtyard ? Math.max(150, (lv3.wood ?? 0) + 20) : 150,
+      hide: savingForCourtyard ? Math.max(12, (lv3.hide ?? 0) + 3) : 12,
+    };
     for (const r of ["food", "wood", "hide"] as const) {
       const extra = Math.floor(g.res[r] - keep[r]);
       if (extra > 0 && sellToPeddler(g, r, extra).ok) log.push(`卖给货郎 ${extra}${{ food: "粮", wood: "木", hide: "兽材" }[r]}`);
@@ -101,6 +109,8 @@ export function botDay(g: GameState, opt: BotOptions = DEFAULT_BOT): string[] {
     if (!g.married && day >= 2 && canAfford(g, g.cfg.economy.house.lv2.cost)) {
       if (upgradeHouse(g).ok) { log.push("修青瓦正房 · 娶妻"); acted = true; continue; }
     }
+    // 1b) 大院（第 6 天起，钱粮够了先修大院再花别的）
+    if (g.houseLevel === 2 && day >= 6 && canAfford(g, lv3) && upgradeHouse(g).ok) { log.push("扩建青砖大院"); acted = true; continue; }
     // 2) 第一座塔永远最先
     if (count((b) => b.category === "tower") < 1 && tryBuildBest("tower_bamboo", towerScore(8))) { acted = true; continue; }
     // 3) 经济
@@ -109,8 +119,7 @@ export function botDay(g: GameState, opt: BotOptions = DEFAULT_BOT): string[] {
     if (day >= 2 && count("hunt_lodge") < 1 && tryBuildBest("hunt_lodge", nearHouse)) { acted = true; continue; }
     if (g.married && count("wing_room") < (day >= 5 ? 2 : 1) && tryBuildBest("wing_room", nearHouse)) { acted = true; continue; }
     if (g.married && day >= 4 && count("granary") < 1 && tryBuildBest("granary", nearHouse)) { acted = true; continue; }
-    // 4) 大院 / 祠堂（第 6 天起）
-    if (g.houseLevel === 2 && day >= 6 && canAfford(g, g.cfg.economy.house.lv3.cost) && upgradeHouse(g).ok) { log.push("扩建青砖大院"); acted = true; continue; }
+    // 4) 祠堂（大院修好后）
     if (g.houseLevel === 3 && count("ancestral_hall") < 1 && tryBuildBest("ancestral_hall", nearHouse)) { acted = true; continue; }
     // 5) 防御：塔数量 → 升级 → 特种塔 → 陷阱 → 篱笆/墙
     const towers = [...g.buildings.values()].filter((b) => b.category === "tower");
