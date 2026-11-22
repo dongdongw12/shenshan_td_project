@@ -6,7 +6,7 @@
 import { parseFp, type GameConfig } from "./config";
 import type { Tile } from "./flowField";
 import {
-  assignWork, build, buildCost, canAfford, canBuildAt, garrison, kindInfo, pathFromSpawn, repairAll, repairCost,
+  assignWork, build, buildCost, canAfford, sellToPeddler, canBuildAt, garrison, kindInfo, pathFromSpawn, repairAll, repairCost,
   towerStats, upgrade, upgradeHouse, type Building, type GameState,
 } from "./sim";
 
@@ -19,6 +19,7 @@ export interface BotOptions {
   /** 余钱超过 reserveCoin 就继续加塔/升级 */
   greedy: boolean;
   reserveCoin: number;
+  sellToPeddler: boolean;
 }
 
 export const DEFAULT_BOT: BotOptions = {
@@ -28,6 +29,7 @@ export const DEFAULT_BOT: BotOptions = {
   fencesNearHouse: 3,
   greedy: true,
   reserveCoin: 90,
+  sellToPeddler: true,
 };
 
 const at = <T>(arr: T[], day: number): T => arr[Math.min(arr.length - 1, day - 1)]!;
@@ -80,6 +82,16 @@ export function botDay(g: GameState, opt: BotOptions = DEFAULT_BOT): string[] {
     return cover * 10 - near * 0.2;
   };
   const nearHouse = (i: number, j: number) => -Math.hypot((i + 1) * T - hc.x, (j + 1) * T - hc.y);
+
+  // 0) 货郎来了就卖掉结余：留两天口粮、150 木、12 兽材
+  if (opt.sellToPeddler && g.peddler) {
+    const mouths = 1 + g.members.length;
+    const keep = { food: mouths * g.cfg.economy.upkeep.foodPerMemberPerDawn * 2 + 30, wood: 150, hide: 12 };
+    for (const r of ["food", "wood", "hide"] as const) {
+      const extra = Math.floor(g.res[r] - keep[r]);
+      if (extra > 0 && sellToPeddler(g, r, extra).ok) log.push(`卖给货郎 ${extra}${{ food: "粮", wood: "木", hide: "兽材" }[r]}`);
+    }
+  }
 
   let acted = true;
   for (let guard = 0; acted && guard < 40; guard++) {

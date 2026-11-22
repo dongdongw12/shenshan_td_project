@@ -12,7 +12,7 @@ import { paintGround, paintPaper, parseGroundMap } from "../render/groundPainter
 import { defaultConfig, parseFp, type Cost } from "../game/config";
 import {
   build, buildCost, canBuildAt, createGame, drainEvents, kindInfo, repairAll, repairCost, startNight, step, upgrade, upgradeHouse,
-  canAfford, type Building, type GameState,
+  canAfford, sellToPeddler, adOffers, adReward, type AdKind, type Building, type GameState,
 } from "../game/sim";
 import { botDay, botFamily } from "../game/bot";
 import {
@@ -149,6 +149,24 @@ async function boot(): Promise<void> {
   mkBtn(() => { const log = botFamily(g); toast(log[log.length - 1] ?? "家人已各就各位"); }, (el) => {
     setHtml(el, `安排家人<small>${g.members.length} 口</small>`);
   });
+  // 货郎：来访的白天出现，一键卖掉结余（留两天口粮、100 木）
+  mkBtn(() => {
+    const keep = { food: (1 + g.members.length) * cfg.economy.upkeep.foodPerMemberPerDawn * 2 + 30, wood: 100 };
+    const before = g.res.coin;
+    for (const r of ["food", "wood"] as const) { const n = Math.floor(g.res[r] - keep[r]); if (n > 0) sellToPeddler(g, r, n); }
+    toast(g.res.coin > before ? `卖给货郎，得 ${Math.floor(g.res.coin - before)} 钱` : "没有多余的粮木可卖");
+  }, (el) => {
+    el.style.display = g.phase === "day" && g.peddler ? "" : "none";
+    setHtml(el, `货郎进山<small>卖余粮余木${g.ads.priceMul > 1 ? " ×2" : ""}</small>`);
+  });
+  // 激励视频（演示里直接模拟看完）
+  for (const kind of ["good_harvest", "rich_peddler", "double_happiness", "last_stand"] as AdKind[]) {
+    mkBtn(() => { const r = adReward(g, kind); toast(r.ok ? `▶ ${cfg.economy.ads[kind].name}（演示：模拟看完广告）` : r.reason); }, (el) => {
+      const offer = adOffers(g).find((o) => o.kind === kind)!;
+      el.style.display = offer.available ? "" : "none";
+      setHtml(el, `▶ ${offer.name}<small>看广告</small>`);
+    }, kind === "last_stand" ? "primary" : "");
+  }
   mkBtn(() => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; }, (el) => setHtml(el, `${speed}× 速度`));
   mkBtn(() => { startNight(g); tool = null; }, (el) => {
     const day = g.phase === "day";
@@ -352,6 +370,7 @@ async function boot(): Promise<void> {
         lastPos.delete(e.id); facing.delete(e.id);
       } else if (e.type === "nightStart") toast(e.title);
       else if (e.type === "married") toast("修好青瓦正房，迎娶阿莲！");
+      else if (e.type === "peddler") toast("货郎进山了！可以卖掉余粮余木");
       else if (e.type === "birth") toast(`厢房添丁：${e.name}`);
       else if (e.type === "grownUp") toast(`${e.name}长成少年：${cfg.family.roles[e.role]?.name}`);
       else if (e.type === "buildingDestroyed") toast(`${cfg.defense.towers[e.kind]?.name ?? cfg.economy.buildings[e.kind]?.name ?? cfg.defense.walls[e.kind]?.name ?? "建筑"}被毁！`);

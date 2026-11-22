@@ -79,7 +79,7 @@
         "wood": 50,
         "hide": 3
       },
-      "hpMul": 1.05
+      "hpMul": 0.99
     },
     {
       "night": 4,
@@ -108,7 +108,7 @@
         "wood": 60,
         "hide": 2
       },
-      "hpMul": 1.43
+      "hpMul": 1.51
     },
     {
       "night": 5,
@@ -137,7 +137,7 @@
         "wood": 70,
         "hide": 3
       },
-      "hpMul": 1.06
+      "hpMul": 1.32
     },
     {
       "night": 6,
@@ -172,7 +172,7 @@
         "wood": 80,
         "hide": 3
       },
-      "hpMul": 1.78
+      "hpMul": 1.76
     },
     {
       "night": 7,
@@ -208,7 +208,7 @@
         "wood": 110,
         "hide": 5
       },
-      "hpMul": 1.4
+      "hpMul": 1.53
     },
     {
       "night": 8,
@@ -243,7 +243,7 @@
         "wood": 110,
         "hide": 4
       },
-      "hpMul": 1.25
+      "hpMul": 1.49
     },
     {
       "night": 9,
@@ -284,7 +284,7 @@
         "wood": 130,
         "hide": 5
       },
-      "hpMul": 0.99
+      "hpMul": 1.22
     },
     {
       "night": 10,
@@ -326,7 +326,7 @@
         "wood": 300,
         "hide": 10
       },
-      "hpMul": 0.64
+      "hpMul": 0.73
     }
   ],
   "endless": {

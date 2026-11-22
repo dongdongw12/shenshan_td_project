@@ -47,6 +47,13 @@ export interface GameConfig {
     house: Record<"lv1" | "lv2" | "lv3", HouseLevel>;
     buildings: Record<string, BuildingDef>;
     married: { productionMul: number };
+    peddler: { fromDay: number; chance: number; buy: Partial<Record<Resource, number>> };
+    ads: {
+      rich_peddler: { name: string; priceMul: number; perDay: number };
+      double_happiness: { name: string; perDay: number };
+      last_stand: { name: string; hpBelow: number; restoreTo: number; stunS: number; stunRadius: number; perNight: number };
+      good_harvest: { name: string; productionMul: number; perDay: number };
+    };
   };
   defense: {
     towers: Record<string, TowerDef>;

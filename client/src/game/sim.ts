@@ -81,6 +81,9 @@ export type GameEvent =
   | { type: "birth"; member: number; name: string }
   | { type: "grownUp"; member: number; name: string; role: string }
   | { type: "dawn"; night: number; reward: Cost; starved: boolean }
+  | { type: "peddler" }
+  | { type: "sold"; resource: Resource; amount: number; coin: number }
+  | { type: "ad"; kind: AdKind }
   | { type: "victory" }
   | { type: "defeat"; night: number };
 
@@ -120,6 +123,9 @@ export interface GameState {
   nightLog: NightStats[];
   cur: { spawned: number; fled: number; lost: number };
   heroCd: number;
+  /** 今天货郎在不在 */
+  peddler: boolean;
+  ads: { usedToday: Record<string, number>; usedNight: Record<string, number>; priceMul: number; harvestMul: number; twins: boolean };
 }
 
 // ============================================================================ 创建
@@ -135,6 +141,8 @@ export function createGame(cfg: GameConfig, seed = 1): GameState {
     ffHouse: null, ffArson: null, nextId: 1, events: [], nightLog: [],
     cur: { spawned: 0, fled: 0, lost: 0 },
     heroCd: 0,
+    peddler: false,
+    ads: { usedToday: {}, usedNight: {}, priceMul: 1, harvestMul: 1, twins: false },
   };
   const h = cfg.economy.house.lv1;
   const fp = parseFp(h.footprint);
@@ -342,6 +350,7 @@ export function startNight(g: GameState): CmdResult {
   const night = nightDef(g.cfg, g.day);
   g.phase = "night";
   g.nightStartT = g.t;
+  g.ads.usedNight = {};
   g.cur = { spawned: 0, fled: 0, lost: 0 };
   let at = g.t + 1.5;
   for (const grp of night.groups) {
@@ -420,7 +429,7 @@ function tick(g: GameState, dt: number): void {
 // ============================================================================ 白昼：生产
 
 export function productionMul(g: GameState, kind: string): number {
-  let mul = g.married ? g.cfg.economy.married.productionMul : 1;
+  let mul = (g.married ? g.cfg.economy.married.productionMul : 1) * g.ads.harvestMul;
   for (const b of g.buildings.values()) {
     const eff = g.cfg.economy.buildings[b.kind]?.effect;
     if (eff?.productionMul) mul *= eff.productionMul;
@@ -435,6 +444,7 @@ export function productionMul(g: GameState, kind: string): number {
 
 function tickDay(g: GameState, dt: number): void {
   const f = g.cfg.economy.farmer;
+  // 当家的砍柴：吃“分工加成”和“风调雨顺”，不吃娶妻加成（娶妻加成是阿莲帮着收割庄稼）
   const fm = productionMul(g, "farmer") / (g.married ? g.cfg.economy.married.productionMul : 1);
   g.res.wood += f.woodPerS * dt * fm;
   g.res.coin += f.coinPerS * dt * fm;
@@ -810,7 +820,9 @@ function endNight(g: GameState, survived: boolean): void {
   if (g.married) {
     const cap = [...g.buildings.values()].reduce((s, b) => s + (g.cfg.economy.buildings[b.kind]?.capacity ?? 0), 0);
     const kids = g.members.filter((m) => m.kind === "child").length;
-    for (let k = 0; k < g.cfg.family.birth.perDawn && kids + k < cap; k++) {
+    const births = g.cfg.family.birth.perDawn + (g.ads.twins ? 1 : 0);
+    g.ads.twins = false;
+    for (let k = 0; k < births && kids + k < cap; k++) {
       const name = g.cfg.family.names[(kids + k) % g.cfg.family.names.length]!;
       const m: Member = { id: g.nextId++, name, kind: "child", bornDay: g.day + 1, role: null, work: "farm_rice", post: null };
       g.members.push(m);
@@ -829,7 +841,77 @@ function endNight(g: GameState, survived: boolean): void {
   g.day++;
   g.phase = "day";
   g.dayLeft = g.cfg.economy.dayLengthS;
+  newDay(g);
+}
+
+function newDay(g: GameState): void {
+  g.ads.usedToday = {};
+  g.ads.priceMul = 1;
+  g.ads.harvestMul = 1;
+  const pd = g.cfg.economy.peddler;
+  g.peddler = g.day >= pd.fromDay && g.rng.next() < pd.chance;
   g.events.push({ type: "dayStart", day: g.day });
+  if (g.peddler) g.events.push({ type: "peddler" });
+}
+
+// ============================================================================ 货郎与激励视频
+
+/** 卖给货郎（只在货郎来访的白天） */
+export function sellToPeddler(g: GameState, resource: Resource, amount: number): CmdResult {
+  if (g.phase !== "day") return { ok: false, reason: "货郎只白天来" };
+  if (!g.peddler) return { ok: false, reason: "今天货郎没进山" };
+  const price = g.cfg.economy.peddler.buy[resource];
+  if (!price || resource === "coin") return { ok: false, reason: "货郎不收这个" };
+  const n = Math.floor(Math.min(amount, g.res[resource]));
+  if (n <= 0) return { ok: false, reason: "没有可卖的" };
+  const coin = Math.floor(n * price * g.ads.priceMul);
+  g.res[resource] -= n;
+  g.res.coin += coin;
+  g.events.push({ type: "sold", resource, amount: n, coin });
+  return { ok: true };
+}
+
+export type AdKind = "rich_peddler" | "double_happiness" | "last_stand" | "good_harvest";
+
+export interface AdOffer { kind: AdKind; name: string; available: boolean; reason?: string }
+
+/** 当前可以看哪些激励视频（UI 据此显示按钮） */
+export function adOffers(g: GameState): AdOffer[] {
+  const a = g.cfg.economy.ads;
+  const usedDay = (k: AdKind) => g.ads.usedToday[k] ?? 0;
+  const house = g.buildings.get(g.houseId);
+  const offers: AdOffer[] = [
+    { kind: "good_harvest", name: a.good_harvest.name, available: g.phase === "day" && usedDay("good_harvest") < a.good_harvest.perDay, reason: "白天、每天一次" },
+    { kind: "rich_peddler", name: a.rich_peddler.name, available: g.phase === "day" && g.peddler && usedDay("rich_peddler") < a.rich_peddler.perDay, reason: "货郎来访的白天" },
+    { kind: "double_happiness", name: a.double_happiness.name, available: g.married && !g.ads.twins && usedDay("double_happiness") < a.double_happiness.perDay, reason: "成家后、每天一次" },
+    {
+      kind: "last_stand", name: a.last_stand.name,
+      available: g.phase === "night" && !!house && house.hp / house.maxHp < a.last_stand.hpBelow && (g.ads.usedNight.last_stand ?? 0) < a.last_stand.perNight,
+      reason: "夜里主屋血量低于 15%",
+    },
+  ];
+  return offers;
+}
+
+/** 广告看完后由平台层调用，发放奖励 */
+export function adReward(g: GameState, kind: AdKind): CmdResult {
+  const offer = adOffers(g).find((o) => o.kind === kind);
+  if (!offer?.available) return { ok: false, reason: offer?.reason ?? "现在不能领" };
+  const a = g.cfg.economy.ads;
+  if (kind === "last_stand") {
+    g.ads.usedNight[kind] = (g.ads.usedNight[kind] ?? 0) + 1;
+    const house = g.buildings.get(g.houseId)!;
+    house.hp = Math.max(house.hp, house.maxHp * a.last_stand.restoreTo);
+    const T = g.cfg.tileSize;
+    for (const e of g.enemies) if (distToRect(e.x, e.y, house, T) <= a.last_stand.stunRadius) e.stunUntil = g.t + a.last_stand.stunS;
+  } else {
+    g.ads.usedToday[kind] = (g.ads.usedToday[kind] ?? 0) + 1;
+    if (kind === "good_harvest") g.ads.harvestMul = a.good_harvest.productionMul;
+    if (kind === "rich_peddler") g.ads.priceMul = a.rich_peddler.priceMul;
+    if (kind === "double_happiness") g.ads.twins = true;
+  }
+  g.events.push({ type: "ad", kind });
+  return { ok: true };
 }
 
 /** 通关后继续无尽模式 */
@@ -838,6 +920,7 @@ export function continueEndless(g: GameState): CmdResult {
   g.day++;
   g.phase = "day";
   g.dayLeft = g.cfg.economy.dayLengthS;
+  newDay(g);
   return { ok: true };
 }
 

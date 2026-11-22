@@ -139,5 +139,41 @@
   "married": {
     "productionMul": 1.4,
     "_note": "娶妻后自动收割，产量 +40%（原型数值）"
+  },
+  "peddler": {
+    "_note": "货郎进山：第 2 天起，每天白天按 chance 概率来访，收购粮/木/兽材换钱（解决粮木结余）。价格故意压低，只是消耗口不是主要收入。",
+    "fromDay": 2,
+    "chance": 0.6,
+    "buy": {
+      "food": 0.25,
+      "wood": 0.3,
+      "hide": 6
+    }
+  },
+  "ads": {
+    "_note": "IAA 激励视频埋点（模拟层只负责效果和次数限制；真机由平台层在广告看完后调用 adReward）。平衡对局不使用广告。",
+    "rich_peddler": {
+      "name": "富商货郎进山",
+      "priceMul": 2,
+      "perDay": 1
+    },
+    "double_happiness": {
+      "name": "双喜临门",
+      "perDay": 1,
+      "_note": "下一个黎明添丁时生双胞胎（需要厢房空位）"
+    },
+    "last_stand": {
+      "name": "绝境死守",
+      "hpBelow": 0.15,
+      "restoreTo": 0.6,
+      "stunS": 2.5,
+      "stunRadius": 10,
+      "perNight": 1
+    },
+    "good_harvest": {
+      "name": "风调雨顺",
+      "productionMul": 2,
+      "perDay": 1
+    }
   }
 }

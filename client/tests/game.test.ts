@@ -3,7 +3,7 @@ import { defaultConfig, withOverrides, type GameConfig } from "../src/game/confi
 import { buildFlowField, Grid, INF, nextStep } from "../src/game/flowField";
 import {
   build, buildCost, createGame, drainEvents, garrison, nightDef, pathFromSpawn, runUntilPhaseChange, startNight,
-  step, towerStats, upgradeHouse, assignWork, type GameState,
+  step, towerStats, upgradeHouse, assignWork, sellToPeddler, adReward, adOffers, productionMul, type GameState,
 } from "../src/game/sim";
 import { autoPlay } from "../src/game/bot";
 
@@ -231,5 +231,56 @@ describe("确定性与无尽", () => {
     const n10 = nightDef(cfg, 10), n12 = nightDef(cfg, 12);
     expect(n12.hpMul).toBeCloseTo((cfg.waves.nights[9]!.hpMul ?? 1) * cfg.waves.endless.hpMulPerNight ** 2);
     expect(n12.groups[0]!.count).toBeGreaterThan(n10.groups[0]!.count);
+  });
+});
+
+describe("货郎与激励视频", () => {
+  it("货郎只在来访的白天收购；富商货郎让收购价翻倍（每天一次）", () => {
+    const g = createGame(testConfig(), 1);
+    g.res.food = 200;
+    expect(sellToPeddler(g, "food", 100).ok).toBe(false); // 第一天没来
+    g.peddler = true;
+    expect(sellToPeddler(g, "food", 100).ok).toBe(true);
+    expect(g.res.food).toBe(100);
+    expect(g.res.coin).toBe(90 + 25);
+    expect(adReward(g, "rich_peddler").ok).toBe(true);
+    sellToPeddler(g, "food", 100);
+    expect(g.res.coin).toBe(90 + 25 + 50);
+    expect(adReward(g, "rich_peddler").ok).toBe(false);
+  });
+
+  it("风调雨顺：当天产量翻倍，第二天恢复", () => {
+    const g = createGame(testConfig(), 1);
+    const base = productionMul(g, "farm_rice");
+    expect(adReward(g, "good_harvest").ok).toBe(true);
+    expect(productionMul(g, "farm_rice")).toBeCloseTo(base * 2);
+    build(g, "tower_bamboo", 6, 4);
+    startNight(g);
+    runUntilPhaseChange(g);
+    expect(productionMul(g, "farm_rice")).toBeCloseTo(base);
+  });
+
+  it("双喜临门：有空位时黎明生双胞胎", () => {
+    const cfg = withOverrides(testConfig(), (c) => { c.waves.nights[0]!.groups = [{ type: "wolf", count: 1, interval: 1 }]; });
+    const g = createGame(cfg, 1);
+    rich(g);
+    upgradeHouse(g);
+    build(g, "wing_room", 1, 3);
+    expect(adReward(g, "double_happiness").ok).toBe(true);
+    startNight(g);
+    runUntilPhaseChange(g);
+    expect(g.members.filter((m) => m.kind === "child").length).toBe(2);
+  });
+
+  it("绝境死守：只在夜里主屋 <15% 时可用，回到 60% 并定住附近敌人，每夜一次", () => {
+    const g = createGame(testConfig(), 1);
+    expect(adOffers(g).find((o) => o.kind === "last_stand")!.available).toBe(false);
+    startNight(g);
+    const house = g.buildings.get(g.houseId)!;
+    house.hp = house.maxHp * 0.1;
+    expect(adReward(g, "last_stand").ok).toBe(true);
+    expect(house.hp).toBeCloseTo(house.maxHp * 0.6);
+    house.hp = house.maxHp * 0.1;
+    expect(adReward(g, "last_stand").ok).toBe(false);
   });
 });
