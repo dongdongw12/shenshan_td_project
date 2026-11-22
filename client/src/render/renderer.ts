@@ -48,6 +48,8 @@ export interface RenderOptions {
   showGrid?: boolean;
   /** 贴地图层（农田、鱼梁、选址预览等）：画在地影之后、物体之前，不参与遮挡排序 */
   drawDecals?: (ctx: CanvasRenderingContext2D, toScreen: (x: number, y: number, z?: number) => Vec2, pxPerMeter: number) => void;
+  /** 背景（远山等，屏幕固定）：画在天色之后、地面之前 */
+  drawBackdrop?: (ctx: CanvasRenderingContext2D, w: number, h: number, nightAlpha: number) => void;
   /** 最上层（飘字、血条等），不参与排序 */
   drawOverlay?: (ctx: CanvasRenderingContext2D, toScreen: (x: number, y: number, z?: number) => Vec2, pxPerMeter: number) => void;
 }
@@ -89,6 +91,7 @@ export class IsoRenderer {
     ctx.globalAlpha = 1;
     ctx.fillStyle = mixRgb(this.ground.sky[0], this.ground.sky[1], a);
     ctx.fillRect(0, 0, w, h);
+    if (opts.drawBackdrop) { opts.drawBackdrop(ctx, w, h, a); ctx.globalAlpha = 1; }
 
     if (opts.ground) {
       this.drawGroundTexture(opts.ground.day, cam, 1);

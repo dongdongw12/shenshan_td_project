@@ -484,3 +484,72 @@ export function paintPaper(createCanvas: (w: number, h: number) => HTMLCanvasEle
   ctx.globalAlpha = 1;
   return c;
 }
+
+/**
+ * 远山背景（屏幕固定，画在地面之前）：三层青绿远山 —— 最远一层淡石青、中层二青、近层石绿，
+ * 山脊墨线 + 几笔皴，层与层之间留白雾。只占屏幕上半部；谷地菱形盖在中间，四角露出山。
+ * night = true 时整体压成夜靛、山脊线更淡。按屏幕尺寸缓存，尺寸变了再画。
+ */
+export function paintBackdrop(createCanvas: (w: number, h: number) => HTMLCanvasElement, w: number, h: number, night: boolean, seed = 5): HTMLCanvasElement {
+  const c = createCanvas(Math.max(1, Math.round(w)), Math.max(1, Math.round(h)));
+  const ctx = c.getContext("2d")!;
+  const R = rng(seed);
+  ctx.clearRect(0, 0, w, h);
+  const layers = night
+    ? [{ top: "#3a4a78", bot: "#25315c", y: 0.1, amp: 0.07 }, { top: "#33456b", bot: "#222c52", y: 0.2, amp: 0.08 }, { top: "#2d4a5e", bot: "#1f2a4c", y: 0.32, amp: 0.07 }]
+    : [{ top: "#a9c1cc", bot: "#d3ddd6", y: 0.1, amp: 0.07 }, { top: "#86a9b4", bot: "#c5d4cc", y: 0.2, amp: 0.08 }, { top: "#6f9a8e", bot: "#bfd0c3", y: 0.32, amp: 0.07 }];
+  for (const [li, L] of layers.entries()) {
+    const f1 = (2 + R() * 2) / w, f2 = (5 + R() * 4) / w, f3 = (13 + R() * 6) / w;
+    const p1 = R() * 6.28, p2 = R() * 6.28, p3 = R() * 6.28;
+    const ridge = (x: number) => h * L.y + h * L.amp * (0.55 * Math.sin(x * f1 * 6.28 + p1) + 0.3 * Math.sin(x * f2 * 6.28 + p2) + 0.15 * Math.sin(x * f3 * 6.28 + p3))
+      - h * L.amp * 0.9 * Math.pow(Math.max(0, Math.sin(x * f1 * 3.14 + p2)), 6); // 偶尔拔起一座尖峰
+    const step = Math.max(2, w / 160);
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    for (let x = 0; x <= w + step; x += step) ctx.lineTo(x, ridge(x));
+    ctx.lineTo(w, h);
+    ctx.closePath();
+    const gy0 = h * (L.y - L.amp * 1.6), gy1 = h * (L.y + 0.28);
+    const grad = ctx.createLinearGradient(0, gy0, 0, gy1);
+    grad.addColorStop(0, L.top);
+    grad.addColorStop(1, L.bot);
+    ctx.fillStyle = grad;
+    ctx.globalAlpha = 0.9;
+    ctx.fill();
+    // 山脊墨线：粗细随走向变化（书法起伏）
+    ctx.globalAlpha = night ? 0.28 : 0.42 - li * 0.06;
+    ctx.strokeStyle = "#1c1510";
+    for (let x = 0; x < w; x += step) {
+      ctx.lineWidth = 0.6 + 0.9 * (0.5 + 0.5 * Math.sin(x * 0.031 + li));
+      ctx.beginPath();
+      ctx.moveTo(x, ridge(x));
+      ctx.lineTo(x + step, ridge(x + step));
+      ctx.stroke();
+    }
+    // 皴：山脊下方几笔斜短线
+    ctx.lineWidth = 0.7;
+    ctx.globalAlpha = night ? 0.12 : 0.18;
+    for (let k = 0; k < 26; k++) {
+      const x = R() * w, y0 = ridge(x) + 4 + R() * h * 0.05, l = 5 + R() * 10;
+      ctx.beginPath();
+      ctx.moveTo(x, y0);
+      ctx.quadraticCurveTo(x - l * 0.3, y0 + l * 0.5, x - l * 0.2, y0 + l);
+      ctx.stroke();
+    }
+    // 层间白雾
+    const mist = ctx.createLinearGradient(0, h * (L.y + L.amp * 0.6), 0, h * (L.y + L.amp * 0.6 + 0.12));
+    mist.addColorStop(0, night ? "rgba(40,52,90,0)" : "rgba(236,232,220,0)");
+    mist.addColorStop(1, night ? "rgba(40,52,90,0.55)" : "rgba(236,232,220,0.7)");
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = mist;
+    ctx.fillRect(0, h * (L.y + L.amp * 0.6), w, h * 0.12);
+  }
+  // 下半部渐隐回纸色，避免和地面贴图边缘撞色
+  const fade = ctx.createLinearGradient(0, h * 0.42, 0, h * 0.62);
+  fade.addColorStop(0, night ? "rgba(15,21,40,0)" : "rgba(205,216,207,0)");
+  fade.addColorStop(1, night ? "rgba(15,21,40,1)" : "rgba(205,216,207,1)"); // = renderer 的天色
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, h * 0.42, w, h * 0.58);
+  ctx.globalAlpha = 1;
+  return c;
+}

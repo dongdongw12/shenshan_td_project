@@ -8,7 +8,7 @@ import { IsoProjection, type Vec2 } from "../render/iso";
 import { IsoRenderer, type Camera, type SpriteImages } from "../render/renderer";
 import { Scene } from "../render/scene";
 import type { SpriteAtlasIndex } from "../render/spriteMeta";
-import { paintGround, paintPaper, parseGroundMap } from "../render/groundPainter";
+import { paintGround, paintPaper, parseGroundMap, paintBackdrop } from "../render/groundPainter";
 import { defaultConfig, parseFp, type Cost } from "../game/config";
 import {
   assignWork, build, buildCost, canBuildAt, createGame, drainEvents, garrison, kindInfo, repairAll, repairCost, startNight, step, upgrade, upgradeHouse,
@@ -627,6 +627,14 @@ async function boot(): Promise<void> {
     }
   };
 
+  // 远山背景：按屏幕尺寸缓存白昼 / 夜晚两张，入夜交叉淡入
+  let backdrop: { w: number; h: number; day: HTMLCanvasElement; night: HTMLCanvasElement } | null = null;
+  const drawBackdrop = (c: CanvasRenderingContext2D, w: number, h: number, a: number) => {
+    if (!backdrop || backdrop.w !== w || backdrop.h !== h) backdrop = { w, h, day: paintBackdrop(off, w, h, false), night: paintBackdrop(off, w, h, true) };
+    c.globalAlpha = 1; c.drawImage(backdrop.day, 0, 0, w, h);
+    if (a > 0.002) { c.globalAlpha = a; c.drawImage(backdrop.night, 0, 0, w, h); }
+    c.globalAlpha = 1;
+  };
   const drawOverlay = (c: CanvasRenderingContext2D, _S: unknown, ppm: number) => {
     const u = ppm * 0.1;
     // 白天主屋 / 厢房屋脊冒炊烟（快天黑时最浓，夜里散掉）；夜里稻田边几点萤火
@@ -743,7 +751,7 @@ async function boot(): Promise<void> {
     nightA += Math.sign(target - nightA) * Math.min(Math.abs(target - nightA), dt * 0.8);
     syncScene();
     const { w, h } = platform.screenSize();
-    renderer.render(scene, cam, nightA, { w, h, dpr: platform.pixelRatio() }, { ground, paper, drawDecals, drawOverlay });
+    renderer.render(scene, cam, nightA, { w, h, dpr: platform.pixelRatio() }, { ground, paper, drawDecals, drawOverlay, drawBackdrop });
     uiT -= dt;
     if (uiT <= 0) { renderTop(); renderBottom(); if (selected !== null) renderPanel(); if (familyOpen) renderFamily(); uiT = 0.25; }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) toastEl.style.opacity = "0"; }
