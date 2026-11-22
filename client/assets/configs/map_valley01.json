@@ -1,0 +1,21 @@
+{
+  "_note": "主线地图“山口谷地”。j = 0 是离相机最近的一排（屏幕左下边），i 向屏幕右下。g 草 d 土路 f 可开垦荒地 w 溪 r 山石（不可走不可建）。敌人从远端山口（j 最大的一排）进来，主屋在近端。",
+  "terrain": [
+    "ggfffgggggggw",
+    "ggfffggggggww",
+    "gggggggggggwg",
+    "ggggggddggwwg",
+    "ggggggdgggwgg",
+    "gggggddggwwgg",
+    "rggggdgggwggr",
+    "rrgggdggwwggr",
+    "rrggddggwgggr",
+    "rrggdgggwggrr",
+    "rrrgdggwwggrr",
+    "rrrgdgggwgrrr",
+    "rrrrdggwwgrrr",
+    "rrrrddggwrrrr"
+  ],
+  "house": { "i": 5, "j": 1 },
+  "spawns": [ { "i": 4, "j": 13 }, { "i": 5, "j": 13 }, { "i": 6, "j": 13 } ]
+}

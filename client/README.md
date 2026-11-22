@@ -14,6 +14,9 @@
 | `src/render/scene.ts` | 场景数据：地块网格、建筑精灵、自绘物体（单位/投射物/特效） |
 | `src/render/renderer.ts` | Canvas2D 渲染：天色 → 地面贴图（昼夜交叉淡入）→ **全部地影** → 按遮挡顺序画物体（白昼图 + 夜晚图交叉淡入）→ 宣纸纹理 |
 | `src/render/groundPainter.ts` | 地面绘制：按地形图（草 g / 土路 d / 水田 f / 溪 w / 山石 r）一次性画出白昼、夜晚两张离屏贴图——矿物色平涂、斑驳色块、墨色草簇、路沿墨线、秧行与田埂、木刻水纹与卵石岸、地图外缘分染；另有宣纸纹理 |
+| `src/game/` | **T4 玩法核心**（引擎无关、确定性）：`sim.ts` 昼夜循环/经济/建造/夜战/家族/黎明结算，`flowField.ts` 流场寻路，`bot.ts` 平衡 AI。说明见 `docs/design/T4_core_systems.md` |
+| `assets/configs/` | 玩法数值 JSON（经济、防御、敌人、家族、10 夜波次、地图） |
+| `scripts/` | `balance.ts` 自动对局平衡表、`tune.ts` 自动搜每夜难度倍率、`income.ts` 收入来源 |
 | `src/platform/` | 平台适配：`browser.ts`（开发台）、`wechat.ts`（小游戏，**未真机验证**） |
 | `src/dev/` | 浏览器开发台（替身精灵小山村 + 绕房走的村民） |
 | `assets/dev/` | 开发用替身精灵（`pipeline/atlas/export_sprites.py --scale 0.5` 导出，64 px/m） |
@@ -26,6 +29,8 @@ npm --prefix client install
 npm --prefix client test          # 单测
 npm --prefix client run typecheck
 npm --prefix client run dev       # http://127.0.0.1:5173
+npm --prefix client run balance   # 10 夜自动对局平衡表（-- --write 写 docs/design/balance_v1.md）
+npm --prefix client run tune      # 自动搜每夜难度倍率（-- --write 写回 waves.json）
 ```
 
 开发台 URL 参数（便于截图对比）：`?t=秒` 固定时辰并暂停，`?debug=1` 显示占地框与格线，`?walk=米` 固定村民位置，`?zoom=1.1&focus=3,3` 放大到某格，`?ground=flat` 用纯色地块，`?paper=0` 关宣纸纹理。

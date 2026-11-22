@@ -1,0 +1,143 @@
+{
+  "_note": "经济与建筑数值（v1）。单位：秒 / 米 / 格（1 格 = 2m）。原型的产出是按“玩家手动收割”设计的，这里全部自动产出，所以周期产量下调约 2/3；起始资源、娶妻价格等沿用原型。经 client/scripts/balance.ts 自动对局调过。",
+  "dayLengthS": 38,
+  "nightMaxS": 150,
+  "start": {
+    "coin": 90,
+    "wood": 45,
+    "food": 20,
+    "hide": 0
+  },
+  "farmer": {
+    "_note": "主角白天砍柴打零工的自动产出；正式版玩家点按可额外加成",
+    "woodPerS": 1.0,
+    "coinPerS": 0.4
+  },
+  "upkeep": {
+    "foodPerMemberPerDawn": 6,
+    "starveHpPenalty": 0.15
+  },
+  "house": {
+    "lv1": {
+      "name": "漏风茅草屋",
+      "hp": 320,
+      "footprint": "2x2",
+      "sprite": "house_lv1_thatch"
+    },
+    "lv2": {
+      "name": "青瓦正房（喜房）",
+      "hp": 560,
+      "footprint": "2x2",
+      "cost": {
+        "coin": 200,
+        "wood": 40
+      },
+      "sprite": "house_lv2_tile",
+      "_note": "修好即娶妻"
+    },
+    "lv3": {
+      "name": "青砖大院",
+      "hp": 1100,
+      "footprint": "3x3",
+      "cost": {
+        "coin": 650,
+        "wood": 220,
+        "hide": 6
+      },
+      "requires": "lv2",
+      "sprite": "house_lv3_courtyard"
+    }
+  },
+  "buildings": {
+    "farm_rice": {
+      "name": "开荒稻田",
+      "footprint": "2x2",
+      "cost": {
+        "coin": 40
+      },
+      "hp": 120,
+      "cycleS": 12,
+      "yield": {
+        "food": 14,
+        "coin": 12
+      },
+      "walkable": true,
+      "sprite": "farm_rice_young"
+    },
+    "fish_weir": {
+      "name": "溪边鱼梁",
+      "footprint": "2x1",
+      "cost": {
+        "coin": 60
+      },
+      "hp": 140,
+      "cycleS": 12,
+      "yield": {
+        "food": 8,
+        "coin": 20
+      },
+      "terrain": "w",
+      "sprite": "fish_weir"
+    },
+    "hunt_lodge": {
+      "name": "林间猎棚",
+      "footprint": "2x2",
+      "cost": {
+        "coin": 75,
+        "wood": 15
+      },
+      "hp": 180,
+      "cycleS": 14,
+      "yield": {
+        "hide": 1,
+        "coin": 22
+      },
+      "sprite": "hunt_lodge"
+    },
+    "wing_room": {
+      "name": "家族厢房",
+      "footprint": "2x2",
+      "cost": {
+        "coin": 180,
+        "wood": 60
+      },
+      "hp": 300,
+      "capacity": 2,
+      "requires": "married",
+      "sprite": "house_wing_room"
+    },
+    "granary": {
+      "name": "防潮粮仓",
+      "footprint": "2x2",
+      "cost": {
+        "coin": 160,
+        "wood": 50
+      },
+      "hp": 260,
+      "requires": "married",
+      "effect": {
+        "productionMul": 1.15
+      },
+      "sprite": "granary"
+    },
+    "ancestral_hall": {
+      "name": "家族祠堂",
+      "footprint": "2x2",
+      "cost": {
+        "coin": 480,
+        "wood": 160,
+        "hide": 4
+      },
+      "hp": 600,
+      "requires": "lv3",
+      "effect": {
+        "familyBondMul": 1.25
+      },
+      "sprite": "ancestral_hall"
+    }
+  },
+  "married": {
+    "productionMul": 1.4,
+    "_note": "娶妻后自动收割，产量 +40%（原型数值）"
+  }
+}

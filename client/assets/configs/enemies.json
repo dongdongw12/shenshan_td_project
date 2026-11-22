@@ -1,0 +1,135 @@
+{
+  "_note": "敌人。速度米/秒；armor 为每次受击的固定减伤（破甲按比例抵消）。前三种沿用原型（52px/s≈2.4m/s 等）。击败表现为“冒烟逃跑”，不做血腥。",
+  "wolf": {
+    "name": "饿狼",
+    "hp": 55,
+    "speed": 2.4,
+    "damage": 12,
+    "attackCd": 1.0,
+    "armor": 0,
+    "radius": 0.45,
+    "reward": {
+      "coin": 5
+    }
+  },
+  "boar": {
+    "name": "野猪",
+    "hp": 150,
+    "speed": 1.8,
+    "damage": 24,
+    "attackCd": 1.2,
+    "armor": 2,
+    "radius": 0.6,
+    "reward": {
+      "coin": 10,
+      "hide": 1
+    },
+    "traits": [
+      "charge"
+    ]
+  },
+  "bear_king": {
+    "name": "黑熊王",
+    "hp": 900,
+    "speed": 1.2,
+    "damage": 48,
+    "attackCd": 1.45,
+    "armor": 5,
+    "radius": 0.9,
+    "reward": {
+      "coin": 90,
+      "hide": 2
+    },
+    "boss": true
+  },
+  "scout": {
+    "name": "土匪斥候",
+    "hp": 90,
+    "speed": 3.1,
+    "damage": 8,
+    "attackCd": 0.8,
+    "armor": 0,
+    "radius": 0.4,
+    "reward": {
+      "coin": 5
+    }
+  },
+  "swordsman": {
+    "name": "刀匪",
+    "hp": 220,
+    "speed": 1.8,
+    "damage": 20,
+    "attackCd": 1.0,
+    "armor": 3,
+    "radius": 0.45,
+    "reward": {
+      "coin": 8
+    }
+  },
+  "shield": {
+    "name": "盾牌匪",
+    "hp": 380,
+    "speed": 1.35,
+    "damage": 16,
+    "attackCd": 1.1,
+    "armor": 10,
+    "radius": 0.5,
+    "reward": {
+      "coin": 11
+    }
+  },
+  "arsonist": {
+    "name": "纵火贼",
+    "hp": 120,
+    "speed": 2.2,
+    "damage": 10,
+    "attackCd": 1.0,
+    "armor": 0,
+    "radius": 0.4,
+    "reward": {
+      "coin": 9
+    },
+    "traits": [
+      "arson"
+    ],
+    "burnDps": 14,
+    "burnS": 6
+  },
+  "second_chief": {
+    "name": "黑风二当家",
+    "hp": 2600,
+    "speed": 1.5,
+    "damage": 46,
+    "attackCd": 1.2,
+    "armor": 8,
+    "radius": 0.7,
+    "reward": {
+      "coin": 200,
+      "hide": 3
+    },
+    "boss": true,
+    "aura": {
+      "radius": 5,
+      "speedMul": 1.2
+    }
+  },
+  "chief": {
+    "name": "黑风大当家",
+    "hp": 6000,
+    "speed": 1.3,
+    "damage": 72,
+    "attackCd": 1.3,
+    "armor": 12,
+    "radius": 0.9,
+    "reward": {
+      "coin": 500,
+      "hide": 6
+    },
+    "boss": true,
+    "aura": {
+      "radius": 6,
+      "damageMul": 1.25,
+      "speedMul": 1.1
+    }
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "_note": "家族与驻守羁绊。子女的身份由白天分工决定（长成少年那天的分工即定身份），驻守到对应位置触发专属羁绊。",
+  "hero": {
+    "name": "当家的",
+    "damage": 22,
+    "attackCd": 0.65,
+    "guardRadius": 6,
+    "_note": "主角夜里守在主屋附近补刀（原型 22 伤害 / 0.65 秒；54px 攻击距离 + 跑动，这里折算成以主屋为中心 6m 的守卫半径）"
+  },
+  "wife": {
+    "name": "阿莲",
+    "nightHealPerS": 12,
+    "_note": "原型数值：夜里熬汤修墙回血；白天自动收割（产量加成见 economy.married）"
+  },
+  "garrison": {
+    "anyMemberFireRateMul": 1.2,
+    "_note": "塔里有人驻守，攻速 +20%"
+  },
+  "growth": {
+    "daysToYouth": 2,
+    "_note": "出生后经过 2 个黎明长成少年，可以驻守"
+  },
+  "birth": {
+    "_note": "每个黎明，若厢房还有空位且已成家，添一个孩子",
+    "perDawn": 1
+  },
+  "names": [
+    "大郎",
+    "二丫",
+    "三郎",
+    "四妹",
+    "五郎",
+    "六妹",
+    "七郎",
+    "八妹"
+  ],
+  "roles": {
+    "hunter": {
+      "name": "猎户",
+      "work": "hunt_lodge",
+      "workMul": 1.25,
+      "bond": {
+        "slot": "tower",
+        "name": "神射手",
+        "armorPierce": 0.6,
+        "rangeMul": 1.15,
+        "damageMul": 1.15
+      }
+    },
+    "woodcutter": {
+      "name": "樵夫",
+      "work": "farmer",
+      "workMul": 1.25,
+      "bond": {
+        "slot": "wall",
+        "name": "修墙",
+        "repairPerS": 9,
+        "radius": 4
+      }
+    },
+    "fisher": {
+      "name": "渔郎",
+      "work": "fish_weir",
+      "workMul": 1.25,
+      "bond": {
+        "slot": "tower",
+        "name": "撒网",
+        "slow": 0.35,
+        "slowS": 1.6
+      }
+    },
+    "farmer": {
+      "name": "农人",
+      "work": "farm_rice",
+      "workMul": 1.25,
+      "bond": {
+        "slot": "house",
+        "name": "送饭",
+        "healPerS": 7
+      }
+    }
+  }
+}

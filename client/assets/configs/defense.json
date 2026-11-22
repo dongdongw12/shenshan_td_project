@@ -1,0 +1,125 @@
+{
+  "_note": "防御建筑（塔 / 墙 / 陷阱）。射程单位米，攻速单位次/秒。前两级箭楼数值沿用原型（170px≈8m、205px≈9.5m）。",
+  "towers": {
+    "tower_bamboo": {
+      "name": "竹箭楼",
+      "footprint": "1x1",
+      "hp": 260,
+      "cost": {
+        "coin": 60
+      },
+      "damage": 18,
+      "fireRate": 1.05,
+      "range": 8,
+      "projectileSpeed": 22,
+      "garrison": 1,
+      "upgrade": "tower_crossbow",
+      "sprite": "tower_bamboo"
+    },
+    "tower_crossbow": {
+      "name": "强弩箭楼",
+      "footprint": "1x1",
+      "hp": 420,
+      "cost": {
+        "coin": 110,
+        "hide": 2
+      },
+      "damage": 38,
+      "fireRate": 1.25,
+      "range": 9.5,
+      "projectileSpeed": 26,
+      "armorPierce": 0.25,
+      "garrison": 1,
+      "upgradeOnly": true,
+      "sprite": "tower_crossbow"
+    },
+    "tower_oil_fire": {
+      "name": "火油连弩塔",
+      "footprint": "1x1",
+      "hp": 480,
+      "cost": {
+        "coin": 220,
+        "wood": 40,
+        "hide": 3
+      },
+      "damage": 16,
+      "fireRate": 0.8,
+      "range": 7.5,
+      "projectileSpeed": 18,
+      "splash": 2.2,
+      "burnDps": 9,
+      "burnS": 3,
+      "requires": "married",
+      "garrison": 1,
+      "sprite": "tower_oil_fire"
+    },
+    "tower_rolling_log": {
+      "name": "滚木礌石楼",
+      "footprint": "2x2",
+      "hp": 900,
+      "cost": {
+        "coin": 420,
+        "wood": 160,
+        "hide": 4
+      },
+      "damage": 150,
+      "fireRate": 0.25,
+      "range": 6.5,
+      "projectileSpeed": 9,
+      "splash": 2.8,
+      "stunS": 1.2,
+      "requires": "lv3",
+      "garrison": 2,
+      "sprite": "tower_rolling_log"
+    }
+  },
+  "walls": {
+    "fence_wood": {
+      "name": "尖木篱笆",
+      "footprint": "1x1",
+      "hp": 260,
+      "cost": {
+        "wood": 15
+      },
+      "upgrade": "wall_brick",
+      "sprite": "fence_wood",
+      "_note": "原型一整段 260hp/30 木；这里按格计价，每格 15 木"
+    },
+    "wall_brick": {
+      "name": "青砖围墙",
+      "footprint": "1x1",
+      "hp": 900,
+      "cost": {
+        "coin": 40,
+        "wood": 20
+      },
+      "upgradeOnly": true,
+      "requires": "married",
+      "garrison": 1,
+      "sprite": "wall_brick"
+    }
+  },
+  "traps": {
+    "trap_bear": {
+      "name": "精铁捕兽夹",
+      "footprint": "1x1",
+      "cost": {
+        "coin": 40,
+        "hide": 1
+      },
+      "charges": 3,
+      "damage": 70,
+      "slow": 0.55,
+      "slowS": 3.2,
+      "sprite": "trap_bear"
+    }
+  },
+  "pathing": {
+    "_note": "流场代价：可走地 1；墙/塔等障碍不是不可通过，而是代价很高 → 敌人优先绕路，绕不过去就砍最弱的一段",
+    "blockerBaseCost": 12,
+    "blockerHpCostPer100": 2.5,
+    "waterCost": 6
+  },
+  "towerCostScale": 0.08,
+  "_towerCostScale": "每多拥有一座塔（任意种类），新建塔价格 +8%（升级不受影响），防止无脑堆塔"
+}
