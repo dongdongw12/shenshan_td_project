@@ -151,8 +151,10 @@ export function botDay(g: GameState, opt: BotOptions = DEFAULT_BOT): string[] {
     // 6) 修补
     const rc = repairCost(g);
     if ((rc.coin ?? 0) > 0 && canAfford(g, rc) && repairAll(g).ok) { log.push(`修补 ${rc.coin}钱`); acted = true; continue; }
+    // 木料兽材已攒够大院时，余钱也先留着（只差钱的时候别再把钱花光）
+    const materialsReady = savingForCourtyard && g.res.wood >= (lv3.wood ?? 0) && g.res.hide >= (lv3.hide ?? 0);
     // 7) 余钱全部变成防御（会玩的玩家不会攒着钱过夜）：先升级，再加塔
-    if (opt.greedy && g.res.coin >= opt.reserveCoin) {
+    if (opt.greedy && g.res.coin >= opt.reserveCoin + (materialsReady ? (lv3.coin ?? 0) : 0)) {
       const up2 = [...g.buildings.values()].find((b) => b.kind === "tower_bamboo");
       if (up2 && upgrade(g, up2.id).ok) { log.push(`升级强弩楼 #${up2.id}`); acted = true; continue; }
       const kind = g.married && day >= 4 && g.res.hide >= 3 && g.res.wood >= 40 ? "tower_oil_fire" : "tower_bamboo";
