@@ -19,7 +19,8 @@ function hex(h: string): RGB {
 /** 夜色：压暗并偏夜靛 */
 export function tone(color: string, night: number, lift = 0): string {
   const c = hex(color);
-  const dark: RGB = [c[0] * 0.32 + NIGHT[0] * 0.55, c[1] * 0.34 + NIGHT[1] * 0.55, c[2] * 0.4 + NIGHT[2] * 0.6];
+  // 与烘培精灵的夜晚版亮度对齐（浅色墙面夜里约是灰蓝 70~110）
+  const dark: RGB = [c[0] * 0.2 + NIGHT[0] * 0.6, c[1] * 0.22 + NIGHT[1] * 0.6, c[2] * 0.26 + NIGHT[2] * 0.65];
   const m = c.map((v, k) => Math.round(Math.min(255, (v + (dark[k]! - v) * night) * (1 + lift)))) as RGB;
   return `rgb(${m[0]},${m[1]},${m[2]})`;
 }

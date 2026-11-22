@@ -182,3 +182,7 @@
 
 ### 2026-11-23 · Claude Opus（货郎 + IAA 埋点）
 - **已完成**：`economy.json` 加 `peddler` 与 `ads`；`sim.ts` 加 `sellToPeddler`、`adOffers`、`adReward`（风调雨顺 / 富商货郎 / 双喜临门 / 绝境死守，含每天/每夜次数限制）；平衡 AI 会把结余卖给货郎（不看广告）；重新 `tune.ts`，3/3 通关；新增 4 项单测（共 42 项）；演示底栏在可用时显示货郎与广告按钮。
+
+### 2026-11-23 · Claude Opus（角色序列帧管线）
+- **已完成**：`make_characters.py`（9 个角色：狼/野猪/熊王四足一套骨骼，五种土匪 + 二当家/大当家人形一套骨骼，8 帧行走循环）+ `bake_sprite_anim.py`（复用建筑烘培的相机/光照/墨线/渲染通道与 `stylize_sprites`，两个朝向 + 镜像，夜晚版由白昼调色保证可读）；本机半比例 9 个角色约 3 分钟烘完；导出到 `client/assets/dev/chars/`（`chars.json`）；`src/render/animSprites.ts` + 演示接入（有序列帧就用，否则退回程序化画法），44 项单测。美术圣经补“角色”一节。
+- **未做**：攻击 / 受击 / 逃跑动作（目前只有行走，击退时冒烟）；村民/家族成员角色；正式比例（128px/m）烘培应放 Colab。

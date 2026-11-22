@@ -15,6 +15,7 @@ import {
   canAfford, sellToPeddler, adOffers, adReward, type AdKind, type Building, type GameState,
 } from "../game/sim";
 import { botDay, botFamily } from "../game/bot";
+import { drawAnimFrame, facingFromScreenDelta, type AnimImages, type AnimIndex } from "../render/animSprites";
 import {
   drawArrow, drawEnemy, drawFarmDecal, drawFence, drawFloatText, drawHouseLike, drawSmoke, drawTrapDecal, drawWeirDecal,
   isoBox, hipRoof, PAL, tone, type ToScreen,
@@ -22,6 +23,8 @@ import {
 
 /** 敌人画得比真实比例大一些（手机上要一眼看清是狼是匪），只影响画面不影响判定 */
 const ENEMY_SCALE = 1.7;
+/** 烘培序列帧角色的放大倍数（同理：比真实比例大一些更易读） */
+const CHAR_SCALE = 1.45;
 const NUM = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"];
 const RES_ZH: Record<string, string> = { coin: "钱", wood: "木", food: "粮", hide: "兽材" };
 const TOOLS: { kind: string; label: string }[] = [
@@ -45,6 +48,18 @@ async function boot(): Promise<void> {
     ]);
     images.set(stem, { day, night, shadow });
   }));
+
+  // 角色序列帧（有就用，没有就退回程序化画法）
+  const anims = new Map<string, AnimImages>();
+  let animIndex: AnimIndex | null = null;
+  try {
+    animIndex = await platform.loadJson<AnimIndex>("/dev/chars/chars.json");
+    await Promise.all(Object.entries(animIndex.chars).map(async ([id, m]) => {
+      const L = (f: string) => platform.loadImage(`/dev/chars/${f}`);
+      const [fd, fn, bd, bn] = await Promise.all([L(m.dirs.front.day), L(m.dirs.front.night), L(m.dirs.back.day), L(m.dirs.back.night)]);
+      anims.set(id, { front: { day: fd, night: fn }, back: { day: bd, night: bn } });
+    }));
+  } catch { animIndex = null; }
 
   const cfg = defaultConfig();
   const seed = Number(qs.get("seed") ?? 7);
@@ -107,6 +122,7 @@ async function boot(): Promise<void> {
   const fx: Fx[] = [];
   const lastPos = new Map<number, Vec2>();
   const facing = new Map<number, number>();
+  const animFacing = new Map<number, { dir: "front" | "back"; flip: boolean }>();
   let autoTimer = 0;
 
   // ---------------------------------------------------------------- UI
@@ -277,13 +293,30 @@ async function boot(): Promise<void> {
       const prev = lastPos.get(e.id);
       if (prev) {
         const dxs = (e.x - prev.x) + (e.y - prev.y); // 屏幕 x ∝ x + y
+        const dys = (e.x - prev.x) - (e.y - prev.y); // 屏幕 y ∝ x − y
         if (Math.abs(dxs) > 1e-3) facing.set(e.id, dxs > 0 ? 1 : -1);
+        animFacing.set(e.id, facingFromScreenDelta(dxs, dys, animFacing.get(e.id) ?? { dir: "front", flip: false }));
       }
       lastPos.set(e.id, { x: e.x, y: e.y });
       const face = facing.get(e.id) ?? -1;
+      const anim = animIndex?.chars[e.type];
+      const animImg = anims.get(e.type);
       scene.addCustom({
         id: `e${e.id}`, pos: { x: e.x, y: e.y, z: 0 }, radius: 0,
-        draw: (c, p, ppm) => drawEnemy(c, e.type, p, ppm * 0.1 * ENEMY_SCALE, nightA, face, (clock * e.def.speed * 0.9) % 1, e.hp / e.maxHp, clock),
+        draw: anim && animImg
+          ? (c, p, ppm) => {
+            const f = animFacing.get(e.id) ?? { dir: "front" as const, flip: false };
+            // 脚下墨色小地影
+            c.globalAlpha = 0.3 * (1 - 0.4 * nightA); c.fillStyle = "#1f2740";
+            c.beginPath(); c.ellipse(p.x, p.y, ppm * 0.45 * CHAR_SCALE, ppm * 0.18 * CHAR_SCALE, 0, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+            drawAnimFrame(c, anim, animImg, p, ppm, CHAR_SCALE, f.dir, f.flip, clock * e.def.speed / 1.8, nightA);
+            if (e.hp < e.maxHp) {
+              const w = ppm * 0.7 * CHAR_SCALE, h = Math.max(2, ppm * 0.07), y = p.y - anim.anchor_px[1] * (ppm / anim.px_per_meter) * CHAR_SCALE - 4;
+              c.fillStyle = "rgba(28,21,16,0.75)"; c.fillRect(p.x - w / 2 - 1, y - 1, w + 2, h + 2);
+              c.fillStyle = "#b8352a"; c.fillRect(p.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), h);
+            }
+          }
+          : (c, p, ppm) => drawEnemy(c, e.type, p, ppm * 0.1 * ENEMY_SCALE, nightA, face, (clock * e.def.speed * 0.9) % 1, e.hp / e.maxHp, clock),
       });
     }
   };
@@ -367,7 +400,7 @@ async function boot(): Promise<void> {
       } else if (e.type === "enemyFled") {
         fx.push({ kind: "smoke", x: e.x, y: e.y, t0: clock, life: 0.9 });
         if (e.reward.coin) fx.push({ kind: "text", x: e.x, y: e.y, t0: clock, life: 1.1, text: `+${e.reward.coin}`, color: "#d9a838" });
-        lastPos.delete(e.id); facing.delete(e.id);
+        lastPos.delete(e.id); facing.delete(e.id); animFacing.delete(e.id);
       } else if (e.type === "nightStart") toast(e.title);
       else if (e.type === "married") toast("修好青瓦正房，迎娶阿莲！");
       else if (e.type === "peddler") toast("货郎进山了！可以卖掉余粮余木");

@@ -29,7 +29,9 @@ shenshan_td_project/
 │   ├── tests/                             # python3 -m unittest discover -s pipeline/tests
 │   ├── blender/
 │   │   ├── bake_isometric_sprites.py      # Blender 5.x 归一化 + 固定比例等距相机 + 渲染通道（v2）
-│   │   └── make_proxy_assets.py           # 3 件样张的程序化替身模型（回归测试 / 低模兜底）
+│   │   ├── make_proxy_assets.py           # 程序化模型：3 件样张替身 + 5 件正式程序化资产（稻田/篱笆/墙/陷阱）
+│   │   ├── make_characters.py             # 程序化角色（狼/野猪/熊王/斥候/刀匪/盾匪/纵火贼/二当家/大当家）：骨骼 + 行走循环
+│   │   └── bake_sprite_anim.py            # 角色序列帧烘培：逐帧渲染 → 同一套工笔风格化 → 横排精灵表（两个朝向 + 镜像）
 │   ├── raw_models/                        # Colab 生成的原始 .glb 建筑模型（.gitignore 忽略，走 Google Drive）
 │   └── baked_sprites/                     # Blender 烘培出的高清 _day.png / _night.png / _meta.json（.gitignore 忽略，走 Google Drive）
 ├── client/                                # 游戏客户端：引擎无关 TS 渲染核心 + 浏览器开发台（见 client/README.md）
@@ -76,6 +78,9 @@ blender -b -P pipeline/blender/bake_isometric_sprites.py -- \
 # 只改了 style_profile.json：不重新渲染，几十秒重出全部风格化图
 /Applications/Blender.app/Contents/Resources/5.3/python/bin/python3.13 pipeline/style/stylize_sprites.py \
   --passes pipeline/baked_sprites/_passes --out pipeline/baked_sprites [--debug]
+
+# 角色序列帧（8 帧行走 × 两个朝向；夜晚版由白昼版调色）
+blender -b -P pipeline/blender/bake_sprite_anim.py -- --chars wolf,swordsman --out pipeline/baked_sprites/chars --scale 0.5 --samples 16
 
 # 场景预览：按锚点摆到 2:1 地块网格上看整体效果
 /Applications/Blender.app/Contents/Resources/5.3/python/bin/python3.13 pipeline/style/compose_preview.py \
