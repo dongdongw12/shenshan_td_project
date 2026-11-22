@@ -13,6 +13,8 @@ export interface Platform {
   screenSize(): { w: number; h: number };
   /** 主画布（微信小游戏里第一次调用 wx.createCanvas() 得到的就是上屏画布） */
   mainCanvas(): HTMLCanvasElement;
+  /** 离屏画布（地面贴图、宣纸纹理等一次性绘制的缓存） */
+  createOffscreen(w: number, h: number): HTMLCanvasElement;
   loadImage(src: string): Promise<ImageLike>;
   loadJson<T>(src: string): Promise<T>;
   requestFrame(cb: (timeMs: number) => void): void;

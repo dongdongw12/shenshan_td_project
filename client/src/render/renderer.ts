@@ -7,6 +7,7 @@ import { depthSort } from "./depthSort";
 import { hexToRgb, lightAlpha, mixRgb, shadowOpacity, type RGB } from "./dayNight";
 import { IsoProjection, type Vec2 } from "./iso";
 import type { Scene, SpriteObject } from "./scene";
+import type { GroundTexture } from "./groundPainter";
 import type { ImageLike } from "../platform/platform";
 
 export interface SpriteImages {
@@ -37,6 +38,16 @@ export const DEFAULT_GROUND: GroundPalette = {
   grid: ["#76825a", "#171d33"],
 };
 
+export interface RenderOptions {
+  /** 绘制好的地面贴图（白昼 / 夜晚），没有就画纯色地块 */
+  ground?: { day: GroundTexture; night: GroundTexture };
+  /** 宣纸纹理（屏幕固定平铺） */
+  paper?: HTMLCanvasElement;
+  paperAlpha?: number;
+  /** 格线（建造模式时打开） */
+  showGrid?: boolean;
+}
+
 export interface FrameStats {
   drawn: number;
   culled: number;
@@ -61,7 +72,10 @@ export class IsoRenderer {
     return { x: cam.x + s.x * cam.zoom, y: cam.y + s.y * cam.zoom };
   }
 
-  render(scene: Scene, cam: Camera, nightAlpha: number, viewport: { w: number; h: number; dpr: number }): FrameStats {
+  private paperPattern: CanvasPattern | null = null;
+  private paperSrc: HTMLCanvasElement | null = null;
+
+  render(scene: Scene, cam: Camera, nightAlpha: number, viewport: { w: number; h: number; dpr: number }, opts: RenderOptions = {}): FrameStats {
     const ctx = this.ctx;
     const { w, h, dpr } = viewport;
     const a = nightAlpha;
@@ -72,7 +86,14 @@ export class IsoRenderer {
     ctx.fillStyle = mixRgb(this.ground.sky[0], this.ground.sky[1], a);
     ctx.fillRect(0, 0, w, h);
 
-    this.drawGround(scene, cam, a, w, h);
+    if (opts.ground) {
+      this.drawGroundTexture(opts.ground.day, cam, 1);
+      if (a > 0.002) this.drawGroundTexture(opts.ground.night, cam, a);
+      if (opts.showGrid) this.drawGrid(scene, cam, a);
+    } else {
+      this.drawGround(scene, cam, a, w, h);
+      this.drawGrid(scene, cam, a);
+    }
 
     const t0 = typeof performance !== "undefined" ? performance.now() : 0;
     const ordered = depthSort(scene.sortables());
@@ -113,8 +134,27 @@ export class IsoRenderer {
       }
       drawn++;
     }
+    if (opts.paper) {
+      if (this.paperSrc !== opts.paper) {
+        this.paperPattern = ctx.createPattern(opts.paper, "repeat");
+        this.paperSrc = opts.paper;
+      }
+      if (this.paperPattern) {
+        // 宣纸纹理里有浅色纤维，夜里在深底上会像雪点，随夜色减淡
+        ctx.globalAlpha = (opts.paperAlpha ?? 0.9) * (1 - 0.75 * a);
+        ctx.fillStyle = this.paperPattern;
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
     ctx.globalAlpha = 1;
     return { drawn, culled, sortMs };
+  }
+
+  private drawGroundTexture(tex: GroundTexture, cam: Camera, alpha: number): void {
+    const k = cam.zoom * (this.iso.cfg.pxPerMeter / tex.pxPerMeter);
+    this.ctx.globalAlpha = alpha;
+    this.ctx.drawImage(tex.canvas, cam.x - tex.origin.x * k, cam.y - tex.origin.y * k, tex.canvas.width * k, tex.canvas.height * k);
+    this.ctx.globalAlpha = 1;
   }
 
   spriteRect(scene: Scene, o: SpriteObject, cam: Camera): { x: number; y: number; w: number; h: number } {
@@ -152,6 +192,11 @@ export class IsoRenderer {
         ctx.fill();
       }
     }
+  }
+
+  private drawGrid(scene: Scene, cam: Camera, a: number): void {
+    const ctx = this.ctx;
+    const g = this.ground;
     // 细格线：沿两组轴各画一遍长线，比逐格描边省
     ctx.strokeStyle = mixRgb(g.grid[0], g.grid[1], a);
     ctx.lineWidth = Math.max(0.5, cam.zoom * 0.8);

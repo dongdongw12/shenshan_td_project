@@ -12,7 +12,8 @@
 | `src/render/dayNight.ts` | 昼夜时钟、逐户点灯（每栋建筑按 id 哈希错开亮灯）、地影昼夜透明度 |
 | `src/render/spriteMeta.ts` | 精灵元数据类型（`sprites.json`）与比例/锚点校验 |
 | `src/render/scene.ts` | 场景数据：地块网格、建筑精灵、自绘物体（单位/投射物/特效） |
-| `src/render/renderer.ts` | Canvas2D 渲染：天色 → 地块 → **全部地影** → 按遮挡顺序画物体（白昼图 + 夜晚图交叉淡入） |
+| `src/render/renderer.ts` | Canvas2D 渲染：天色 → 地面贴图（昼夜交叉淡入）→ **全部地影** → 按遮挡顺序画物体（白昼图 + 夜晚图交叉淡入）→ 宣纸纹理 |
+| `src/render/groundPainter.ts` | 地面绘制：按地形图（草 g / 土路 d / 水田 f / 溪 w / 山石 r）一次性画出白昼、夜晚两张离屏贴图——矿物色平涂、斑驳色块、墨色草簇、路沿墨线、秧行与田埂、木刻水纹与卵石岸、地图外缘分染；另有宣纸纹理 |
 | `src/platform/` | 平台适配：`browser.ts`（开发台）、`wechat.ts`（小游戏，**未真机验证**） |
 | `src/dev/` | 浏览器开发台（替身精灵小山村 + 绕房走的村民） |
 | `assets/dev/` | 开发用替身精灵（`pipeline/atlas/export_sprites.py --scale 0.5` 导出，64 px/m） |
@@ -27,7 +28,8 @@ npm --prefix client run typecheck
 npm --prefix client run dev       # http://127.0.0.1:5173
 ```
 
-开发台 URL 参数（便于截图对比）：`?t=秒` 固定时辰并暂停，`?debug=1` 显示占地框，`?walk=米` 固定村民位置，`?zoom=1.1&focus=3,3` 放大到某格。
+开发台 URL 参数（便于截图对比）：`?t=秒` 固定时辰并暂停，`?debug=1` 显示占地框与格线，`?walk=米` 固定村民位置，`?zoom=1.1&focus=3,3` 放大到某格，`?ground=flat` 用纯色地块，`?paper=0` 关宣纸纹理。
+开发台截图：页面里 `fetch('/__capture', {method:'POST', body: JSON.stringify({name:'x.jpg', data: canvas.toDataURL('image/jpeg')})})` 会写到 `docs/art/samples/`（仅 dev server）。
 
 ## 精灵约定（与烘培管线的接口）
 
@@ -38,5 +40,5 @@ npm --prefix client run dev       # http://127.0.0.1:5173
 
 ## 已验证 / 未验证
 
-- 已验证：19 项单测；开发台中锚点与格子对齐、地影层、树木与建筑遮挡、村民在房后被挡住、黄昏逐户点灯；每帧绘制约 0.45ms（11 个物体，M1）。
+- 已验证：21 项单测；开发台中锚点与格子对齐、地影层、树木与建筑遮挡、村民在房后被挡住、黄昏逐户点灯、地面贴图昼夜淡入无接缝；地面贴图 1874×1014 生成约 6–13ms，每帧绘制约 0.1–0.5ms（12 个物体，M1）。效果图：`docs/art/samples/client_village_{day,dusk,night}.jpg`。
 - 未验证：微信小游戏真机（`wechat.ts` 只写了接口）、触屏手势、图集打包、几百个单位时的帧率。

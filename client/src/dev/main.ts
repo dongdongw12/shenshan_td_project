@@ -13,6 +13,20 @@ import { IsoRenderer, type Camera, type SpriteImages } from "../render/renderer"
 import { Scene } from "../render/scene";
 import { validateAtlas, type SpriteAtlasIndex } from "../render/spriteMeta";
 import { drawVillager, walkLoop } from "./villager";
+import { paintGround, paintPaper, parseGroundMap } from "../render/groundPainter";
+
+// j = 0 是离相机最近的一排（屏幕左下边），i 向屏幕右下。g 草 d 土路 f 水田 w 溪 r 山石
+const VILLAGE = parseGroundMap([
+  "ggggfffggg",
+  "ggggfffggr",
+  "dddddddddd",
+  "ggggggdggw",
+  "ggggggdgww",
+  "fffgggggwg",
+  "fffggggwwg",
+  "fffgggwwgg",
+  "ggggggwggr",
+]);
 
 const PHASE_ZH: Record<Phase, string> = { day: "白昼", dusk: "黄昏 · 点灯", night: "夜晚", dawn: "黎明 · 熄灯" };
 
@@ -36,11 +50,17 @@ async function boot(): Promise<void> {
   );
 
   const iso = new IsoProjection({ pxPerMeter: atlas.px_per_meter, tileSize: 2, elevationDeg: 30 });
-  const scene = new Scene(10, 9, atlas);
+  const scene = new Scene(VILLAGE.cols, VILLAGE.rows, atlas);
   const has = (s: string) => s in atlas.sprites;
   if (has("house_lv2_tile")) { scene.addSprite("house_lv2_tile", 2, 3); scene.addSprite("house_lv2_tile", 6, 5); }
-  if (has("tower_bamboo")) { scene.addSprite("tower_bamboo", 1, 1); scene.addSprite("tower_bamboo", 8, 2); scene.addSprite("tower_bamboo", 5, 8); }
-  if (has("prop_pine_tree")) { for (const [i, j] of [[0, 6], [4, 0], [9, 7], [5, 2], [0, 0]]) scene.addSprite("prop_pine_tree", i!, j!); }
+  if (has("tower_bamboo")) { scene.addSprite("tower_bamboo", 1, 1); scene.addSprite("tower_bamboo", 8, 1); scene.addSprite("tower_bamboo", 5, 8); }
+  if (has("prop_pine_tree")) { for (const [i, j] of [[0, 8], [4, 0], [9, 7], [5, 4], [0, 0], [3, 7]]) scene.addSprite("prop_pine_tree", i!, j!); }
+
+  const t0 = performance.now();
+  const off = (w: number, h: number) => platform.createOffscreen(w, h);
+  const ground = { day: paintGround(off, VILLAGE, atlas.px_per_meter, false), night: paintGround(off, VILLAGE, atlas.px_per_meter, true) };
+  const paper = paintPaper(off);
+  const groundMs = performance.now() - t0;
 
   // 村民绕第一栋房子（占地 x∈[4,8]、y∈[6,10]）走一圈
   const loop: Vec2[] = [{ x: 3.3, y: 5.3 }, { x: 8.7, y: 5.3 }, { x: 8.7, y: 10.7 }, { x: 3.3, y: 10.7 }];
@@ -130,7 +150,9 @@ async function boot(): Promise<void> {
     const { w, h } = platform.screenSize();
     const a = clock.nightAlpha();
     const r0 = performance.now();
-    const stats = renderer.render(scene, cam, a, { w, h, dpr: platform.pixelRatio() });
+    const flat = qs.get("ground") === "flat";
+    const stats = renderer.render(scene, cam, a, { w, h, dpr: platform.pixelRatio() },
+      flat ? {} : { ground, paper: qs.get("paper") === "0" ? undefined : paper, showGrid: debugBox.checked });
     renderMs = renderMs * 0.9 + (performance.now() - r0) * 0.1;
 
     if (hover && !drag) {
@@ -155,7 +177,7 @@ async function boot(): Promise<void> {
     if (document.activeElement !== timeInput) timeInput.value = String(Math.round((clock.t / clock.period) * 1000));
     fpsAcc += dt; fpsN++;
     if (fpsAcc > 0.5) { fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; }
-    statsEl.textContent = `${fps.toFixed(0)} fps · 每帧绘制 ${renderMs.toFixed(2)}ms（排序 ${stats.sortMs.toFixed(2)}ms）· ${stats.drawn} 个物体 · 缩放 ${cam.zoom.toFixed(2)}`;
+    statsEl.textContent = `${fps.toFixed(0)} fps · 每帧绘制 ${renderMs.toFixed(2)}ms（排序 ${stats.sortMs.toFixed(2)}ms）· ${stats.drawn} 个物体 · 地面贴图 ${ground.day.canvas.width}×${ground.day.canvas.height}（生成 ${groundMs.toFixed(0)}ms）· 缩放 ${cam.zoom.toFixed(2)}`;
     platform.requestFrame(frame);
   };
   platform.requestFrame(frame);

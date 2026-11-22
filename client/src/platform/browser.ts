@@ -18,6 +18,13 @@ export class BrowserPlatform implements Platform {
     return this.canvas;
   }
 
+  createOffscreen(w: number, h: number): HTMLCanvasElement {
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(w));
+    c.height = Math.max(1, Math.round(h));
+    return c;
+  }
+
   loadImage(src: string): Promise<ImageLike> {
     return new Promise((resolve, reject) => {
       const img = new Image();

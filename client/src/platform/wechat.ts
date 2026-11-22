@@ -48,6 +48,15 @@ export class WechatPlatform implements Platform {
     return this.canvas;
   }
 
+  /** 小游戏里第一次 wx.createCanvas() 是上屏画布，之后创建的都是离屏画布 */
+  createOffscreen(w: number, h: number): HTMLCanvasElement {
+    this.mainCanvas();
+    const c = wx.createCanvas();
+    c.width = Math.max(1, Math.round(w));
+    c.height = Math.max(1, Math.round(h));
+    return c;
+  }
+
   loadImage(src: string): Promise<ImageLike> {
     return new Promise((resolve, reject) => {
       const img = wx.createImage();
