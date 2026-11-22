@@ -10,8 +10,8 @@
         152
       ],
       "anchor_px": [
-        55.15,
-        126.44
+        54.68,
+        125.67
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -24,6 +24,36 @@
           "night": "arsonist_back_night.png"
         }
       },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "arsonist_front_day.png",
+              "night": "arsonist_front_night.png"
+            },
+            "back": {
+              "day": "arsonist_back_day.png",
+              "night": "arsonist_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "arsonist_front_attack_day.png",
+              "night": "arsonist_front_attack_night.png"
+            },
+            "back": {
+              "day": "arsonist_back_attack_day.png",
+              "night": "arsonist_back_attack_night.png"
+            }
+          }
+        }
+      },
       "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
     },
     "bear_king": {
@@ -31,12 +61,12 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        208,
+        200,
         216
       ],
       "anchor_px": [
-        113.73,
-        155.28
+        104.28,
+        149.06
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -49,6 +79,36 @@
           "night": "bear_king_back_night.png"
         }
       },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "bear_king_front_day.png",
+              "night": "bear_king_front_night.png"
+            },
+            "back": {
+              "day": "bear_king_back_day.png",
+              "night": "bear_king_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "bear_king_front_attack_day.png",
+              "night": "bear_king_front_attack_night.png"
+            },
+            "back": {
+              "day": "bear_king_back_attack_day.png",
+              "night": "bear_king_back_attack_night.png"
+            }
+          }
+        }
+      },
       "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
     },
     "boar": {
@@ -56,12 +116,12 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        120,
-        128
+        128,
+        136
       ],
       "anchor_px": [
-        64.66,
-        91.3
+        66.17,
+        91.82
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -74,6 +134,36 @@
           "night": "boar_back_night.png"
         }
       },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "boar_front_day.png",
+              "night": "boar_front_night.png"
+            },
+            "back": {
+              "day": "boar_back_day.png",
+              "night": "boar_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "boar_front_attack_day.png",
+              "night": "boar_front_attack_night.png"
+            },
+            "back": {
+              "day": "boar_back_attack_day.png",
+              "night": "boar_back_attack_night.png"
+            }
+          }
+        }
+      },
       "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
     },
     "chief": {
@@ -81,12 +171,12 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        128,
-        224
+        136,
+        232
       ],
       "anchor_px": [
-        65.95,
-        189.25
+        64.21,
+        188.18
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -99,6 +189,146 @@
           "night": "chief_back_night.png"
         }
       },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "chief_front_day.png",
+              "night": "chief_front_night.png"
+            },
+            "back": {
+              "day": "chief_back_day.png",
+              "night": "chief_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "chief_front_attack_day.png",
+              "night": "chief_front_attack_night.png"
+            },
+            "back": {
+              "day": "chief_back_attack_day.png",
+              "night": "chief_back_attack_night.png"
+            }
+          }
+        }
+      },
+      "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
+    },
+    "child": {
+      "id": "child",
+      "frames": 8,
+      "fps": 10,
+      "frame_size": [
+        72,
+        112
+      ],
+      "anchor_px": [
+        37.71,
+        90.61
+      ],
+      "px_per_meter": 64.0,
+      "dirs": {
+        "front": {
+          "day": "child_front_day.png",
+          "night": "child_front_night.png"
+        },
+        "back": {
+          "day": "child_back_day.png",
+          "night": "child_back_night.png"
+        }
+      },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "child_front_day.png",
+              "night": "child_front_night.png"
+            },
+            "back": {
+              "day": "child_back_day.png",
+              "night": "child_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "child_front_attack_day.png",
+              "night": "child_front_attack_night.png"
+            },
+            "back": {
+              "day": "child_back_attack_day.png",
+              "night": "child_back_attack_night.png"
+            }
+          }
+        }
+      },
+      "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
+    },
+    "hero": {
+      "id": "hero",
+      "frames": 8,
+      "fps": 10,
+      "frame_size": [
+        120,
+        184
+      ],
+      "anchor_px": [
+        64.31,
+        146.38
+      ],
+      "px_per_meter": 64.0,
+      "dirs": {
+        "front": {
+          "day": "hero_front_day.png",
+          "night": "hero_front_night.png"
+        },
+        "back": {
+          "day": "hero_back_day.png",
+          "night": "hero_back_night.png"
+        }
+      },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "hero_front_day.png",
+              "night": "hero_front_night.png"
+            },
+            "back": {
+              "day": "hero_back_day.png",
+              "night": "hero_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "hero_front_attack_day.png",
+              "night": "hero_front_attack_night.png"
+            },
+            "back": {
+              "day": "hero_back_attack_day.png",
+              "night": "hero_back_attack_night.png"
+            }
+          }
+        }
+      },
       "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
     },
     "scout": {
@@ -107,11 +337,11 @@
       "fps": 10,
       "frame_size": [
         96,
-        160
+        168
       ],
       "anchor_px": [
-        51.15,
-        133.52
+        50.13,
+        135.54
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -124,6 +354,36 @@
           "night": "scout_back_night.png"
         }
       },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "scout_front_day.png",
+              "night": "scout_front_night.png"
+            },
+            "back": {
+              "day": "scout_back_day.png",
+              "night": "scout_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "scout_front_attack_day.png",
+              "night": "scout_front_attack_night.png"
+            },
+            "back": {
+              "day": "scout_back_attack_day.png",
+              "night": "scout_back_attack_night.png"
+            }
+          }
+        }
+      },
       "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
     },
     "second_chief": {
@@ -131,12 +391,12 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        128,
-        224
+        136,
+        232
       ],
       "anchor_px": [
-        65.95,
-        189.25
+        64.21,
+        188.18
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -149,6 +409,36 @@
           "night": "second_chief_back_night.png"
         }
       },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "second_chief_front_day.png",
+              "night": "second_chief_front_night.png"
+            },
+            "back": {
+              "day": "second_chief_back_day.png",
+              "night": "second_chief_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "second_chief_front_attack_day.png",
+              "night": "second_chief_front_attack_night.png"
+            },
+            "back": {
+              "day": "second_chief_back_attack_day.png",
+              "night": "second_chief_back_attack_night.png"
+            }
+          }
+        }
+      },
       "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
     },
     "shield": {
@@ -157,11 +447,11 @@
       "fps": 10,
       "frame_size": [
         104,
-        152
+        160
       ],
       "anchor_px": [
-        55.15,
-        124.85
+        55.33,
+        126.18
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -172,6 +462,36 @@
         "back": {
           "day": "shield_back_day.png",
           "night": "shield_back_night.png"
+        }
+      },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "shield_front_day.png",
+              "night": "shield_front_night.png"
+            },
+            "back": {
+              "day": "shield_back_day.png",
+              "night": "shield_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "shield_front_attack_day.png",
+              "night": "shield_front_attack_night.png"
+            },
+            "back": {
+              "day": "shield_back_attack_day.png",
+              "night": "shield_back_attack_night.png"
+            }
+          }
         }
       },
       "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
@@ -185,8 +505,8 @@
         152
       ],
       "anchor_px": [
-        51.15,
-        125.67
+        50.4,
+        124.71
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -199,6 +519,91 @@
           "night": "swordsman_back_night.png"
         }
       },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "swordsman_front_day.png",
+              "night": "swordsman_front_night.png"
+            },
+            "back": {
+              "day": "swordsman_back_day.png",
+              "night": "swordsman_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "swordsman_front_attack_day.png",
+              "night": "swordsman_front_attack_night.png"
+            },
+            "back": {
+              "day": "swordsman_back_attack_day.png",
+              "night": "swordsman_back_attack_night.png"
+            }
+          }
+        }
+      },
+      "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
+    },
+    "wife": {
+      "id": "wife",
+      "frames": 8,
+      "fps": 10,
+      "frame_size": [
+        96,
+        160
+      ],
+      "anchor_px": [
+        50.57,
+        130.17
+      ],
+      "px_per_meter": 64.0,
+      "dirs": {
+        "front": {
+          "day": "wife_front_day.png",
+          "night": "wife_front_night.png"
+        },
+        "back": {
+          "day": "wife_back_day.png",
+          "night": "wife_back_night.png"
+        }
+      },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "wife_front_day.png",
+              "night": "wife_front_night.png"
+            },
+            "back": {
+              "day": "wife_back_day.png",
+              "night": "wife_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "wife_front_attack_day.png",
+              "night": "wife_front_attack_night.png"
+            },
+            "back": {
+              "day": "wife_back_attack_day.png",
+              "night": "wife_back_attack_night.png"
+            }
+          }
+        }
+      },
       "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"
     },
     "wolf": {
@@ -207,11 +612,11 @@
       "fps": 10,
       "frame_size": [
         120,
-        120
+        136
       ],
       "anchor_px": [
-        60.96,
-        87.25
+        59.08,
+        90.42
       ],
       "px_per_meter": 64.0,
       "dirs": {
@@ -222,6 +627,36 @@
         "back": {
           "day": "wolf_back_day.png",
           "night": "wolf_back_night.png"
+        }
+      },
+      "actions": {
+        "walk": {
+          "frames": 8,
+          "fps": 10,
+          "dirs": {
+            "front": {
+              "day": "wolf_front_day.png",
+              "night": "wolf_front_night.png"
+            },
+            "back": {
+              "day": "wolf_back_day.png",
+              "night": "wolf_back_night.png"
+            }
+          }
+        },
+        "attack": {
+          "frames": 6,
+          "fps": 12,
+          "dirs": {
+            "front": {
+              "day": "wolf_front_attack_day.png",
+              "night": "wolf_front_attack_night.png"
+            },
+            "back": {
+              "day": "wolf_back_attack_day.png",
+              "night": "wolf_back_attack_night.png"
+            }
+          }
         }
       },
       "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像"

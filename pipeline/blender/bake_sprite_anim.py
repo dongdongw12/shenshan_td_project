@@ -30,6 +30,7 @@ import make_characters as mc  # noqa: E402
 import stylize_sprites as st  # noqa: E402
 
 DIRS = {"front": 0.0, "back": -90.0}
+ACTIONS = {"walk": 8, "attack": 6}  # 动作: 帧数
 
 
 def parse_args():
@@ -74,20 +75,22 @@ def bake_char(name, out, profile, profile_path, args):
 
     # 先算两个朝向所有帧的联合包围盒，保证两个朝向画布一致
     all_pts = []
-    for yaw in DIRS.values():
-        bk.reset_scene(True)
-        arm, meshes, frames = mc.build(name, args.frames)
-        arm.rotation_euler = Euler((0, 0, math.radians(yaw)), "XYZ")
-        bpy.context.view_layer.update()
-        all_pts += frame_bbox(meshes, frames)
+    for action, nfr in ACTIONS.items():
+        for yaw in DIRS.values():
+            bk.reset_scene(True)
+            arm, meshes, frames = mc.build(name, nfr, action)
+            arm.rotation_euler = Euler((0, 0, math.radians(yaw)), "XYZ")
+            bpy.context.view_layer.update()
+            all_pts += frame_bbox(meshes, frames)
 
     meta = None
-    for dname, yaw in DIRS.items():
+    for action, nfr in ACTIONS.items():
+      for dname, yaw in DIRS.items():
         t0 = time.time()
         scene = bk.reset_scene(True)
         bk.configure_device(scene, args.device)
         bk.ensure_no_ink_collection(scene)
-        arm, meshes, frames = mc.build(name, args.frames)
+        arm, meshes, frames = mc.build(name, nfr, action)
         for o in meshes:
             o.pass_index = bk.OBJECT_PASS_INDEX
         bk.make_materials_matte(meshes)
@@ -106,21 +109,27 @@ def bake_char(name, out, profile, profile_path, args):
         day_frames = []
         for f in range(1, frames + 1):
             scene.frame_set(f)
-            path = pass_dir / f"{name}_{dname}_{f:02d}.exr"
+            path = pass_dir / f"{name}_{action}_{dname}_{f:02d}.exr"
             bk.render_to(scene, path)
             passes = st.read_exr_passes(path)
             C, A = st.stylize_image(passes, passes, style, info, "day")
             day_frames.append(st.finalize(C, A, res_x, res_y))
         day_sheet = np.concatenate(day_frames, axis=1)
-        st.write_png(out / f"{name}_{dname}_day.png", day_sheet)
-        st.write_png(out / f"{name}_{dname}_night.png", night_from_day(day_sheet))
+        suffix = "" if action == "walk" else f"_{action}"
+        st.write_png(out / f"{name}_{dname}{suffix}_day.png", day_sheet)
+        st.write_png(out / f"{name}_{dname}{suffix}_night.png", night_from_day(day_sheet))
         meta = meta or {
-            "id": name, "frames": frames, "fps": args.fps, "frame_size": [res_x, res_y],
+            "id": name, "frames": ACTIONS["walk"], "fps": args.fps, "frame_size": [res_x, res_y],
             "anchor_px": [round(anchor_uv[0] * res_x, 2), round(anchor_uv[1] * res_y, 2)],
-            "px_per_meter": ppm, "dirs": {}, "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像",
+            "px_per_meter": ppm, "dirs": {}, "actions": {},
+            "mirror_note": "front=面朝左下、back=面朝左上；朝右的两个方向水平镜像",
         }
-        meta["dirs"][dname] = {"day": f"{name}_{dname}_day.png", "night": f"{name}_{dname}_night.png"}
-        print(f"BAKED_ANIM {name}/{dname} {frames}f {res_x}x{res_y} in {time.time() - t0:.1f}s", flush=True)
+        files = {"day": f"{name}_{dname}{suffix}_day.png", "night": f"{name}_{dname}{suffix}_night.png"}
+        if action == "walk":
+            meta["dirs"][dname] = files
+        act = meta["actions"].setdefault(action, {"frames": frames, "fps": args.fps if action == "walk" else 12, "dirs": {}})
+        act["dirs"][dname] = files
+        print(f"BAKED_ANIM {name}/{action}/{dname} {frames}f {res_x}x{res_y} in {time.time() - t0:.1f}s", flush=True)
     with open(out / f"{name}_anim.json", "w", encoding="utf-8") as fp:
         json.dump(meta, fp, ensure_ascii=False, indent=2)
 

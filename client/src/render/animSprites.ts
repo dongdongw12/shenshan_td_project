@@ -13,16 +13,20 @@ export interface AnimMeta {
   anchor_px: [number, number];
   px_per_meter: number;
   dirs: Record<"front" | "back", { day: string; night: string }>;
+  /** 各动作（walk / attack）的帧数、帧率与精灵表；旧数据只有 dirs（= walk） */
+  actions?: Record<string, { frames: number; fps: number; dirs: Record<"front" | "back", { day: string; night: string }> }>;
 }
+
+export type DirImages = { front: { day: ImageLike; night: ImageLike }; back: { day: ImageLike; night: ImageLike } };
 
 export interface AnimIndex {
   px_per_meter: number;
   chars: Record<string, AnimMeta>;
 }
 
-export interface AnimImages {
-  front: { day: ImageLike; night: ImageLike };
-  back: { day: ImageLike; night: ImageLike };
+export interface AnimImages extends DirImages {
+  /** 其他动作的精灵表（如 attack） */
+  actions?: Record<string, DirImages>;
 }
 
 /** 由屏幕上的移动方向选朝向与是否镜像：下 = 朝相机（front），右 = 镜像 */
@@ -33,9 +37,12 @@ export function facingFromScreenDelta(dx: number, dy: number, prev: { dir: "fron
 
 /** 画一帧：p = 脚底屏幕位置，pxPerMeter = 当前屏幕每米像素，night 0..1 时白昼/夜晚两张交叉淡入 */
 export function drawAnimFrame(ctx: CanvasRenderingContext2D, meta: AnimMeta, img: AnimImages, p: Vec2, pxPerMeter: number,
-  scale: number, dir: "front" | "back", flip: boolean, timeS: number, night: number): void {
+  scale: number, dir: "front" | "back", flip: boolean, timeS: number, night: number, action = "walk"): void {
   const [fw, fh] = meta.frame_size;
-  const frame = Math.floor(timeS * meta.fps) % meta.frames;
+  const act = action !== "walk" ? meta.actions?.[action] : undefined;
+  const sheet: DirImages = act && img.actions?.[action] ? img.actions[action]! : img;
+  const frames = act?.frames ?? meta.frames, fps = act?.fps ?? meta.fps;
+  const frame = Math.floor(timeS * fps) % frames;
   const k = (pxPerMeter / meta.px_per_meter) * scale;
   const [ax, ay] = meta.anchor_px;
   ctx.save();
@@ -46,8 +53,8 @@ export function drawAnimFrame(ctx: CanvasRenderingContext2D, meta: AnimMeta, img
     ctx.globalAlpha = alpha;
     ctx.drawImage(src, frame * fw, 0, fw, fh, -ax * k, -ay * k, fw * k, fh * k);
   };
-  draw(img[dir].day, 1);
-  draw(img[dir].night, night);
+  draw(sheet[dir].day, 1);
+  draw(sheet[dir].night, night);
   ctx.restore();
   ctx.globalAlpha = 1;
 }

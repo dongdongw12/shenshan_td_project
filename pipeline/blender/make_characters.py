@@ -15,7 +15,8 @@ PALETTE = {
     "ink": "#1c1510", "fur_grey": "#7d8288", "fur_dark": "#4c5056", "boar": "#6b4735", "boar_dark": "#3f2a20",
     "tusk": "#ede3cc", "cloth_dark": "#3e4552", "cloth_brown": "#5c3a26", "cloth_green": "#5c6b4a", "cloth_black": "#232a40",
     "sash": "#b8352a", "skin": "#e2c19a", "steel": "#9aa3a6", "wood": "#9a5a35", "shield": "#7a5232", "flame": "#f08a2c",
-    "hat": "#d9a838", "pants": "#2e2a2a",
+    "hat": "#d9a838", "pants": "#2e2a2a", "ochre": "#9a5a35", "azurite": "#2e5f8f", "apron": "#b8352a", "hair": "#1c1510",
+    "child_green": "#3f8a63", "pants_blue": "#3e4552",
 }
 _mats = {}
 
@@ -141,7 +142,7 @@ QUAD = {
 }
 
 
-def build_wolf(frames=8, kind="wolf"):
+def build_wolf(frames=8, kind="wolf", action="walk"):
     """四足兽（狼 / 野猪 / 黑熊王共用一套骨骼）：敦实身体、大头、粗短腿（对角步态）"""
     k, body_c, dark_c, tusks, tail_len, stride = QUAD[kind]
     hip_z = 0.42
@@ -160,13 +161,18 @@ def build_wolf(frames=8, kind="wolf"):
     parts.append((_ell("w_ruff", 0.27, (0, -0.28, hip_z + 0.1), dark_c, scale=(0.9 * fat, 0.85, 1.05 * fat)), "body"))
     parts.append((_ell("w_head", 0.2, (0, -0.52, hip_z + 0.2), body_c, scale=(0.9, 1.05, 0.88)), "head"))
     snout_r = 0.13 if kind == "boar" else 0.11
-    parts.append((_cone("w_snout", snout_r, 0.06 if kind != "wolf" else 0.04, 0.3, (0, -0.78, hip_z + 0.15), dark_c, rot=(math.radians(95), 0, 0)), "head"))
+    snout_len = 0.16 if kind == "bear_king" else 0.3   # 熊是短而宽的吻部
+    parts.append((_cone("w_snout", snout_r, 0.08 if kind == "bear_king" else 0.06 if kind != "wolf" else 0.04, snout_len,
+                        (0, -0.66 - snout_len / 2, hip_z + 0.15), dark_c, rot=(math.radians(95), 0, 0)), "head"))
     for sd in (-1, 1):
         if kind == "bear_king":
             parts.append((_ell(f"w_ear{sd}", 0.07, (sd * 0.13, -0.48, hip_z + 0.38), dark_c), "head"))
         else:
             parts.append((_cone(f"w_ear{sd}", 0.07, 0.0, 0.2 if kind == "wolf" else 0.12, (sd * 0.1, -0.5, hip_z + 0.42), dark_c, rot=(0, math.radians(sd * 12), 0)), "head"))
-    parts.append((_ell("w_tail", 0.12, (0, 0.62, hip_z + 0.0), dark_c, scale=(0.8, tail_len, 0.8)), "tail"))
+    if kind == "bear_king":
+        parts.append((_ell("w_tail", 0.07, (0, 0.5, hip_z - 0.05), dark_c), "tail"))  # 熊尾巴小且低
+    else:
+        parts.append((_ell("w_tail", 0.12, (0, 0.62, hip_z + 0.0), dark_c, scale=(0.8, tail_len, 0.8)), "tail"))
     for name, (x, y) in {"leg_fl": (0.14, -0.24), "leg_fr": (-0.14, -0.24), "leg_bl": (0.14, 0.24), "leg_br": (-0.14, 0.24)}.items():
         parts.append((_cone(f"w_{name}", 0.085 * (1.25 if kind != "wolf" else 1), 0.06, hip_z - 0.02, (x, y, (hip_z - 0.02) / 2), dark_c, verts=8), name))
         parts.append((_ell(f"w_paw_{name}", 0.07, (x, y - 0.03, 0.04), "ink", scale=(1, 1.3, 0.6), seg=8), name))
@@ -174,10 +180,22 @@ def build_wolf(frames=8, kind="wolf"):
         for sd in (-1, 1):
             parts.append((_cone(f"w_tusk{sd}", 0.035, 0.0, 0.16, (sd * 0.08, -0.82, hip_z + 0.2), "tusk", rot=(math.radians(-30), 0, 0)), "head"))
     if kind == "bear_king":
-        parts.append((_box("w_sash", (0.6, 0.14, 0.62), (0, -0.05, hip_z + 0.05), "sash"), "body"))
+        parts.append((_box("w_sash", (0.58, 0.07, 0.56), (0, -0.12, hip_z + 0.06), "sash"), "body"))
     for o, b in parts:
         _bind(arm, o, b)
     arm.scale = (k, k, k)
+    if action == "attack":
+        # 扑咬：身体前压、头猛地下探再抬起，前腿蹬地
+        for f in range(frames + 1):
+            ph = f / frames
+            lunge = math.sin(ph * math.pi)  # 0→1→0
+            _key(arm, "body", f + 1, rot=(-12 * lunge, 0, 0), loc=(0, -0.12 * lunge, -0.03 * lunge))
+            _key(arm, "head", f + 1, rot=(-28 * math.sin(ph * 2 * math.pi) * (1 - ph * 0.3), 0, 0))
+            for leg, sgn in (("leg_fl", 1), ("leg_fr", 1), ("leg_bl", -1), ("leg_br", -1)):
+                _key(arm, leg, f + 1, rot=(sgn * 22 * lunge, 0, 0))
+            _key(arm, "tail", f + 1, rot=(20 * lunge, 0, 0))
+        _cyclic(arm)
+        return arm, [o for o, _ in parts], frames
     for f in range(frames + 1):
         t = f / frames * 2 * math.pi
         sw = stride * math.sin(t)
@@ -192,10 +210,12 @@ def build_wolf(frames=8, kind="wolf"):
     return arm, [o for o, _ in parts], frames
 
 
-def build_bandit(variant="swordsman", frames=8):
+def build_bandit(variant="swordsman", frames=8, action="walk"):
     """土匪：腿、躯干（带红腰带）、头（红头巾）、双臂、按变体持道具"""
-    cloth = {"swordsman": "cloth_dark", "shield": "cloth_brown", "scout": "cloth_green", "arsonist": "cloth_brown", "chief": "cloth_black"}[variant]
-    s = 1.25 if variant == "chief" else 1.0
+    cloth = {"swordsman": "cloth_dark", "shield": "cloth_brown", "scout": "cloth_green", "arsonist": "cloth_brown", "chief": "cloth_black",
+             "hero": "ochre", "wife": "azurite", "child": "child_green"}[variant]
+    villager = variant in ("hero", "wife", "child")
+    s = 1.25 if variant == "chief" else 0.68 if variant == "child" else 1.0
     arm = _armature([
         ("hips", (0, 0, 0.9 * s), (0, 0, 1.05 * s), None),
         ("chest", (0, 0, 1.05 * s), (0, 0, 1.45 * s), "hips"),
@@ -207,12 +227,23 @@ def build_bandit(variant="swordsman", frames=8):
     ])
     parts = []
     for side, bone in ((1, "leg_l"), (-1, "leg_r")):
-        parts.append((_box(f"b_leg{side}", (0.15 * s, 0.17 * s, 0.85 * s), (side * 0.1 * s, 0, 0.45 * s), "pants"), bone))
+        parts.append((_box(f"b_leg{side}", (0.15 * s, 0.17 * s, 0.85 * s), (side * 0.1 * s, 0, 0.45 * s), "pants_blue" if villager else "pants"), bone))
         parts.append((_box(f"b_foot{side}", (0.15 * s, 0.24 * s, 0.08 * s), (side * 0.1 * s, -0.04 * s, 0.04 * s), "ink"), bone))
     parts.append((_box("b_torso", (0.42 * s, 0.26 * s, 0.6 * s), (0, 0, 1.2 * s), cloth), "chest"))
-    parts.append((_box("b_sash", (0.44 * s, 0.28 * s, 0.08 * s), (0, 0, 1.0 * s), "sash"), "hips"))
+    parts.append((_box("b_sash", (0.44 * s, 0.28 * s, 0.08 * s), (0, 0, 1.0 * s), "sash" if not villager else "ink"), "hips"))
     parts.append((_ell("b_head", 0.14 * s, (0, 0, 1.6 * s), "skin"), "head"))
-    parts.append((_cyl("b_band", 0.145 * s, 0.06 * s, (0, 0, 1.66 * s), "sash", verts=14), "head"))
+    if not villager:
+        parts.append((_cyl("b_band", 0.145 * s, 0.06 * s, (0, 0, 1.66 * s), "sash", verts=14), "head"))
+    if variant == "hero":
+        parts.append((_cone("b_hat", 0.34, 0.03, 0.2, (0, 0, 1.8), "hat"), "head"))
+        parts.append((_cyl("b_hoe", 0.025, 1.2, (-0.3, -0.05, 1.05), "wood", rot=(math.radians(-12), 0, 0)), "arm_r"))
+        parts.append((_box("b_hoe_blade", (0.05, 0.22, 0.14), (-0.3, -0.18, 0.47), "steel"), "arm_r"))
+    if variant == "wife":
+        parts.append((_box("b_apron", (0.3, 0.04, 0.5), (0, -0.15, 1.0), "apron"), "chest"))
+        parts.append((_ell("b_bun", 0.08, (0, 0.1, 1.72), "hair"), "head"))
+        parts.append((_ell("b_hair", 0.145, (0, 0.02, 1.64), "hair", scale=(1, 1, 0.75)), "head"))
+    if variant == "child":
+        parts.append((_ell("b_tuft", 0.05, (0, 0, 1.6 * s + 0.11), "hair"), "head"))
     for side, bone in ((1, "arm_l"), (-1, "arm_r")):
         parts.append((_box(f"b_arm{side}", (0.11 * s, 0.13 * s, 0.48 * s), (side * 0.27 * s, 0, 1.15 * s), cloth), bone))
         parts.append((_ell(f"b_hand{side}", 0.06 * s, (side * 0.28 * s, 0, 0.9 * s), "skin"), bone))
@@ -230,6 +261,25 @@ def build_bandit(variant="swordsman", frames=8):
         parts.append((_cone("b_hat", 0.3, 0.02, 0.18, (0, 0, 1.77), "hat"), "head"))
     for o, b in parts:
         _bind(arm, o, b)
+    if action == "attack":
+        # 劈砍：右臂举过头顶 → 猛劈下；盾匪用盾顶撞；身体随之前倾，弓步站定
+        for f in range(frames + 1):
+            ph = f / frames
+            if ph < 0.45:
+                raise_ = ph / 0.45
+                arm_r = -150 * raise_          # 举起（绕 X 轴向后上方）
+            else:
+                down = min(1.0, (ph - 0.45) / 0.25)
+                arm_r = -150 + 200 * down      # 劈下到身前
+            lean = math.sin(ph * math.pi)
+            _key(arm, "arm_r", f + 1, rot=(arm_r if variant != "shield" else -20 * lean, 0, 0))
+            _key(arm, "arm_l", f + 1, rot=(-60 * lean if variant == "shield" else 15, 0, 0))
+            _key(arm, "chest", f + 1, rot=(-14 * lean, 0, 0))
+            _key(arm, "leg_l", f + 1, rot=(-18, 0, 0))
+            _key(arm, "leg_r", f + 1, rot=(16, 0, 0))
+            _key(arm, "hips", f + 1, loc=(0, -0.06 * lean, -0.04))
+        _cyclic(arm)
+        return arm, [o for o, _ in parts], frames
     for f in range(frames + 1):
         t = f / frames * 2 * math.pi
         sw = 30 * math.sin(t)
@@ -244,18 +294,23 @@ def build_bandit(variant="swordsman", frames=8):
 
 
 BUILDERS = {
-    "wolf": lambda frames=8: build_wolf(frames),
-    "boar": lambda frames=8: build_wolf(frames, "boar"),
-    "bear_king": lambda frames=8: build_wolf(frames, "bear_king"),
-    "second_chief": lambda frames=8: build_bandit("chief", frames),
-    "swordsman": lambda frames=8: build_bandit("swordsman", frames),
-    "shield": lambda frames=8: build_bandit("shield", frames),
-    "scout": lambda frames=8: build_bandit("scout", frames),
-    "arsonist": lambda frames=8: build_bandit("arsonist", frames),
-    "chief": lambda frames=8: build_bandit("chief", frames),
+    "wolf": lambda frames=8, action="walk": build_wolf(frames, "wolf", action),
+    "boar": lambda frames=8, action="walk": build_wolf(frames, "boar", action),
+    "bear_king": lambda frames=8, action="walk": build_wolf(frames, "bear_king", action),
+    "swordsman": lambda frames=8, action="walk": build_bandit("swordsman", frames, action),
+    "shield": lambda frames=8, action="walk": build_bandit("shield", frames, action),
+    "scout": lambda frames=8, action="walk": build_bandit("scout", frames, action),
+    "arsonist": lambda frames=8, action="walk": build_bandit("arsonist", frames, action),
+    "second_chief": lambda frames=8, action="walk": build_bandit("chief", frames, action),
+    "chief": lambda frames=8, action="walk": build_bandit("chief", frames, action),
+    # 家人（白天在村里干活走动，当家的夜里守主屋）
+    "hero": lambda frames=8, action="walk": build_bandit("hero", frames, action),
+    "wife": lambda frames=8, action="walk": build_bandit("wife", frames, action),
+    "child": lambda frames=8, action="walk": build_bandit("child", frames, action),
 }
 
 
-def build(name, frames=8):
+def build(name, frames=8, action="walk"):
+    """action: walk（行走循环）| attack（攻击循环）"""
     _mats.clear()
-    return BUILDERS[name](frames)
+    return BUILDERS[name](frames, action)

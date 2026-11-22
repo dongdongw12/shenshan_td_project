@@ -57,7 +57,13 @@ async function boot(): Promise<void> {
     await Promise.all(Object.entries(animIndex.chars).map(async ([id, m]) => {
       const L = (f: string) => platform.loadImage(`/dev/chars/${f}`);
       const [fd, fn, bd, bn] = await Promise.all([L(m.dirs.front.day), L(m.dirs.front.night), L(m.dirs.back.day), L(m.dirs.back.night)]);
-      anims.set(id, { front: { day: fd, night: fn }, back: { day: bd, night: bn } });
+      const entry: AnimImages = { front: { day: fd, night: fn }, back: { day: bd, night: bn }, actions: {} };
+      for (const [act, a] of Object.entries(m.actions ?? {})) {
+        if (act === "walk") continue;
+        const [afd, afn, abd, abn] = await Promise.all([L(a.dirs.front.day), L(a.dirs.front.night), L(a.dirs.back.day), L(a.dirs.back.night)]);
+        entry.actions![act] = { front: { day: afd, night: afn }, back: { day: abd, night: abn } };
+      }
+      anims.set(id, entry);
     }));
   } catch { animIndex = null; }
 
@@ -123,6 +129,69 @@ async function boot(): Promise<void> {
   const lastPos = new Map<number, Vec2>();
   const facing = new Map<number, number>();
   const animFacing = new Map<number, { dir: "front" | "back"; flip: boolean }>();
+
+  // ---------------------------------------------------------------- 家人（纯表现层：白天走动干活，夜里当家的守门）
+  interface Villager { key: string; kind: "hero" | "wife" | "child"; x: number; y: number; tx: number; ty: number; wait: number; face: { dir: "front" | "back"; flip: boolean }; attackT: number }
+  const villagers = new Map<string, Villager>();
+  const houseDoor = () => { const h = g.buildings.get(g.houseId)!; return { x: (h.i + h.w / 2) * T, y: h.j * T - 0.6 }; };
+  const frontOf = (b: Building) => ({ x: (b.i + b.w / 2) * T + (vrand() - 0.5) * T * 0.6, y: b.j * T - 0.5 });
+  let vseed = 99;
+  const vrand = () => { vseed = (vseed * 1664525 + 1013904223) >>> 0; return vseed / 4294967296; };
+  const syncVillagers = (dt: number) => {
+    const want: { key: string; kind: Villager["kind"] }[] = [{ key: "hero", kind: "hero" }];
+    if (g.married) want.push({ key: "wife", kind: "wife" });
+    g.members.filter((m) => m.kind === "child").forEach((m) => want.push({ key: `c${m.id}`, kind: "child" }));
+    for (const w of want) if (!villagers.has(w.key)) { const d = houseDoor(); villagers.set(w.key, { ...w, x: d.x, y: d.y, tx: d.x, ty: d.y, wait: vrand() * 2, face: { dir: "front", flip: false }, attackT: 0 }); }
+    for (const k of [...villagers.keys()]) if (!want.some((w) => w.key === k)) villagers.delete(k);
+    const day = g.phase === "day";
+    const work = [...g.buildings.values()].filter((b) => b.category === "production" || b.category === "tower");
+    const fields = [...g.buildings.values()].filter((b) => b.kind === "farm_rice" || b.kind === "fish_weir");
+    for (const v of villagers.values()) {
+      v.attackT = Math.max(0, v.attackT - dt);
+      if (!day) {
+        const d = houseDoor();
+        v.tx = d.x + (v.kind === "hero" ? 0 : 0.01); v.ty = d.y;
+        if (v.kind === "hero") {
+          // 守门：守卫半径内有敌人就挥锄（与模拟里当家的补刀对应）
+          const h = g.buildings.get(g.houseId)!;
+          const near = g.enemies.find((e) => Math.hypot(e.x - (h.i + h.w / 2) * T, e.y - (h.j + h.d / 2) * T) < cfg.family.hero.guardRadius + 2);
+          if (near) { v.attackT = 0.3; v.face = facingFromScreenDelta((near.x - v.x) + (near.y - v.y), (near.x - v.x) - (near.y - v.y), v.face); }
+        }
+      } else {
+        v.wait -= dt;
+        if (v.wait <= 0 && Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1) {
+          const pool = v.kind === "wife" ? (fields.length ? fields : work) : v.kind === "hero" ? work : [];
+          const pick = pool.length ? frontOf(pool[Math.floor(vrand() * pool.length)]!) : { x: houseDoor().x + (vrand() - 0.5) * 4, y: houseDoor().y - vrand() * 2 };
+          v.tx = pick.x; v.ty = pick.y; v.wait = 2 + vrand() * 3;
+        }
+      }
+      const dx = v.tx - v.x, dy = v.ty - v.y, dist = Math.hypot(dx, dy);
+      const sp = (v.kind === "child" ? 1.5 : 1.2) * dt * speed;
+      if (dist > 0.05) {
+        const k = Math.min(1, sp / dist);
+        v.x += dx * k; v.y += dy * k;
+        v.face = facingFromScreenDelta(dx + dy, dx - dy, v.face);
+      }
+    }
+  };
+  const addVillagers = () => {
+    for (const v of villagers.values()) {
+      const meta = animIndex?.chars[v.kind], img = anims.get(v.kind);
+      if (!meta || !img) continue;
+      const home = Math.hypot(v.tx - v.x, v.ty - v.y) < 0.1 && g.phase !== "day" && v.kind !== "hero";
+      if (home) continue; // 夜里妻儿进屋
+      const moving = Math.hypot(v.tx - v.x, v.ty - v.y) > 0.05;
+      scene.addCustom({
+        id: `v_${v.key}`, pos: { x: v.x, y: v.y, z: 0 }, radius: 0,
+        draw: (c, p, ppm) => {
+          c.globalAlpha = 0.3 * (1 - 0.4 * nightA); c.fillStyle = "#1f2740";
+          c.beginPath(); c.ellipse(p.x, p.y, ppm * 0.35 * CHAR_SCALE, ppm * 0.14 * CHAR_SCALE, 0, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+          const action = v.attackT > 0 ? "attack" : "walk";
+          drawAnimFrame(c, meta, img, p, ppm, CHAR_SCALE, v.face.dir, v.face.flip, action === "walk" && !moving ? 0 : clock, nightA, action);
+        },
+      });
+    }
+  };
   let autoTimer = 0;
 
   // ---------------------------------------------------------------- UI
@@ -289,6 +358,7 @@ async function boot(): Promise<void> {
       const cx = (b.i + b.w / 2) * T, cy = (b.j + b.d / 2) * T;
       scene.addCustom({ id: `b${b.id}`, pos: { x: cx, y: cy, z: 0 }, radius: (Math.min(b.w, b.d) * T) / 2 - 0.01, draw: (c) => drawBuilding(c, b) });
     }
+    addVillagers();
     for (const e of g.enemies) {
       const prev = lastPos.get(e.id);
       if (prev) {
@@ -305,11 +375,17 @@ async function boot(): Promise<void> {
         id: `e${e.id}`, pos: { x: e.x, y: e.y, z: 0 }, radius: 0,
         draw: anim && animImg
           ? (c, p, ppm) => {
-            const f = animFacing.get(e.id) ?? { dir: "front" as const, flip: false };
+            let f = animFacing.get(e.id) ?? { dir: "front" as const, flip: false };
+            // 正在砍建筑：播攻击动作并转向目标
+            const tb = e.attacking ? g.buildings.get(e.attacking) : undefined;
+            if (tb) {
+              const tx = (tb.i + tb.w / 2) * T - e.x, ty = (tb.j + tb.d / 2) * T - e.y;
+              f = facingFromScreenDelta(tx + ty, tx - ty, f);
+            }
             // 脚下墨色小地影
             c.globalAlpha = 0.3 * (1 - 0.4 * nightA); c.fillStyle = "#1f2740";
             c.beginPath(); c.ellipse(p.x, p.y, ppm * 0.45 * CHAR_SCALE, ppm * 0.18 * CHAR_SCALE, 0, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
-            drawAnimFrame(c, anim, animImg, p, ppm, CHAR_SCALE, f.dir, f.flip, clock * e.def.speed / 1.8, nightA);
+            drawAnimFrame(c, anim, animImg, p, ppm, CHAR_SCALE, f.dir, f.flip, tb ? clock : clock * e.def.speed / 1.8, nightA, tb ? "attack" : "walk");
             if (e.hp < e.maxHp) {
               const w = ppm * 0.7 * CHAR_SCALE, h = Math.max(2, ppm * 0.07), y = p.y - anim.anchor_px[1] * (ppm / anim.px_per_meter) * CHAR_SCALE - 4;
               c.fillStyle = "rgba(28,21,16,0.75)"; c.fillRect(p.x - w / 2 - 1, y - 1, w + 2, h + 2);
@@ -414,6 +490,8 @@ async function boot(): Promise<void> {
   };
 
   // ---------------------------------------------------------------- 主循环
+  // ?bg=1（仅开发调试）：页面在后台时 requestAnimationFrame 会停，改用定时器驱动，方便自动化截图
+  const nextFrame = (cb: (t: number) => void) => (qs.get("bg") === "1" ? setTimeout(() => cb(performance.now()), 60) : platform.requestFrame(cb));
   renderBottom();
   fit();
   let last = performance.now(), uiT = 0;
@@ -425,6 +503,7 @@ async function boot(): Promise<void> {
     if (auto && g.phase === "day") { autoTimer -= dt * speed; if (autoTimer <= 0) { botDay(g); autoTimer = 4; } }
     if (auto && g.phase === "day" && g.dayLeft > 3 && g.day > 0) step(g, dt * speed * 3); else step(g, dt * speed);
     handleEvents();
+    syncVillagers(dt);
     const target = g.phase === "night" ? 1 : g.phase === "day" && g.dayLeft < 5 ? ((5 - g.dayLeft) / 5) * 0.75 : 0;
     nightA += Math.sign(target - nightA) * Math.min(Math.abs(target - nightA), dt * 0.8);
     syncScene();
@@ -433,9 +512,9 @@ async function boot(): Promise<void> {
     uiT -= dt;
     if (uiT <= 0) { renderTop(); renderBottom(); if (selected !== null) renderPanel(); uiT = 0.25; }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) toastEl.style.opacity = "0"; }
-    platform.requestFrame(frame);
+    nextFrame(frame);
   };
-  platform.requestFrame(frame);
+  nextFrame(frame);
 }
 
 boot().catch((e) => {

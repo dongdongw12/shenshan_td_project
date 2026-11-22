@@ -86,4 +86,6 @@
 - 朝向：只烘两个（front 面朝左下、back 面朝左上），朝右的两个由客户端水平镜像；8 帧行走、10fps，脚底中心为锚点。
 - 夜晚：敌人身上没有灯，夜晚版由白昼版调成“月下夜靛”（约 60% 亮度），保证夜里依然看得清——这是可读性优先于写实的有意取舍。
 - 外轮廓墨线比建筑细一档（×0.8），角色小，太粗会糊成一团；客户端显示时放大约 1.45 倍。
-- 样张：`docs/art/samples/characters_walk_sheets.png`、`demo_chars_night.jpg`。
+- 动作：行走（8 帧循环）+ 攻击（6 帧：野兽扑咬、土匪举刀劈砍、盾匪顶盾、当家的挥锄）；客户端在敌人砍建筑时自动切攻击并转向目标。
+- 家人：当家的（斗笠、赭石短褐、锄头）、阿莲（石青衣裙、朱砂围裙、发髻）、孩子（石绿短衣、小一号）。白天在村里走动干活，夜里妻儿进屋、当家的守门挥锄——“攒钱娶妻生子”要在画面上看得见。
+- 样张：`docs/art/samples/characters_walk_sheets.png`、`characters_attack_sheets.png`、`characters_villagers.png`、`demo_chars_night.jpg`、`demo_villagers_day.jpg`。
