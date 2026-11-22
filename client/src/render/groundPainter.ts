@@ -44,6 +44,8 @@ interface Palette {
   rock: string; rockDark: string;
   ink: string; inkAlpha: number;
   edge: string; sky: string;
+  /** 青绿山石：山顶石青 → 山腰石绿 → 山脚赭石 */
+  peakTop: string; peakMid: string; peakBase: string; moss: string;
 }
 
 const DAY: Palette = {
@@ -54,6 +56,7 @@ const DAY: Palette = {
   rock: "#8b9592", rockDark: "#5f6b6a",
   ink: "#1c1510", inkAlpha: 0.55,
   edge: "#3b4a2c", sky: "#cdd8cf",
+  peakTop: "#4f7fa8", peakMid: "#5f9a6e", peakBase: "#a07a50", moss: "#24574a",
 };
 
 const NIGHT: Palette = {
@@ -64,6 +67,7 @@ const NIGHT: Palette = {
   rock: "#343c55", rockDark: "#232a40",
   ink: "#0b0a10", inkAlpha: 0.6,
   edge: "#080b18", sky: "#0f1528",
+  peakTop: "#2a3c66", peakMid: "#223a44", peakBase: "#3a3442", moss: "#121c2c",
 };
 
 /** 可复现的伪随机（mulberry32） */
@@ -103,7 +107,7 @@ export function paintGround(
 ): GroundTexture {
   const iso = new IsoProjection({ pxPerMeter, tileSize, elevationDeg: 30 });
   const pal = night ? NIGHT : DAY;
-  const margin = Math.round(pxPerMeter * 1.2);
+  const margin = Math.round(pxPerMeter * 4); // 留够空间给向上画的山峰
   const b = textureBounds(iso, map, margin);
   const canvas = createCanvas(b.w, b.h);
   const ctx = canvas.getContext("2d")!;
@@ -194,6 +198,9 @@ export function paintGround(
 
   // 6) 地图外缘分染：沿四边向内压暗
   edgeWash();
+
+  // 7) 青绿山石：山石格上画层叠的石峰（由远到近画，近处压住远处）；靠谷地一侧矮、往外越来越高
+  paintPeaks();
 
   return { canvas, origin: o, pxPerMeter };
 
@@ -301,6 +308,77 @@ export function paintGround(
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
+  }
+
+  function paintPeaks() {
+    const rocks: { i: number; j: number; inner: number }[] = [];
+    for (let j = 0; j < map.rows; j++) for (let i = 0; i < map.cols; i++) {
+      if (at(i, j) !== "r") continue;
+      // 离谷地多远（周围 2 格内非山石格越少越“深”）
+      let open = 0;
+      for (let dj = -2; dj <= 2; dj++) for (let di = -2; di <= 2; di++) { const t2 = at(i + di, j + dj); if (t2 !== null && t2 !== "r") open++; }
+      rocks.push({ i, j, inner: Math.max(0, 1 - open / 8) });
+    }
+    rocks.sort((a, b) => (a.i - a.j) - (b.i - b.j)); // 深度 x−y 从远到近
+    const kz = iso.kz, kx = iso.kx;
+    for (const r of rocks) {
+      if (R() > 0.85) continue;
+      const cx = (r.i + 0.5 + (R() - 0.5) * 0.4) * T, cy = (r.j + 0.5 + (R() - 0.5) * 0.4) * T;
+      const base = S(cx, cy);
+      const bw = (0.75 + 0.35 * R()) * T * kx;              // 半个底宽（像素）
+      const h = (0.85 + r.inner * (2.4 + 1.6 * R())) * T * kz; // 峰高（像素）
+      const peakX = base.x + (R() - 0.5) * bw * 0.5;
+      // 轮廓：左山脚 → 锯齿上坡 → 峰顶 → 锯齿下坡 → 右山脚 → 底边微弧
+      const pts: Vec2[] = [{ x: base.x - bw, y: base.y }];
+      const steps = 4;
+      for (let k = 1; k <= steps; k++) {
+        const t = k / (steps + 1);
+        pts.push({ x: base.x - bw + (peakX - base.x + bw) * t + (R() - 0.5) * bw * 0.12, y: base.y - h * (t ** 0.8) + (k % 2 ? h * 0.08 : 0) });
+      }
+      pts.push({ x: peakX, y: base.y - h });
+      for (let k = steps; k >= 1; k--) {
+        const t = k / (steps + 1);
+        pts.push({ x: base.x + bw - (base.x + bw - peakX) * t + (R() - 0.5) * bw * 0.12, y: base.y - h * (t ** 0.9) + (k % 2 ? 0 : h * 0.07) });
+      }
+      pts.push({ x: base.x + bw, y: base.y });
+      ctx.beginPath();
+      pts.forEach((q, k) => (k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+      ctx.quadraticCurveTo(base.x, base.y + bw * 0.28, base.x - bw, base.y);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, base.y - h, 0, base.y + bw * 0.2);
+      grad.addColorStop(0, pal.peakTop);
+      grad.addColorStop(0.55, pal.peakMid);
+      grad.addColorStop(1, pal.peakBase);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.strokeStyle = pal.ink;
+      ctx.globalAlpha = pal.inkAlpha + 0.15;
+      ctx.lineWidth = 1.5 * px;
+      ctx.stroke();
+      // 皴：沿山坡的短钩笔
+      ctx.lineWidth = 1.0 * px;
+      ctx.globalAlpha = pal.inkAlpha * 0.6;
+      for (let k = 0; k < 3 + Math.floor(R() * 4); k++) {
+        const t = 0.2 + 0.6 * R();
+        const sx = base.x - bw * 0.6 + bw * 1.2 * R(), sy = base.y - h * t;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.quadraticCurveTo(sx + bw * 0.12, sy + h * 0.06, sx + bw * 0.08, sy + h * 0.16);
+        ctx.stroke();
+      }
+      // 苔点
+      ctx.fillStyle = pal.moss;
+      ctx.globalAlpha = 0.8;
+      for (let k = 0; k < 4; k++) {
+        const t = R();
+        const q = pts[1 + Math.floor(t * (pts.length - 2))]!;
+        ctx.beginPath();
+        ctx.ellipse(q.x + (R() - 0.5) * 4 * px, q.y + 2 * px, 1.6 * px, 1.1 * px, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
   }
 
   function inkEdge(a: Vec2, c: Vec2, width: number, pebbles: boolean) {
