@@ -27,6 +27,20 @@ const ENEMY_SCALE = 1.7;
 const CHAR_SCALE = 1.45;
 const NUM = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"];
 const RES_ZH: Record<string, string> = { coin: "钱", wood: "木", food: "粮", hide: "兽材" };
+/** 资源小图标（墨线 + 矿物色，内联 SVG，和画面同一套笔意） */
+const INKS = 'stroke="#1c1510" stroke-linejoin="round"';
+const RES_ICON: Record<string, string> = {
+  coin: `<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4" fill="#d9a838" ${INKS} stroke-width="1.3"/><circle cx="8" cy="8" r="4.6" fill="none" stroke="#9a5a35" stroke-width=".7"/><rect x="6.1" y="6.1" width="3.8" height="3.8" fill="#f1e8d4" ${INKS} stroke-width="1"/></svg>`,
+  wood: `<svg viewBox="0 0 16 16"><rect x="1.6" y="8" width="10.5" height="4.6" rx="1" fill="#9a5a35" ${INKS} stroke-width="1.1"/><ellipse cx="12.2" cy="10.3" rx="2.1" ry="2.3" fill="#c88f5f" ${INKS} stroke-width="1.1"/><rect x="3.2" y="3.4" width="8.8" height="4.4" rx="1" fill="#9a5a35" ${INKS} stroke-width="1.1"/><ellipse cx="12" cy="5.6" rx="1.9" ry="2.2" fill="#c88f5f" ${INKS} stroke-width="1.1"/></svg>`,
+  food: `<svg viewBox="0 0 16 16"><path d="M8 15 L3 4 Q4 1.5 6 3 L8 9 L10 3 Q12 1.5 13 4 Z" fill="#d9a838" ${INKS} stroke-width="1.1"/><path d="M8 9 L8 2.2" stroke="#1c1510" stroke-width="1.1"/><circle cx="8" cy="2" r="1.3" fill="#d9a838" ${INKS} stroke-width="1"/><rect x="5.4" y="9.6" width="5.2" height="1.9" fill="#b8352a" ${INKS} stroke-width=".8"/></svg>`,
+  hide: `<svg viewBox="0 0 16 16"><path d="M4 2 L6 4 L10 4 L12 2 L12.6 5.2 L14.2 7.2 L12.6 9.4 L13 13.4 L10 12.2 L8 14.2 L6 12.2 L3 13.4 L3.4 9.4 L1.8 7.2 L3.4 5.2 Z" fill="#c88f5f" ${INKS} stroke-width="1.1"/><path d="M6 7 Q8 9 10 7" fill="none" stroke="#9a5a35" stroke-width=".8"/></svg>`,
+};
+const resIcon = (k: string) => `<i class="ri" title="${RES_ZH[k]}">${RES_ICON[k] ?? RES_ZH[k]}</i>`;
+/** 建造按钮上的缩略图：玩法 id → 精灵（没有就不显示） */
+const TOOL_THUMB: Record<string, string> = {
+  tower_bamboo: "tower_bamboo", fence_wood: "fence_wood_a0", trap_bear: "trap_bear", farm_rice: "farm_rice_ripe", fish_weir: "fish_weir",
+  hunt_lodge: "hunt_lodge", wing_room: "house_wing_room", tower_oil_fire: "tower_oil_fire",
+};
 const TOOLS: { kind: string; label: string }[] = [
   { kind: "tower_bamboo", label: "竹箭楼" }, { kind: "fence_wood", label: "篱笆" }, { kind: "trap_bear", label: "捕兽夹" },
   { kind: "farm_rice", label: "稻田" }, { kind: "fish_weir", label: "鱼梁" }, { kind: "hunt_lodge", label: "猎棚" },
@@ -273,7 +287,9 @@ async function boot(): Promise<void> {
   const toastEl = $("toast");
   let toastTimer = 0;
   const toast = (msg: string) => { toastEl.textContent = msg; toastEl.style.opacity = "1"; toastTimer = 2.6; };
-  const costText = (c: Cost | null | undefined) => c ? Object.entries(c).filter(([, v]) => v).map(([k, v]) => `${v}${RES_ZH[k]}`).join(" ") : "";
+  const costText = (c: Cost | null | undefined) => c ? Object.entries(c).filter(([, v]) => v).map(([k, v]) => `${resIcon(k)}${v}`).join(" ") : "";
+  const costPlain = (c: Cost | null | undefined) => c ? Object.entries(c).filter(([, v]) => v).map(([k, v]) => `${v}${RES_ZH[k]}`).join(" ") : "";
+  const thumb = (stem: string | undefined) => stem && atlas.sprites[stem] ? `<img class="thumb" src="/dev/${atlas.sprites[stem]!.day_file}" alt="">` : "";
 
   // 底栏按钮只创建一次，之后只改文字/状态：频繁重建会让“按下-抬起”之间按钮被替换，点击丢失
   type Btn = { el: HTMLButtonElement; update: () => void };
@@ -286,18 +302,20 @@ async function boot(): Promise<void> {
     $("bottom").appendChild(el);
     buttons.push({ el, update: () => update(el) });
   };
-  const setHtml = (el: HTMLElement, html: string) => { if (el.innerHTML !== html) el.innerHTML = html; };
+  // 记住上次写入的字符串再比较：浏览器回读 innerHTML 时会改写 SVG 的写法，直接比会每 250ms 重写一次子节点（按下-抬起之间节点被换掉会丢点击）
+  const lastHtml = new WeakMap<HTMLElement, string>();
+  const setHtml = (el: HTMLElement, html: string) => { if (lastHtml.get(el) !== html) { el.innerHTML = html; lastHtml.set(el, html); } };
   for (const t of TOOLS) {
     const info = kindInfo(cfg, t.kind)!;
     mkBtn(() => { tool = tool === t.kind ? null : t.kind; selected = null; renderPanel(); }, (el) => {
       el.classList.toggle("on", tool === t.kind);
-      setHtml(el, `${t.label}<small>${costText(buildCost(g, t.kind))}</small>`);
+      setHtml(el, `${thumb(TOOL_THUMB[t.kind])}${t.label}<small>${costText(buildCost(g, t.kind))}</small>`);
       el.disabled = g.phase !== "day" || (info.requires === "married" && !g.married);
     });
   }
   mkBtn(() => { const r = upgradeHouse(g); if (!r.ok) toast(r.reason); }, (el) => {
     const next = g.houseLevel === 1 ? cfg.economy.house.lv2 : g.houseLevel === 2 ? cfg.economy.house.lv3 : null;
-    setHtml(el, next ? `${g.houseLevel === 1 ? "修房娶妻" : "扩建大院"}<small>${costText(next.cost)}</small>` : "大院已成");
+    setHtml(el, next ? `${thumb(g.houseLevel === 1 ? "house_lv2_tile" : "house_lv3_courtyard")}${g.houseLevel === 1 ? "修房娶妻" : "扩建大院"}<small>${costText(next.cost)}</small>` : "大院已成");
     el.disabled = g.phase !== "day" || !next || !canAfford(g, next.cost);
   });
   mkBtn(() => { repairAll(g); }, (el) => {
@@ -356,7 +374,7 @@ async function boot(): Promise<void> {
   const renderTop = () => {
     $("title").textContent = g.phase === "night" ? `第${NUM[g.day] ?? g.day}夜 · ${cfg.waves.nights[g.day - 1]?.title.split("·")[1]?.trim() ?? "无尽"}`
       : g.phase === "day" ? `第${NUM[g.day] ?? g.day}天 · 白昼` : g.phase === "victory" ? "大获全胜" : "寨破";
-    $("res").innerHTML = (["coin", "wood", "food", "hide"] as const).map((k) => `<span>${RES_ZH[k]} ${Math.floor(g.res[k])}</span>`).join("");
+    setHtml($("res"), (["coin", "wood", "food", "hide"] as const).map((k) => `<span>${resIcon(k)}${Math.floor(g.res[k])}</span>`).join(""));
     const h = g.buildings.get(g.houseId);
     ($("hp").firstElementChild as HTMLElement).style.width = `${h ? (100 * h.hp) / h.maxHp : 0}%`;
   };
@@ -646,7 +664,7 @@ async function boot(): Promise<void> {
       else if (e.type === "birth") toast(`厢房添丁：${e.name}`);
       else if (e.type === "grownUp") toast(`${e.name}长成少年：${cfg.family.roles[e.role]?.name}`);
       else if (e.type === "buildingDestroyed") toast(`${cfg.defense.towers[e.kind]?.name ?? cfg.economy.buildings[e.kind]?.name ?? cfg.defense.walls[e.kind]?.name ?? "建筑"}被毁！`);
-      else if (e.type === "dawn") toast(`天亮了 · 收获 ${costText(e.reward)}${e.starved ? " · 口粮不够！" : ""}`);
+      else if (e.type === "dawn") toast(`天亮了 · 收获 ${costPlain(e.reward)}${e.starved ? " · 口粮不够！" : ""}`);
       else if (e.type === "victory") banner("击退黑风大当家\n深山传家 · 大获全胜");
       else if (e.type === "defeat") banner(`第${NUM[e.night] ?? e.night}夜 · 寨破`);
     }
