@@ -44,10 +44,11 @@
 
 ### 文件同步边界
 - **GitHub 仓库（代码、配置、文档、小体积脚本）**：每台电脑开工前必跑 `git pull`，收工前必跑 `git add/commit/push` 并更新本文件底部日志。
-- **Google Drive（大体积 3D 资产与烘培图）**：统一存放在 `Google Drive/MyDrive/shenshan_td/`：
+- **Google Drive（大体积 3D 资产与烘培图）**：统一存放在 `Google Drive/MyDrive/shenshan_td/`（[云盘目录链接](https://drive.google.com/drive/folders/1eoE7aVdFmsn79JN-U3fkxy1DiwpEbhe8)）：
   - `raw_models/`：Colab 生成的原始 `.glb`（命名必须严格对应 `assets_manifest.json` 的 `id`）
   - `baked_sprites/`：Blender 烘培出的 `_day.png`、`_night.png`、`_meta.json`
-  - **原则**：`.glb` 和 `.blend` 绝不提交进 Git；只有压缩打包进客户端的最终图集（`client/assets/atlases/`）才入仓。
+  - 根目录已同步：`assets_manifest.json`、`bake_isometric_sprites.py`、`colab_bake_sprites.ipynb`（已按 Colab 笔记本 MIME 类型上传，可在 Drive 直接用 Colab 打开）
+  - **原则**：`.glb`、`.blend` 和烘培散图绝不提交进 Git；只有压缩打包进客户端的最终图集（`client/assets/atlases/`）才入仓。
 
 ### Claude Opus 与 Antigravity 推荐分工
 - **Claude Opus 优先负责**：系统架构设计、30 天数值平衡表、复杂核心逻辑（家族家谱、驻守羁绊、寻路/波次引擎）、Colab/Blender 自动化脚本与代码审查。
@@ -62,9 +63,10 @@
 
 ## 5. 下一步任务队列（Next Actions — 按顺序认领）
 
-- [ ] **T1 · 独立建仓与环境同步**
-  - 将 `shenshan_td_project/` 移至 `~/Projects/shenshan_td_project/` 并初始化独立 GitHub 仓库；可选将 `mountain_td_mvp/` 归档到 `docs/prototype_v0/`。
-  - 在 Google Drive 创建 `MyDrive/shenshan_td/raw_models/` 与 `baked_sprites/`，上传 `assets_manifest.json` 与 `bake_isometric_sprites.py`。
+- [ ] **T1 · 独立建仓与环境同步**（仅差 `git push` 到 GitHub）
+  - [x] 将 `shenshan_td_project/` 移至 `~/Projects/shenshan_td_project/`，将 `mountain_td_mvp/` 归档到 `docs/prototype_v0/`，并初始化本地独立 Git 仓库（`main` 分支）
+  - [x] 在 Google Drive 创建 `MyDrive/shenshan_td/raw_models/` 与 `baked_sprites/`，上传 `assets_manifest.json`、`bake_isometric_sprites.py` 与 `colab_bake_sprites.ipynb`
+  - [ ] 创建 GitHub 远程仓库并执行 `git push -u origin main`
 - [ ] **T2 · 编写 Colab 图生 3D 笔记本 + 第 1 周视觉样张（3 件）**
   - 准备统一“明清木刻粗墨线重彩”概念图提示词，先做 3 件核心样张：`house_lv2_tile`（青瓦正房）、`tower_bamboo`（竹箭楼）、`prop_pine_tree`（深山古松）。
   - 在 `pipeline/colab/` 新建 `colab_gen_3d.ipynb`（Hunyuan3D / TRELLIS）批量生成 `.glb` 到 `raw_models/`。
