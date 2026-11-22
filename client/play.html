@@ -32,6 +32,14 @@
                border-radius: 18px; font-size: 14px; letter-spacing: .06em; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
       #panel { position: absolute; right: 8px; top: 96px; width: 46%; font-size: 12px; display: none; }
       #panel.show { display: block; }
+      #family { bottom: 190px; font-size: 12px; display: none; flex-direction: column; align-items: stretch; gap: 4px; max-height: 46%; overflow-y: auto; }
+      #family.show { display: flex; }
+      #family .frow { line-height: 1.5; }
+      #family .who { display: inline-block; min-width: 3.2em; font-weight: 700; margin-right: 6px; }
+      #family small { opacity: .8; }
+      #family .dim { opacity: .55; }
+      #family button { font-family: inherit; font-size: 12px; border: 1.5px solid var(--ink); border-radius: 8px; background: #fbf6ea; color: var(--ink); padding: 2px 7px; margin: 2px 4px 0 0; cursor: pointer; }
+      #family button.on { background: var(--gamboge); }
       #banner { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; background: rgba(15,21,40,.72); color: #f6ecd6;
                 font-size: 26px; letter-spacing: .2em; text-align: center; gap: 14px; }
       #banner.show { display: flex; }
@@ -48,6 +56,7 @@
       </div>
       <div id="toast"></div>
       <div id="panel" class="bar"></div>
+      <div id="family" class="bar"></div>
       <div id="bottom" class="bar"></div>
       <div id="banner"><div id="bannerText"></div><button id="bannerBtn" type="button">再来一局</button></div>
     </div></div>

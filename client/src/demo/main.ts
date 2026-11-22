@@ -11,7 +11,7 @@ import type { SpriteAtlasIndex } from "../render/spriteMeta";
 import { paintGround, paintPaper, parseGroundMap } from "../render/groundPainter";
 import { defaultConfig, parseFp, type Cost } from "../game/config";
 import {
-  build, buildCost, canBuildAt, createGame, drainEvents, kindInfo, repairAll, repairCost, startNight, step, upgrade, upgradeHouse,
+  assignWork, build, buildCost, canBuildAt, createGame, drainEvents, garrison, kindInfo, repairAll, repairCost, startNight, step, upgrade, upgradeHouse,
   canAfford, sellToPeddler, adOffers, adReward, type AdKind, type Building, type GameState,
 } from "../game/sim";
 import { botDay, botFamily } from "../game/bot";
@@ -323,8 +323,9 @@ async function boot(): Promise<void> {
     setHtml(el, `修补<small>${(rc.coin ?? 0) > 0 ? costText(rc) : "完好"}</small>`);
     el.disabled = g.phase !== "day" || (rc.coin ?? 0) === 0 || !canAfford(g, rc);
   });
-  mkBtn(() => { const log = botFamily(g); toast(log[log.length - 1] ?? "家人已各就各位"); }, (el) => {
-    setHtml(el, `安排家人<small>${g.members.length} 口</small>`);
+  mkBtn(() => { familyOpen = !familyOpen; renderFamily(); }, (el) => {
+    el.classList.toggle("on", familyOpen);
+    setHtml(el, `安排家人<small>${g.members.length + 1} 口</small>`);
   });
   // 货郎：来访的白天出现，一键卖掉结余（留两天口粮、100 木）
   mkBtn(() => {
@@ -369,6 +370,54 @@ async function boot(): Promise<void> {
       p.appendChild(btn);
     }
     p.classList.add("show");
+  };
+
+  // ---------------------------------------------------------------- 家族面板：子女分工（长成那天的分工定身份）、少年驻守
+  let familyOpen = false;
+  let familySig = "";
+  const WORKS: { work: string; label: string }[] = [
+    { work: "hunt_lodge", label: "打猎" }, { work: "farmer", label: "砍柴" }, { work: "fish_weir", label: "打渔" }, { work: "farm_rice", label: "种田" },
+  ];
+  const ROLE_OF_WORK: Record<string, string> = Object.fromEntries(Object.entries(cfg.family.roles).map(([id, r]) => [r.work, id]));
+  const bName = (b: Building) => cfg.defense.towers[b.kind]?.name ?? cfg.defense.walls[b.kind]?.name ?? (b.category === "house" ? "主屋" : b.kind);
+  const postsFor = (slot: string) => [...g.buildings.values()].filter((b) => (slot === "tower" ? b.category === "tower" : slot === "wall" ? b.category === "wall" : b.category === "house"));
+  const renderFamily = () => {
+    const p = $("family");
+    if (!familyOpen) { p.classList.remove("show"); familySig = ""; return; }
+    // 只在家族状态变了时重建（避免按下-抬起之间按钮被替换）
+    const sig = JSON.stringify([g.phase, g.married, g.day, g.members.map((m) => [m.id, m.work, m.role, m.post]), [...g.buildings.keys()].length]);
+    p.classList.add("show");
+    p.style.bottom = `${$("bottom").offsetHeight + 14}px`; // 底栏高度随按钮换行变化，面板贴在它上面
+    if (sig === familySig) return;
+    familySig = sig;
+    p.innerHTML = "";
+    const row = (html: string) => { const d = document.createElement("div"); d.className = "frow"; d.innerHTML = html; p.appendChild(d); return d; };
+    const btn = (parent: HTMLElement, label: string, on: boolean, fn: () => void, disabled = false) => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = label; if (on) b.className = "on"; b.disabled = disabled;
+      b.onclick = () => { fn(); familySig = ""; renderFamily(); renderBottom(); }; parent.appendChild(b);
+    };
+    row(`<b>家族</b>　<small>白天分工产出加成；长成少年那天的分工定身份；少年驻守触发羁绊</small>`);
+    row(`<span class="who">${cfg.family.hero.name}</span>白天下田干活 · 夜里守在主屋门口补刀`);
+    if (g.married) row(`<span class="who">${cfg.family.wife.name}</span>白天自动收割 · 夜里熬汤回血`);
+    else row(`<span class="who dim">（未成家）</span>修好青瓦正房即迎娶阿莲`);
+    for (const m of g.members.filter((x) => x.kind === "child")) {
+      if (!m.role) {
+        const left = Math.max(0, cfg.family.growth.daysToYouth - (g.day - m.bornDay));
+        const r = row(`<span class="who">${m.name}</span><small>幼年 · ${left > 0 ? `再过 ${left} 个黎明长成` : "明早长成"} → 将成${cfg.family.roles[ROLE_OF_WORK[m.work] ?? ""]?.name ?? "？"}</small><br>`);
+        for (const w of WORKS) btn(r, w.label, m.work === w.work, () => { const res = assignWork(g, m.id, w.work); if (!res.ok) toast(res.reason); });
+      } else {
+        const role = cfg.family.roles[m.role]!;
+        const posts = postsFor(role.bond.slot);
+        const r = row(`<span class="who">${m.name}</span><small>${role.name} · 羁绊「${role.bond.name}」驻${{ tower: "塔", wall: "墙", house: "主屋" }[role.bond.slot] ?? ""}</small><br>`);
+        btn(r, "不驻守", m.post === null, () => garrison(g, m.id, null));
+        for (const b of posts.slice(0, 6)) btn(r, `${bName(b)}#${b.id}`, m.post === b.id, () => { const res = garrison(g, m.id, b.id); if (!res.ok) toast(res.reason); });
+        if (!posts.length) r.insertAdjacentHTML("beforeend", `<small class="dim">还没有可驻守的${{ tower: "塔", wall: "墙", house: "主屋" }[role.bond.slot] ?? ""}</small>`);
+      }
+    }
+    if (!g.members.some((x) => x.kind === "child")) row(`<small class="dim">成家后建厢房，每个黎明添丁</small>`);
+    const last = row("");
+    btn(last, "一键安排", false, () => { const log = botFamily(g); toast(log[log.length - 1] ?? "家人已各就各位"); });
+    btn(last, "收起", false, () => { familyOpen = false; });
   };
 
   const renderTop = () => {
@@ -691,7 +740,7 @@ async function boot(): Promise<void> {
     const { w, h } = platform.screenSize();
     renderer.render(scene, cam, nightA, { w, h, dpr: platform.pixelRatio() }, { ground, paper, drawDecals, drawOverlay });
     uiT -= dt;
-    if (uiT <= 0) { renderTop(); renderBottom(); if (selected !== null) renderPanel(); uiT = 0.25; }
+    if (uiT <= 0) { renderTop(); renderBottom(); if (selected !== null) renderPanel(); if (familyOpen) renderFamily(); uiT = 0.25; }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) toastEl.style.opacity = "0"; }
     nextFrame(frame);
   };
