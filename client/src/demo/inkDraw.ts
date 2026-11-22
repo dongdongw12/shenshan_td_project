@@ -301,3 +301,60 @@ export function drawFloatText(ctx: CanvasRenderingContext2D, p: Vec2, text: stri
   ctx.fillText(text, p.x, p.y - age * 18);
   ctx.restore();
 }
+
+/**
+ * 木刻风火焰（纵火贼点着的建筑）：三四条朱砂 / 橘 / 藤黄火舌 + 墨线勾边 + 往上飘的烟团。
+ * p = 火焰根部的屏幕点（屋顶附近），u = 0.1 米对应的像素，t = 时钟（秒），w = 火场半宽（米）。
+ */
+export function drawFlames(ctx: CanvasRenderingContext2D, p: Vec2, u: number, t: number, w = 1): void {
+  ctx.save();
+  // 烟：三团灰墨往上飘、越飘越淡
+  for (let n = 0; n < 3; n++) {
+    const k = ((t * 0.6 + n / 3) % 1);
+    ctx.globalAlpha = 0.35 * (1 - k);
+    ctx.fillStyle = n % 2 ? "#6b6560" : "#8a847c";
+    ctx.beginPath();
+    ctx.arc(p.x + Math.sin(t * 1.3 + n) * u * 2 + u * 3 * k * w, p.y - u * (9 + 22 * k) * w, u * (2 + 3.5 * k) * w, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  const tongues = [
+    { dx: -0.55, h: 0.75, c: "#b8352a", ph: 0.0 },
+    { dx: 0.5, h: 0.8, c: "#b8352a", ph: 1.7 },
+    { dx: -0.15, h: 1.15, c: "#f08a2c", ph: 0.9 },
+    { dx: 0.2, h: 0.95, c: "#f08a2c", ph: 2.4 },
+    { dx: 0.0, h: 0.6, c: "#ffd27a", ph: 3.1 },
+  ];
+  ctx.lineJoin = "round";
+  for (const f of tongues) {
+    const flick = 0.82 + 0.18 * Math.sin(t * 11 + f.ph * 3) + 0.08 * Math.sin(t * 23 + f.ph);
+    const H = u * 9 * f.h * flick * w;
+    const W = u * 2.6 * w;
+    const bx = p.x + f.dx * W * 1.4, by = p.y;
+    const sway = Math.sin(t * 7 + f.ph) * W * 0.35;
+    ctx.beginPath();
+    ctx.moveTo(bx - W * 0.55, by);
+    ctx.bezierCurveTo(bx - W * 0.7, by - H * 0.45, bx + sway - W * 0.2, by - H * 0.7, bx + sway, by - H);
+    ctx.bezierCurveTo(bx + sway + W * 0.25, by - H * 0.65, bx + W * 0.75, by - H * 0.4, bx + W * 0.55, by);
+    ctx.closePath();
+    ctx.fillStyle = f.c;
+    ctx.fill();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = Math.max(0.8, u * 0.35);
+    ctx.globalAlpha = 0.7;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+/** 建筑血条：墨框 + 朱砂（低于 35% 变藤黄提醒修补） */
+export function drawHpBar(ctx: CanvasRenderingContext2D, p: Vec2, width: number, frac: number): void {
+  const h = Math.max(3, width * 0.09);
+  ctx.fillStyle = "rgba(28,21,16,0.78)";
+  ctx.fillRect(p.x - width / 2 - 1, p.y - 1, width + 2, h + 2);
+  ctx.fillStyle = "rgba(237,227,204,0.35)";
+  ctx.fillRect(p.x - width / 2, p.y, width, h);
+  ctx.fillStyle = frac < 0.35 ? "#d9a838" : "#b8352a";
+  ctx.fillRect(p.x - width / 2, p.y, width * Math.max(0, Math.min(1, frac)), h);
+}

@@ -17,7 +17,7 @@ import {
 import { botDay, botFamily } from "../game/bot";
 import { drawAnimFrame, facingFromScreenDelta, type AnimImages, type AnimIndex } from "../render/animSprites";
 import {
-  drawArrow, drawEnemy, drawFarmDecal, drawFence, drawFloatText, drawHouseLike, drawSmoke, drawTrapDecal, drawWeirDecal,
+  drawArrow, drawEnemy, drawFarmDecal, drawFence, drawFloatText, drawFlames, drawHouseLike, drawHpBar, drawSmoke, drawTrapDecal, drawWeirDecal,
   isoBox, hipRoof, PAL, tone, type ToScreen,
 } from "./inkDraw";
 
@@ -33,7 +33,7 @@ const TOOLS: { kind: string; label: string }[] = [
   { kind: "wing_room", label: "厢房" }, { kind: "tower_oil_fire", label: "火油塔" },
 ];
 
-interface Fx { kind: "smoke" | "text" | "arrow"; x: number; y: number; z?: number; t0: number; life: number; text?: string; color?: string; fromX?: number; fromY?: number; fire?: boolean }
+interface Fx { kind: "smoke" | "text" | "arrow" | "flee"; enemy?: string; vx?: number; vy?: number; x: number; y: number; z?: number; t0: number; life: number; text?: string; color?: string; fromX?: number; fromY?: number; fire?: boolean }
 
 async function boot(): Promise<void> {
   const qs = new URLSearchParams(location.search);
@@ -495,7 +495,6 @@ async function boot(): Promise<void> {
       : b.kind === "ancestral_hall" ? { wall: PAL.cinnabar, wallShade: "#8e2a20", roof: PAL.tile, roofShade: PAL.tileShade }
       : { wall: PAL.lime, wallShade: PAL.limeShade, roof: PAL.tile, roofShade: PAL.tileShade };
     drawHouseLike(c, S, x0, y0, x1, y1, b.kind === "granary" ? 2.4 : 2.0, b.kind === "ancestral_hall" ? 2.2 : 1.5, pal, n, lw);
-    if (b.burnUntil > g.t) { const f = S((x0 + x1) / 2, (y0 + y1) / 2, 3.2); c.fillStyle = "#f08a2c"; c.globalAlpha = 0.8; c.beginPath(); c.ellipse(f.x, f.y, lw * 5, lw * 8, 0, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1; }
   };
 
   const drawDecals = (c: CanvasRenderingContext2D) => {
@@ -530,11 +529,39 @@ async function boot(): Promise<void> {
 
   const drawOverlay = (c: CanvasRenderingContext2D, _S: unknown, ppm: number) => {
     const u = ppm * 0.1;
+    // 着火的建筑冒火（精灵本身是静态的，火焰叠在屋顶上）；夜里受损的建筑头顶显示血条（主屋看顶栏）
+    for (const b of g.buildings.values()) {
+      const stem = spriteFor(b);
+      const height = (stem ? atlas.sprites[stem]?.actual_height_m : undefined) ?? 2.4;
+      const cx = (b.i + b.w / 2) * T, cy = (b.j + b.d / 2) * T;
+      if (b.burnUntil > g.t) {
+        // 大建筑烧成几处火头，散在屋面上；后面的先画
+        const spots = b.w * b.d >= 4 ? [[-0.45, 0.35, 0.9], [0.4, -0.3, 1.1], [0.05, 0.05, 0.75]] : [[0, 0, 1]];
+        for (const [ox, oy, sz] of spots.sort((a, b2) => (b2[0]! - b2[1]!) - (a[0]! - a[1]!))) {
+          drawFlames(c, S(cx + ox! * b.w * T * 0.5, cy + oy! * b.d * T * 0.5, height * 0.55), u, clock + b.id * 0.37 + ox! * 3, sz!);
+        }
+      }
+      if (b.id !== g.houseId && b.hp < b.maxHp && g.phase === "night" && b.category !== "trap") {
+        drawHpBar(c, S(cx, cy, height + 0.45), ppm * 0.7 * Math.min(2, Math.max(b.w, b.d)), b.hp / b.maxHp);
+      }
+    }
     for (let k = fx.length - 1; k >= 0; k--) {
       const f = fx[k]!;
       const age = clock - f.t0;
       if (age > f.life) { fx.splice(k, 1); continue; }
       if (f.kind === "smoke") drawSmoke(c, S(f.x, f.y), u, age, f.life);
+      else if (f.kind === "flee") {
+        // 冒烟逃跑：敌人掉头往山外跑，边跑边淡出（不画血腥的倒地）
+        const meta = animIndex?.chars[f.enemy!], img = anims.get(f.enemy!);
+        if (meta && img) {
+          const k = age / f.life;
+          const x = f.x + f.vx! * age, y = f.y + f.vy! * age;
+          const face = facingFromScreenDelta(f.vx! + f.vy!, f.vx! - f.vy!, { dir: "front", flip: false });
+          c.save(); c.globalAlpha = (1 - k) * 0.9;
+          drawAnimFrame(c, meta, img, S(x, y), ppm, CHAR_SCALE, face.dir, face.flip, clock * 2.2, nightA, "walk");
+          c.restore();
+        }
+      }
       else if (f.kind === "text") drawFloatText(c, S(f.x, f.y, 2.2), f.text!, f.color!, age, f.life, Math.max(11, u * 2.6));
       else drawArrow(c, S(f.fromX!, f.fromY!, 4.6), S(f.x, f.y, 0.8), Math.min(1, age / f.life), u, !!f.fire);
     }
@@ -547,6 +574,11 @@ async function boot(): Promise<void> {
         const b = g.buildings.get(e.tower);
         if (b) fx.push({ kind: "arrow", fromX: (b.i + b.w / 2) * T, fromY: (b.j + b.d / 2) * T, x: e.x, y: e.y, t0: clock, life: 0.35 / speed, fire: b.kind === "tower_oil_fire" });
       } else if (e.type === "enemyFled") {
+        // 掉头往离主屋更远的方向跑
+        const h = g.buildings.get(g.houseId);
+        const ax = h ? e.x - (h.i + h.w / 2) * T : 1, ay = h ? e.y - (h.j + h.d / 2) * T : 0;
+        const al = Math.hypot(ax, ay) || 1, fleeSpeed = 4.5;
+        if (animIndex?.chars[e.enemy]) fx.push({ kind: "flee", enemy: e.enemy, x: e.x, y: e.y, vx: (ax / al) * fleeSpeed, vy: (ay / al) * fleeSpeed, t0: clock, life: 0.8 });
         fx.push({ kind: "smoke", x: e.x, y: e.y, t0: clock, life: 0.9 });
         if (e.reward.coin) fx.push({ kind: "text", x: e.x, y: e.y, t0: clock, life: 1.1, text: `+${e.reward.coin}`, color: "#d9a838" });
         lastPos.delete(e.id); facing.delete(e.id); animFacing.delete(e.id);
