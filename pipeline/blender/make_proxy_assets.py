@@ -337,7 +337,115 @@ def build_trap_bear():
     cyl("stake", 0.035, 0.3, (0.95, 0, 0.12), "wood_dark", verts=6)
 
 
+def _pyramid(name, radius, depth, loc, mat):
+    bpy.ops.mesh.primitive_cone_add(vertices=4, radius1=radius, radius2=0.0, depth=depth, location=loc, rotation=(0, 0, math.radians(45)))
+    o = bpy.context.active_object
+    o.name = name
+    return assign(o, mat)
+
+
+def build_house_lv1_thatch():
+    """漏风茅草屋：夯土墙 + 厚茅草双坡顶 + 歪木门 + 小窗 + 柴堆（开局的家）"""
+    box("earth_base", (3.0, 2.6, 0.2), (0, 0.1, 0.1), "stone")
+    box("earth_walls", (2.7, 2.2, 1.7), (0, 0.15, 1.05), "ochre_light")
+    for k in range(3):  # 夯土层线
+        box(f"earth_course{k}", (2.72, 2.22, 0.04), (0, 0.15, 0.6 + k * 0.45), "ochre")
+    box("door", (0.7, 0.06, 1.25), (0.3, -0.96, 0.85), "wood_dark", rot=(0, math.radians(3), 0))
+    box("window", (0.45, 0.05, 0.4), (-0.75, -0.96, 1.25), "straw")
+    gable_roof("thatch", 3.3, 1.75, 1.75, 2.95, 0.32, "straw", curve=0.05)
+    box("thatch_ridge", (3.3, 0.35, 0.22), (0, 0, 3.05), "gamboge")
+    for k in range(3):
+        rod(f"press{k}", (-1.6, -1.4 + k * 0.05, 2.0 + k * 0.35), (1.6, -1.4 + k * 0.05, 2.0 + k * 0.35), 0.04, "wood_dark")
+    for k in range(5):
+        cyl(f"firewood{k}", 0.09, 0.9, (1.15 + (k % 3) * 0.19, -1.1, 0.12 + (k // 3) * 0.17), "ochre", rot=(math.radians(90), 0, 0), verts=8)
+
+
+def build_house_wing_room():
+    """家族厢房：青石台基 + 白灰墙 + 小青瓦顶 + 格窗 + 红灯笼 + 摇篮"""
+    box("plinth", (3.4, 2.8, 0.28), (0, 0, 0.14), "stone")
+    box("walls", (3.0, 2.2, 1.8), (0, 0.15, 1.18), "lime_white")
+    box("door", (0.75, 0.06, 1.35), (-0.55, -0.97, 0.96), "ochre")
+    box("win", (0.8, 0.05, 0.65), (0.65, -0.97, 1.35), "wood_dark")
+    for k in range(3):
+        box(f"win_m{k}", (0.04, 0.03, 0.6), (0.4 + k * 0.25, -1.0, 1.35), "ochre_light")
+    gable_roof("roof", 3.5, 1.6, 2.05, 3.1, 0.14, "tile_dark")
+    box("ridge", (3.2, 0.2, 0.16), (0, 0, 3.22), "tile_light")
+    sphere("lantern", 0.15, (-0.05, -1.05, 1.8), "cinnabar", scale=(1, 1, 1.25))
+    box("cradle", (0.55, 0.35, 0.25), (1.2, -1.05, 0.42), "ochre_light")
+    rod("pole", (-1.45, -1.25, 1.3), (-0.2, -1.25, 1.3), 0.025, "bamboo")
+    for k in range(3):
+        box(f"cloth{k}", (0.22, 0.03, 0.3), (-1.25 + k * 0.38, -1.25, 1.12), ("cinnabar", "malachite_light", "lime_white")[k])
+
+
+def build_hunt_lodge():
+    """林间猎棚：原木墙 + 茅草树皮顶 + 墙上兽皮与弓 + 晾肉架 + 树墩"""
+    box("lodge_base", (2.8, 2.4, 0.15), (0, 0.1, 0.075), "stone")
+    box("lodge_walls", (2.5, 2.0, 1.6), (0, 0.15, 0.95), "wood_dark")
+    for k in range(5):  # 原木横纹
+        rod(f"log_f{k}", (-1.28, -0.86, 0.3 + k * 0.32), (1.28, -0.86, 0.3 + k * 0.32), 0.07, "ochre")
+        rod(f"log_s{k}", (1.26, -0.85, 0.3 + k * 0.32), (1.26, 1.15, 0.3 + k * 0.32), 0.07, "ochre")
+    box("lodge_door", (0.6, 0.06, 1.15), (-0.6, -0.92, 0.75), "wood_dark")
+    box("hide1", (0.6, 0.04, 0.5), (0.45, -0.94, 1.3), "ochre_light", rot=(0, math.radians(8), 0))
+    box("hide2", (0.04, 0.55, 0.45), (1.33, 0.4, 1.15), "straw")
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.35, minor_radius=0.025, location=(0.95, -0.95, 1.35), rotation=(math.radians(90), 0, 0))
+    bow = bpy.context.active_object; bow.name = "bow"; bow.scale = (0.4, 1, 1); assign(bow, "wood_dark")
+    gable_roof("lodge_roof", 3.0, 1.55, 1.65, 2.75, 0.25, "straw", curve=0.08)
+    for k in range(2):
+        rod(f"rack_post{k}", (-1.6 + k * 0.9, -1.5, 0), (-1.6 + k * 0.9, -1.5, 1.2), 0.04, "wood_dark")
+    rod("rack_bar", (-1.65, -1.5, 1.15), (-0.65, -1.5, 1.15), 0.035, "wood_dark")
+    for k in range(4):
+        box(f"jerky{k}", (0.08, 0.04, 0.32), (-1.5 + k * 0.25, -1.5, 0.95), "cinnabar")
+    cyl("stump", 0.28, 0.35, (1.35, -1.45, 0.17), "ochre", verts=12)
+
+
+def build_granary():
+    """防潮粮仓：四根木柱架高 + 防鼠石盘 + 木板仓 + 茅草四坡顶 + 木梯 + 麻袋"""
+    for k, (x, y) in enumerate(((-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0))):
+        cyl(f"post{k}", 0.13, 1.0, (x, y, 0.5), "wood_dark", verts=10)
+        cyl(f"guard{k}", 0.26, 0.08, (x, y, 1.02), "stone", verts=14)
+    box("floor", (2.5, 2.5, 0.16), (0, 0, 1.12), "ochre")
+    box("bin", (2.3, 2.3, 1.5), (0, 0, 1.95), "ochre_light")
+    for k in range(5):
+        box(f"plank{k}", (0.03, 2.32, 1.5), (-1.15 + k * 0.575, 0, 1.95), "ochre")
+    box("bin_door", (0.6, 0.05, 0.8), (0.2, -1.17, 1.85), "wood_dark")
+    _pyramid("granary_roof", 2.2, 1.3, (0, 0, 3.35), "straw")
+    for i, x in enumerate((-0.05, 0.4)):
+        rod(f"ladder_rail{i}", (x, -1.85, 0), (x, -1.2, 1.2), 0.035, "wood_dark")
+    for k in range(1, 5):
+        t = k / 5
+        rod(f"ladder_rung{k}", (-0.05, -1.85 + 0.65 * t, 1.2 * t), (0.4, -1.85 + 0.65 * t, 1.2 * t), 0.025, "rope")
+    for k in range(3):
+        sphere(f"sack{k}", 0.24, (-1.2 + k * 0.35, -1.55, 0.22), "straw", scale=(1, 0.85, 1.2), seg=12)
+
+
+def build_tower_oil_fire():
+    """火油连弩塔：青砖底层 + 木构上层 + 平台火盆 + 黑陶油罐 + 朱砂四坡顶"""
+    box("brick_base", (1.5, 1.5, 2.2), (0, 0, 1.1), "tile_light")
+    for k in range(4):
+        box(f"brick_course{k}", (1.52, 1.52, 0.04), (0, 0, 0.45 + k * 0.45), "stone")
+    box("timber", (1.4, 1.4, 1.3), (0, 0, 2.85), "ochre")
+    for k, (x, y) in enumerate(((-0.7, -0.7), (0.7, -0.7), (0.7, 0.7), (-0.7, 0.7))):
+        cyl(f"tpost{k}", 0.07, 1.4, (x, y, 2.85), "wood_dark", verts=8)
+    box("platform", (1.8, 1.8, 0.14), (0, 0, 3.57), "wood_dark")
+    for k, (sx, sy, rx) in enumerate(((0, -1, 1), (0, 1, 1), (-1, 0, 0), (1, 0, 0))):
+        box(f"parapet{k}", (1.8, 0.08, 0.45) if rx else (0.08, 1.8, 0.45), (sx * 0.86, sy * 0.86, 3.86), "ochre")
+    box("crossbow", (0.18, 0.9, 0.12), (0, -0.4, 3.95), "wood_dark")
+    rod("bow_arm", (-0.45, -0.75, 3.98), (0.45, -0.75, 3.98), 0.03, "wood_dark")
+    cyl("brazier", 0.2, 0.2, (0.6, -0.6, 3.75), "tile_dark", verts=12)
+    sphere("fire", 0.17, (0.6, -0.6, 3.95), "gamboge", scale=(1, 1, 1.5))
+    for k in range(3):
+        sphere(f"jar{k}", 0.16, (-0.6 + k * 0.3, 0.6, 3.78), "tile_dark", scale=(1, 1, 1.3), seg=12)
+    for k, (x, y) in enumerate(((-0.85, -0.85), (0.85, -0.85), (0.85, 0.85), (-0.85, 0.85))):
+        cyl(f"roofpost{k}", 0.05, 0.9, (x, y, 4.1), "wood_dark", verts=8)
+    _pyramid("oil_roof", 1.55, 1.0, (0, 0, 5.05), "cinnabar")
+
+
 BUILDERS = {
+    "house_lv1_thatch": build_house_lv1_thatch,
+    "house_wing_room": build_house_wing_room,
+    "hunt_lodge": build_hunt_lodge,
+    "granary": build_granary,
+    "tower_oil_fire": build_tower_oil_fire,
     "house_lv2_tile": build_house_lv2_tile,
     "tower_bamboo": build_tower_bamboo,
     "prop_pine_tree": build_prop_pine_tree,

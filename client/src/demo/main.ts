@@ -327,14 +327,17 @@ async function boot(): Promise<void> {
 
   // ---------------------------------------------------------------- 场景同步
   const scene = new Scene(map.cols, map.rows, atlas);
+  /** 玩法里的建筑 id → 资产 id（厢房在玩法里叫 wing_room，资产叫 house_wing_room） */
+  const spriteKind = (kind: string) => (kind === "wing_room" ? "house_wing_room" : kind);
   const isWallAt = (i: number, j: number) => {
     const id = g.grid.occupant(i, j);
     return !!id && g.buildings.get(id)?.category === "wall";
   };
   const spriteFor = (b: Building): string | null => {
     const has = (s: string) => (atlas.sprites[s] ? s : null);
-    if (b.category === "house") return g.houseLevel === 2 ? has("house_lv2_tile") : null;
+    if (b.category === "house") return g.houseLevel === 1 ? has("house_lv1_thatch") : g.houseLevel === 2 ? has("house_lv2_tile") : null;
     if (b.kind === "tower_bamboo" || b.kind === "tower_crossbow") return has("tower_bamboo");
+    if (["house_wing_room", "hunt_lodge", "granary", "tower_oil_fire"].includes(spriteKind(b.kind))) return has(spriteKind(b.kind));
     if (b.category === "wall") {
       // 只和 ±Y 方向的墙相连 → 用 90° 那张，墙段就能接成一条线
       const alongY = (isWallAt(b.i, b.j - 1) || isWallAt(b.i, b.j + 1)) && !(isWallAt(b.i - 1, b.j) || isWallAt(b.i + 1, b.j));
