@@ -109,6 +109,23 @@ async function boot(): Promise<void> {
     }
   }
 
+  // 谷地边缘（挨着可走格）的山石上几丛翠竹；离主屋最近的一块山石上一株红梅
+  const bamboo: { i: number; j: number }[] = [];
+  let plum: { i: number; j: number } | null = null;
+  {
+    const taken = (i: number, j: number) => [...decor, ...lanterns, ...braziers].some((t) => t.i === i && t.j === j);
+    const edge: { i: number; j: number }[] = [];
+    for (let j = 0; j < map.rows; j++) for (let i = 0; i < map.cols; i++) {
+      if (map.terrain[j]![i] !== "r" || taken(i, j)) continue;
+      const open = (x: number, y: number) => { const t = map.terrain[y]?.[x]; return t !== undefined && t !== "r"; };
+      if (open(i - 1, j) || open(i + 1, j) || open(i, j - 1) || open(i, j + 1)) edge.push({ i, j });
+    }
+    const h = cfg.map.house;
+    edge.sort((a, b) => (a.i - h.i) ** 2 + (a.j - h.j) ** 2 - ((b.i - h.i) ** 2 + (b.j - h.j) ** 2));
+    plum = edge.shift() ?? null;
+    bamboo.push(...edge.filter((_, n) => n % 3 === 1));
+  }
+
   // ---------------------------------------------------------------- 相机
   const cam: Camera = { x: 0, y: 0, zoom: 1 };
   const fit = () => {
@@ -417,6 +434,8 @@ async function boot(): Promise<void> {
     const front = h.j - 1; // 正面朝画面左下 = −j 方向
     if (atlas.sprites.prop_stone_lantern) for (const l of lanterns) scene.addSprite("prop_stone_lantern", l.i, l.j, `lantern@${l.i},${l.j}`);
     if (atlas.sprites.prop_beacon_brazier) for (const b of braziers) scene.addSprite("prop_beacon_brazier", b.i, b.j, `beacon@${b.i},${b.j}`);
+    if (atlas.sprites.prop_bamboo_clump) for (const b of bamboo) scene.addSprite("prop_bamboo_clump", b.i, b.j, `bamboo@${b.i},${b.j}`);
+    if (atlas.sprites.prop_plum_tree && plum) scene.addSprite("prop_plum_tree", plum.i, plum.j, "plum");
     if (atlas.sprites.prop_peddler_cart && g.phase === "day" && g.peddler) {
       const spot = [[h.i + h.w, front], [h.i - 1, front], [h.i + h.w, h.j], [h.i, front - 1]].find(([i, j]) => freeTile(i!, j!));
       if (spot) scene.addSprite("prop_peddler_cart", spot[0]!, spot[1]!, "peddler_cart");

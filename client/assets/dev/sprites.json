@@ -990,6 +990,178 @@
       "night_shadow_opacity": 0.6,
       "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
       "export_scale": 1.0
+    },
+    "prop_plum_tree": {
+      "id": "prop_plum_tree",
+      "name": "院墙红梅树",
+      "angle": 0,
+      "resolution": [
+        288,
+        344
+      ],
+      "anchor_uv": [
+        0.37095,
+        0.82224
+      ],
+      "anchor_px": [
+        106.83,
+        282.85
+      ],
+      "px_per_meter": 64.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        181.02,
+        90.51
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 4.0,
+      "actual_height_m": 4.0,
+      "actual_size_m": [
+        3.412,
+        0.794
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "prop_plum_tree_day.png",
+      "night_file": "prop_plum_tree_night.png",
+      "shadow_file": "prop_plum_tree_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "prop_wood_bridge_a0": {
+      "id": "prop_wood_bridge",
+      "name": "溪上木桥",
+      "angle": 0,
+      "resolution": [
+        304,
+        232
+      ],
+      "anchor_uv": [
+        0.45321,
+        0.68287
+      ],
+      "anchor_px": [
+        137.77,
+        158.43
+      ],
+      "px_per_meter": 64.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        181.02,
+        90.51
+      ],
+      "footprint": "2x1",
+      "fit_limited_by": "footprint",
+      "target_height_m": 1.6,
+      "actual_height_m": 1.531,
+      "actual_size_m": [
+        3.84,
+        1.718
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "prop_wood_bridge_a0_day.png",
+      "night_file": "prop_wood_bridge_a0_night.png",
+      "shadow_file": "prop_wood_bridge_a0_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "prop_wood_bridge_a90": {
+      "id": "prop_wood_bridge",
+      "name": "溪上木桥",
+      "angle": 90,
+      "resolution": [
+        304,
+        232
+      ],
+      "anchor_uv": [
+        0.45321,
+        0.68287
+      ],
+      "anchor_px": [
+        137.77,
+        158.43
+      ],
+      "px_per_meter": 64.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        181.02,
+        90.51
+      ],
+      "footprint": "2x1",
+      "fit_limited_by": "footprint",
+      "target_height_m": 1.6,
+      "actual_height_m": 1.531,
+      "actual_size_m": [
+        1.718,
+        3.84
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "prop_wood_bridge_a90_day.png",
+      "night_file": "prop_wood_bridge_a90_night.png",
+      "shadow_file": "prop_wood_bridge_a90_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "prop_bamboo_clump": {
+      "id": "prop_bamboo_clump",
+      "name": "翠竹丛",
+      "angle": 0,
+      "resolution": [
+        368,
+        416
+      ],
+      "anchor_uv": [
+        0.3788,
+        0.81976
+      ],
+      "anchor_px": [
+        139.4,
+        341.02
+      ],
+      "px_per_meter": 64.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        181.02,
+        90.51
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 4.8,
+      "actual_height_m": 4.8,
+      "actual_size_m": [
+        2.982,
+        2.588
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "prop_bamboo_clump_day.png",
+      "night_file": "prop_bamboo_clump_night.png",
+      "shadow_file": "prop_bamboo_clump_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
     }
   }
 }

@@ -637,6 +637,122 @@ def build_ancestral_hall():
         rod(f"incense{k}", ((k - 1) * 0.06, -2.2, 0.7), ((k - 1) * 0.06, -2.2, 1.05), 0.012, "cinnabar")
 
 
+def build_prop_bamboo_clump():
+    """翠竹丛：八根粗细不一的竹竿（竹节清楚、略向一侧斜）+ 上部几团块面分明的叶簇（石绿 / 松青）+ 竹笋与小石。"""
+    import random
+    rnd = random.Random(7)
+    stalks = []
+    for k in range(8):
+        ang = k * 2.4
+        r0 = 0.12 + 0.3 * rnd.random()
+        x0, y0 = math.cos(ang) * r0, math.sin(ang) * r0
+        h = 3.4 + 1.3 * rnd.random()
+        lean = 0.35 + 0.25 * rnd.random()
+        x1, y1 = x0 + lean + 0.15 * math.cos(ang), y0 + 0.12 * math.sin(ang)
+        rad = 0.045 + 0.02 * rnd.random()
+        rod(f"stalk{k}", (x0, y0, 0), (x1, y1, h), rad, "bamboo", verts=8)
+        for n in range(1, int(h / 0.55)):  # 竹节
+            t = n * 0.55 / h
+            cyl(f"stalk{k}_node{n}", rad * 1.25, 0.035, (x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, h * t), "malachite_light", verts=8)
+        stalks.append((x1, y1, h))
+    # 竹叶：每个节点一簇 6~7 片狭长尖叶（压扁的四棱锥），向外下方张开 —— 版画里“个”字 / “介”字竹叶的块面
+    from mathutils import Euler as _Eu
+    leaf_n = 0
+    for k, (x, y, h) in enumerate(stalks):
+        tips = [(x + 0.05, y, h - 0.1), (x - 0.08, y + 0.05, h - 0.75)]
+        if k % 2 == 0:
+            tips.append((x + 0.02, y - 0.05, h - 1.35))
+        for ci, (cx, cy, cz) in enumerate(tips):
+            mat = "pine_deep" if (k + ci) % 3 == 0 else "malachite" if (k + ci) % 3 == 1 else "malachite_light"
+            for m in range(5):
+                yaw = m * (2 * math.pi / 5) + k * 0.7 + ci
+                droop = math.radians(95 + 30 * rnd.random())  # 与竖直方向夹角，>90 就是往下垂
+                length = 0.75 + 0.3 * rnd.random()
+                bpy.ops.mesh.primitive_cone_add(vertices=4, radius1=0.15, radius2=0.0, depth=length)
+                leaf = bpy.context.active_object
+                leaf.name = f"leaf{leaf_n}"
+                leaf_n += 1
+                leaf.scale = (1.0, 0.35, 1.0)
+                bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+                # 锥尖朝 +Z；先绕 X 倾倒 droop，再绕 Z 转到 yaw；底面中心对准簇心
+                rot = _Eu((droop, 0, yaw), "XYZ")
+                tip_dir = Vector((0, 0, 1))
+                tip_dir.rotate(rot)
+                leaf.rotation_euler = rot
+                leaf.location = (cx + tip_dir.x * length / 2, cy + tip_dir.y * length / 2, cz + tip_dir.z * length / 2)
+                assign(leaf, mat)
+    for k, (x, y) in enumerate(((0.45, -0.35), (-0.35, -0.3))):
+        bpy.ops.mesh.primitive_cone_add(vertices=8, radius1=0.08, radius2=0.0, depth=0.32, location=(x, y, 0.16))
+        assign(bpy.context.active_object, "ochre_light")
+    for k, (c, r) in enumerate((((0.55, 0.1, 0.08), 0.18), ((-0.5, 0.25, 0.07), 0.14))):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=r, location=c)
+        rock = bpy.context.active_object
+        rock.scale = (1.3, 1.0, 0.6)
+        assign(rock, "stone")
+
+
+def build_prop_wood_bridge():
+    """溪上木桥（2×1，沿 X 跨溪）：青石桥墩 + 微拱的赭石木板桥面 + 两侧木栏 + 桥下一段溪水与卵石。"""
+    L = 3.6
+    box("water", (L + 0.2, 1.7, 0.04), (0, 0, 0.02), "water")
+    for k, (x, y) in enumerate(((-1.3, 0.55), (0.6, -0.6), (1.2, 0.5), (-0.4, -0.55))):
+        sphere(f"pebble{k}", 0.09, (x, y, 0.05), "stone", scale=(1.3, 1, 0.5), seg=8)
+    for sd in (-1, 1):
+        box(f"pier{sd}", (0.6, 1.4, 0.55), (sd * (L / 2 - 0.25), 0, 0.27), "stone")
+        box(f"pier{sd}_cap", (0.66, 1.46, 0.08), (sd * (L / 2 - 0.25), 0, 0.58), "tile_light")
+    n = 12
+    for k in range(n):
+        x = -L / 2 + (k + 0.5) * L / n
+        z = 0.62 + 0.28 * math.cos(math.pi * x / L)  # 微拱
+        box(f"plank{k}", (L / n - 0.03, 1.2, 0.07), (x, 0, z), "ochre" if k % 2 else "ochre_light",
+            rot=(0, -math.atan2(-0.28 * math.pi / L * math.sin(math.pi * x / L), 1), 0))
+    for sd in (-1, 1):
+        y = sd * 0.58
+        posts = []
+        for k in range(5):
+            x = -L / 2 + 0.2 + k * (L - 0.4) / 4
+            z = 0.62 + 0.28 * math.cos(math.pi * x / L)
+            rod(f"post{sd}_{k}", (x, y, z), (x, y, z + 0.55), 0.04, "wood_dark", verts=8)
+            posts.append((x, y, z + 0.5))
+        for k in range(4):
+            rod(f"rail{sd}_{k}", posts[k], posts[k + 1], 0.03, "wood_dark", verts=6)
+    sphere("bridge_lantern", 0.1, (-L / 2 + 0.2, -0.58, 1.38), "cinnabar", scale=(1, 1, 1.3), seg=8)
+
+
+def build_prop_plum_tree():
+    """红梅：黑褐虬曲枝干向两侧伸展，满枝朱砂 / 朱膘梅花簇（无叶），根部小青石。"""
+    trunk = [(0, 0, 0), (0.12, 0.02, 0.8), (-0.08, 0.05, 1.6), (0.15, 0.0, 2.3)]
+    for i in range(len(trunk) - 1):
+        r = 0.2 - i * 0.04
+        rod(f"trunk{i}", trunk[i], trunk[i + 1], r, "wood_dark", verts=10)
+        sphere(f"tknot{i}", r * 1.05, trunk[i + 1], "wood_dark", seg=10)
+    branches = [
+        ((-0.08, 0.05, 1.6), (-0.9, -0.1, 2.3), (-1.5, 0.05, 2.5)),
+        ((0.12, 0.02, 1.1), (0.9, 0.1, 1.7), (1.5, -0.05, 2.0)),
+        ((0.15, 0.0, 2.3), (0.4, -0.05, 3.1), (0.1, 0.05, 3.7)),
+        ((0.15, 0.0, 2.3), (0.95, 0.05, 2.9), (1.3, -0.1, 3.4)),
+        ((-0.08, 0.05, 1.9), (-0.5, 0.0, 2.9), (-0.9, 0.1, 3.4)),
+    ]
+    blossoms = []
+    for bi, (a, b, c) in enumerate(branches):
+        rod(f"br{bi}a", a, b, 0.07, "wood_dark", verts=8)
+        rod(f"br{bi}b", b, c, 0.045, "wood_dark", verts=8)
+        for t in (0.35, 0.7, 1.0):
+            for (p0, p1) in ((a, b), (b, c)):
+                blossoms.append(tuple(p0[i] + (p1[i] - p0[i]) * t for i in range(3)))
+    import random
+    rnd = random.Random(3)
+    for k, (x, y, z) in enumerate(blossoms):
+        for m in range(3):
+            dx, dy, dz = (rnd.random() - 0.5) * 0.35, (rnd.random() - 0.5) * 0.3, (rnd.random() - 0.3) * 0.25
+            sphere(f"plum{k}_{m}", 0.07 + 0.03 * rnd.random(), (x + dx, y + dy, z + dz), "cinnabar" if (k + m) % 3 else "gamboge" if m == 2 and k % 5 == 0 else "cinnabar", seg=8)
+    for k, (c, r) in enumerate((((0.35, -0.3, 0.08), 0.2), ((-0.3, -0.2, 0.06), 0.15))):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=r, location=c)
+        rock = bpy.context.active_object
+        rock.scale = (1.3, 1.0, 0.6)
+        assign(rock, "stone")
+
+
 def build_tower_rolling_log():
     """滚木礌石楼（2×2）：青石厚墙 + 木构平台 + 一排滚木 + 圆石堆 + 绳闸 + 青瓦顶"""
     box("stone_mass", (3.2, 3.2, 2.6), (0, 0, 1.3), "stone")
@@ -670,6 +786,9 @@ BUILDERS = {
     "house_lv2_tile": build_house_lv2_tile,
     "tower_bamboo": build_tower_bamboo,
     "prop_pine_tree": build_prop_pine_tree,
+    "prop_bamboo_clump": build_prop_bamboo_clump,
+    "prop_wood_bridge": build_prop_wood_bridge,
+    "prop_plum_tree": build_prop_plum_tree,
     # 以下是正式资产（规整/重复/很薄，程序化比图生 3D 更好）
     "farm_rice_young": build_farm_rice_young,
     "farm_rice_ripe": build_farm_rice_ripe,

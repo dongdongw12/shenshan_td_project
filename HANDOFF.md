@@ -212,5 +212,6 @@
 - **夜灯闪烁**：夜里每座有灯的建筑、石灯、烽火盆叠一层叠加混合的暖光晕（位置按烘培夜灯：正面偏左、约 0.4 倍高；箭楼在平台高度），亮度轻微闪烁 —— 美术圣经第 7 节“灯火闪烁 / 灯晕外溢”的客户端部分。
 - **炊烟 / 萤火**：白天主屋、厢房屋脊冒炊烟（浅色烟团 + 细墨线勾边，木刻画法；只用灰色在草地和茅草上几乎看不见），快天黑时更浓；夜里稻田上几点萤火明灭。
 - **受击闪白**：敌人被箭射中时叠加混合再画一遍同一帧，0.12 秒内淡掉。顺手修了 `drawAnimFrame` 会把调用方设的 `globalAlpha` 覆盖成 1 的问题（之前“掉头逃跑”的淡出其实不生效）。闪白太快没截到图，代码跑过无报错。
-- **Colab 烘培笔记本**：角色清单补上当家的 / 阿莲 / 孩子；新增 `PROXY_FALLBACK`（默认开）：`raw_models/` 里还没有 AI 模型的 16 件建筑 / 道具，先用程序化替身按同样参数烘到 `baked_sprites/_proxy/`。所以 T2 就算还卡着，在 Colab 跑一次烘培也能拿到正式比例（128px/m）的全套替身。导出顺序：`export_sprites.py --sprites baked_sprites/_proxy --merge` → `--sprites baked_sprites --merge`（AI 版覆盖替身）→ `export_chars.py --anims baked_sprites/chars`。
+- **Colab 烘培笔记本**：角色清单补上当家的 / 阿莲 / 孩子；新增 `PROXY_FALLBACK`（默认开）：`raw_models/` 里还没有 AI 模型的建筑 / 道具（现 19 件），先用程序化替身按同样参数烘到 `baked_sprites/_proxy/`。所以 T2 就算还卡着，在 Colab 跑一次烘培也能拿到正式比例（128px/m）的全套替身。导出顺序：`export_sprites.py --sprites baked_sprites/_proxy --merge` → `--sprites baked_sprites --merge`（AI 版覆盖替身）→ `export_chars.py --anims baked_sprites/chars`。
 - **精灵图鉴** `client/gallery.html`（`npm --prefix client run dev` → `/gallery.html`，只在开发台）：全部建筑 / 道具精灵按统一比例排开，可拖“入夜”看白昼→夜晚、切底色、显示占地框与锚点、开关地影；角色卡片实时播放行走 / 攻击 / 干活、四个朝向。T2 的 AI 资产导出后用它验收最快。截图 `docs/art/samples/gallery_v1.jpg`。
+- **最后 3 件替身**：翠竹丛（竹节 + 下垂的尖叶簇，版画“个 / 介”字竹叶）、溪上木桥（2×1，0° / 90°，微拱桥面 + 栏杆 + 灯笼）、红梅。至此 manifest 里 24 件资产全部有烘培精灵（19 件替身 + 5 件正式程序化）。演示：谷地边缘山石上几丛翠竹，离主屋最近的山石上一株红梅（木桥暂时没有放的地方：路不过溪）。截图 `docs/art/samples/demo_day1_decor.jpg`。Colab 笔记本的 `PROXY_FALLBACK` 清单同步加上这 3 件。
