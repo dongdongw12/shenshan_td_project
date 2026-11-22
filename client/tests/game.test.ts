@@ -325,7 +325,7 @@ describe("平衡 AI 攒大院", () => {
   it("正房修好后货郎来了不把大院要的木料 / 兽材卖光", async () => {
     const { botDay } = await import("../src/game/bot");
     const g = atLv2(6);
-    const lv3 = g.cfg.economy.house.lv3.cost;
+    const lv3 = g.cfg.economy.house.lv3.cost ?? {};
     g.res = { coin: 20, wood: 600, food: 50, hide: 30 };
     g.peddler = true;
     const log = botDay(g);
@@ -338,7 +338,7 @@ describe("平衡 AI 攒大院", () => {
   it("第 6 天起钱粮够了先修大院，再花别的", async () => {
     const { botDay } = await import("../src/game/bot");
     const g = atLv2(6);
-    const lv3 = g.cfg.economy.house.lv3.cost;
+    const lv3 = g.cfg.economy.house.lv3.cost ?? {};
     g.res = { coin: (lv3.coin ?? 0) + 50, wood: (lv3.wood ?? 0) + 10, food: 200, hide: (lv3.hide ?? 0) + 1 };
     botDay(g);
     expect(g.houseLevel).toBe(3);

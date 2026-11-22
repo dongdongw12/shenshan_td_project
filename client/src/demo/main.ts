@@ -177,6 +177,8 @@ async function boot(): Promise<void> {
   let hoverTile: { i: number; j: number } | null = null;
   let selected: number | null = null;
   let speed = Number(qs.get("speed") ?? 1);
+  // 封面：自动模式直接开始；否则点“开荒”前模拟不走（画面照常渲染当背景）
+  let started = qs.get("auto") === "1";
   // 开发台截图用：控制台里 __demo.speed = 1 / __demo.g 查看状态（只在 dev server 里存在）
   if (import.meta.env?.DEV) {
     Object.defineProperty(globalThis, "__demo", { configurable: true, value: { get g() { return g; }, get villagers() { return villagers; }, get speed() { return speed; }, set speed(v: number) { speed = v; } } });
@@ -428,6 +430,8 @@ async function boot(): Promise<void> {
     ($("hp").firstElementChild as HTMLElement).style.width = `${h ? (100 * h.hp) / h.maxHp : 0}%`;
   };
 
+  if (started) $("cover").classList.add("hide");
+  $("coverBtn").onclick = () => { started = true; $("cover").classList.add("hide"); };
   const banner = (text: string) => { $("bannerText").textContent = text; $("banner").classList.add("show"); };
   $("bannerBtn").onclick = () => { g = createGame(cfg, seed + Math.floor(Math.random() * 1000)); $("banner").classList.remove("show"); renderBottom(); };
 
@@ -731,7 +735,8 @@ async function boot(): Promise<void> {
     last = now;
     clock += dt;
     if (auto && g.phase === "day") { autoTimer -= dt * speed; if (autoTimer <= 0) { botDay(g); autoTimer = 4; } }
-    if (auto && g.phase === "day" && g.dayLeft > 3 && g.day > 0) step(g, dt * speed * 3); else step(g, dt * speed);
+    if (!started) { /* 封面上：只渲染不推进 */ }
+    else if (auto && g.phase === "day" && g.dayLeft > 3 && g.day > 0) step(g, dt * speed * 3); else step(g, dt * speed);
     handleEvents();
     syncVillagers(dt);
     const target = g.phase === "night" ? 1 : g.phase === "day" && g.dayLeft < 5 ? ((5 - g.dayLeft) / 5) * 0.75 : 0;
