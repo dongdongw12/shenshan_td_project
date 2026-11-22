@@ -10,12 +10,25 @@ shenshan_td_project/
 ├── README.md                              # 项目总览与管线说明
 ├── assets_manifest.json                   # 24 件核心 3D 建筑/物件规格清单（尺寸/占地/灯光）
 ├── docs/                                  # 策划案、数值表、美术规范与开发日志
+│   ├── art/ART_BIBLE.md                   # 美术圣经：画风原则、比例镜头、光源、色板、墨线层级
+│   ├── art/T2_concept_prompts.md          # 概念图提示词、出图规范与样张验收清单
+│   ├── art/samples/                       # 风格化效果样张（替身模型）
 │   └── prototype_v0/                      # 前 3 天浏览器可玩原型（原 mountain_td_mvp，含初版 config.js）
 ├── pipeline/                              # 离线美术与 3D 烘培管线（不打包进小游戏）
 │   ├── colab/
-│   │   └── colab_bake_sprites.ipynb       # Colab A100 批量等距双光影烘培笔记本
+│   │   ├── colab_gen_3d.ipynb             # 概念图 → Hunyuan3D-2 图生 3D → .glb → 风格化试烘培（T2）
+│   │   ├── build_gen3d_notebook.py        # 上面笔记本的生成脚本（改单元格改这里）
+│   │   ├── gen_3d_jobs.json               # 概念图提示词 + 图生 3D 参数（每件资产一条）
+│   │   ├── gen3d_utils.py                 # 墙面朝向自动对齐（纯 Python）
+│   │   └── colab_bake_sprites.ipynb       # Colab GPU 批量烘培 + 风格化（支持只重跑风格化）
+│   ├── style/
+│   │   ├── style_profile.json             # 画风参数唯一来源（色板、墨线、光影、比例）
+│   │   ├── stylize_sprites.py             # 明清木刻 + 矿物重彩工笔风格化后处理
+│   │   └── compose_preview.py             # 场景预览（按锚点摆到地块网格）
+│   ├── tests/                             # python3 -m unittest discover -s pipeline/tests
 │   ├── blender/
-│   │   └── bake_isometric_sprites.py      # Blender 4.x/5.0 自动归一化 + 粗墨线昼/夜烘培脚本
+│   │   ├── bake_isometric_sprites.py      # Blender 5.x 归一化 + 固定比例等距相机 + 渲染通道（v2）
+│   │   └── make_proxy_assets.py           # 3 件样张的程序化替身模型（回归测试 / 低模兜底）
 │   ├── raw_models/                        # Colab 生成的原始 .glb 建筑模型（.gitignore 忽略，走 Google Drive）
 │   └── baked_sprites/                     # Blender 烘培出的高清 _day.png / _night.png / _meta.json（.gitignore 忽略，走 Google Drive）
 ├── client/                                # 游戏客户端（Cocos Creator 3.8+ 或 TypeScript 微信小游戏）
@@ -34,29 +47,40 @@ shenshan_td_project/
 
 ## 2. 路线 B 核心工作流（4 步闭环）
 
-1. **生成 3D 建筑模型**：在 Colab 上用开源图生 3D 模型（Hunyuan3D / TRELLIS）生成明清古建 `.glb`，放进 Google Drive 的 `shenshan_td/raw_models/`（文件名与 `assets_manifest.json` 的 `id` 一致，如 `house_lv2_tile.glb`）。
-2. **Blender 自动双光影烘培**：运行 `pipeline/blender/bake_isometric_sprites.py`（本机小图测试或 Colab A100 批量跑），自动完成：
-   - 物理高度归一化 + 底面归零对齐网格中心；
-   - 标准 2:1 等距正交相机（俯角 35.264°、方位角 45°）+ 透明底；
-   - **Freestyle 饱满粗墨线描边**（默认 2.6px 深墨色 `#1c1510`）；
-   - 同步输出 **`<id>_day.png`（白昼矿物重彩）**、**`<id>_night.png`（深靛蓝夜色 + 暖橙门窗灯火）** 与 **`<id>_meta.json`（脚点锚点坐标）**。
-3. **打图集进引擎**：用 TexturePacker / Cocos 自动图集把 `_day.png` 与 `_night.png` 合成 WebP/PNG 图集，放入 `client/assets/atlases/`。
-4. **游戏中平滑昼夜切换**：同一建筑只需叠放白昼图与夜晚图，入夜时把夜晚图透明度从 `0 → 1` 平滑过渡，零 3D 性能开销即可呈现细腻的“入夜逐户点灯”效果。
+> 画风规范见 [`docs/art/ART_BIBLE.md`](docs/art/ART_BIBLE.md)，参数唯一来源 [`pipeline/style/style_profile.json`](pipeline/style/style_profile.json)。效果样张：`docs/art/samples/`。
 
-## 3. 本机快速测试命令
+1. **生成 3D 建筑模型**：按 [`docs/art/T2_concept_prompts.md`](docs/art/T2_concept_prompts.md) 出无描边概念图放进云盘 `shenshan_td/concepts/<id>.png`（或让笔记本用 HunyuanDiT 自动出），再在 Colab 运行 `pipeline/colab/colab_gen_3d.ipynb`，用 Hunyuan3D-2 生成带贴图、墙面已转正的 `.glb` 到 `shenshan_td/raw_models/`（文件名 = `assets_manifest.json` 的 `id`）。
+2. **Blender 烘培渲染通道**（`pipeline/blender/bake_isometric_sprites.py`，stylized 模式）：
+   - 全资产统一 **128 px/m**、2:1 等距（俯角 30°、方位角 45°）、×2 超采样；高度对齐 `target_height_m`，底座不出占地格；
+   - 主光左前方来（正面亮、侧面暗、影子在后），材质统一哑光；Freestyle 只画外轮廓（书法笔触 + 手绘抖动）；
+   - 输出多层 EXR（固有色 / 光照 / 法线 / 深度 / 物体 ID / 墨线）到 `_passes/`。
+3. **工笔风格化**（`pipeline/style/stylize_sprites.py`，烘培时自动调用，也可单独重跑）：Kuwahara 平涂 → 矿物色板归色 → 3 阶色阶光影（暗部石青冷调）→ 内结构线 → 分染 → 墨色外轮廓 → 夜晚夜靛 + 暖灯 + 灯晕。输出 `<id>_day.png` / `<id>_night.png` / `<id>_shadow.png`（地影单独一层）/ `<id>_meta.json`（锚点、比例）。
+4. **进客户端**：打图集到 `client/assets/atlases/`；先画全部地影，再按锚点 Y 排序画物体；入夜把夜晚图透明度 0→1，地影 ×0.6。
+
+## 3. 本机命令（Blender 5.3：`/Applications/Blender.app/Contents/MacOS/Blender`）
 
 ```bash
-# 单模型试烘培（先用 512px、32 采样快速看线条与光影）
-blender -b -P pipeline/blender/bake_isometric_sprites.py -- \
-  --input pipeline/raw_models/house_lv2_tile.glb \
-  --out pipeline/baked_sprites \
-  --manifest assets_manifest.json \
-  --res 512 --samples 32 --ink-width 2.6
+# 生成 3 件程序化替身模型（不依赖 Colab，回归测试画风用）
+blender -b -P pipeline/blender/make_proxy_assets.py -- --out pipeline/raw_models
 
-# 批量烘培整个目录（已存在的 PNG 自动跳过）
+# 半比例快速预览（墨线同比缩放）
 blender -b -P pipeline/blender/bake_isometric_sprites.py -- \
-  --input pipeline/raw_models \
-  --out pipeline/baked_sprites \
-  --manifest assets_manifest.json \
-  --res 768 --samples 48
+  --input pipeline/raw_models/house_lv2_tile.glb --out pipeline/baked_sprites \
+  --manifest assets_manifest.json --scale 0.5 --samples 24 --overwrite
+
+# 正式批量（128 px/m，已有成品自动跳过）
+blender -b -P pipeline/blender/bake_isometric_sprites.py -- \
+  --input pipeline/raw_models --out pipeline/baked_sprites --manifest assets_manifest.json --samples 48
+
+# 只改了 style_profile.json：不重新渲染，几十秒重出全部风格化图
+/Applications/Blender.app/Contents/Resources/5.3/python/bin/python3.13 pipeline/style/stylize_sprites.py \
+  --passes pipeline/baked_sprites/_passes --out pipeline/baked_sprites [--debug]
+
+# 场景预览：按锚点摆到 2:1 地块网格上看整体效果
+/Applications/Blender.app/Contents/Resources/5.3/python/bin/python3.13 pipeline/style/compose_preview.py \
+  --sprites pipeline/baked_sprites --out preview --grid 7x6 \
+  --place house_lv2_tile:1,2 --place tower_bamboo:5,4 --place prop_pine_tree:5,1
+
+# 单元测试（Blender 自带 Python 含 numpy；系统 Python 会跳过需要 numpy 的用例）
+/Applications/Blender.app/Contents/Resources/5.3/python/bin/python3.13 -m unittest discover -s pipeline/tests
 ```
