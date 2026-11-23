@@ -244,7 +244,7 @@
 
 ### 2026-11-23 晚 · Claude Opus（AI 资产量产完成 + 按画风 v2 正式重烘）
 - **AI 量产验收**：16 件 + 3 件样张全部出了模型并半比例试烘（`baked_sprites/_preview/`）。好：茅屋、青瓦正房、大院、厢房、祠堂、吊脚粮仓、猎棚、四座塔、石灯笼、烽火盆、货郎车、两向木桥（木桥底下自带一小块水面，进游戏后再看要不要裁）。不要：**古松**（松针成蓝色刀片）和**翠竹丛**（叶团发蓝、带怪脸）→ 已在 `gen_3d_jobs.json` 改 `method=procedural`，云盘旧模型挪到 `raw_models/_rejected/`，烘培自动用程序化替身。院墙红梅树是“墙 + 梅”，名字本意如此，保留。
-- **正式重烘（v2）**：`colab_bake_sprites.ipynb` `SCALE=1.0 / SAMPLES=48 / OVERWRITE=True`，建筑 25 张（含两向篱笆 / 青砖墙 / 木桥）+ 程序化古松 / 竹丛 + 12 个角色。L4、A100 都排不到，跑在 T4 上（建筑约 3–5 分钟一件，角色约 12 分钟一个，共约 3.5 小时）。已导出到 `client/assets/dev`（仍 23 MB），图鉴 0 警告，演示样张 `docs/art/samples/demo_v2_ai_assets_day2.jpg`。
+- **正式重烘（v2）**：`colab_bake_sprites.ipynb` `SCALE=1.0 / SAMPLES=48 / OVERWRITE=True`，建筑 25 张（含两向篱笆 / 青砖墙 / 木桥）+ 程序化古松 / 竹丛 + 12 个角色。L4、A100 都排不到，跑在 T4 上（建筑约 3–5 分钟一件，角色约 12 分钟一个，共约 3.5 小时）。已导出到 `client/assets/dev`（仍 23 MB），图鉴 0 警告，演示样张 `docs/art/samples/demo_v2_ai_assets_day2.jpg`。角色随后单独导出（`export_chars.py`，108 张序列帧全部换成 v2 旧墨 / 旧绢调色，`chars.json` 帧尺寸与锚点不变，`chars/` 12 MB），图鉴 12 个角色行走 / 攻击 / 干活正常。
 - **新工具 `pipeline/colab/run_unattended.py`**：在 Colab 内核里依次执行仓库里 notebook 的代码格（不依赖浏览器排队，网页断开照跑），参数格执行后用 overrides 覆盖，跳过各 notebook 的释放格、全部结束（含失败）后统一释放运行时；进度写云盘 `_unattended.log`。用法见文件头两行。
 - **修**：替身兜底以前不带 `--overwrite`、且把 `proxy_models/` 整个目录重烘 → 换画风后古松 / 竹丛替身不会更新；改为只烘缺的件并跟随 `OVERWRITE`。
 - **Colab 经验**：① 新运行时的“连接到 Google 云端硬盘”弹窗要在几十秒内点完，晚了 `drive.mount` 报 `mount failed`，`run_jobs` 会照常收尾释放 GPU（这次因此重跑了一次）；② 选 A100 / L4 排不到会自动降到 T4 + 普通内存（12.7GB），Hunyuan3D 会 OOM —— 这种情况只做 Blender 烘培，图生 3D 留到有 L4 / A100 时。
