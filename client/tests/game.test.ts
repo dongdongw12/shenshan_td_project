@@ -191,6 +191,24 @@ describe("夜战", () => {
     expect(hitHouse).toBe(false);
   });
 
+  it("打跑野猪掉野猪肉：计入口粮，界面叫“肉”", () => {
+    const cfg = onlyNight([{ type: "boar", count: 3, interval: 4 }]); // 多来几头，免得最后一头死时直接天亮扣口粮
+    expect(cfg.enemies.boar!.rewardNames?.food).toBe("肉");
+    const g = createGame(cfg, 6);
+    rich(g);
+    build(g, "tower_bamboo", 6, 4); build(g, "tower_bamboo", 4, 6);
+    g.res.food = 10; // 口粮有仓储上限，从少量开始才看得出加了多少
+    startNight(g);
+    let gained = -1;
+    for (let k = 0; k < 30 * 90 && g.phase === "night" && gained < 0; k++) {
+      const before = g.res.food;
+      step(g, 1 / 30);
+      for (const e of drainEvents(g)) if (e.type === "enemyFled" && e.enemy === "boar" && g.phase === "night") { expect(e.reward.food).toBe(15); gained = g.res.food - before; }
+    }
+    expect(gained).toBeGreaterThanOrEqual(15);
+    expect(gained).toBeLessThan(16);
+  });
+
   it("第一夜：一座塔 + 当家的能守住", () => {
     const g = createGame(testConfig(), 11);
     build(g, "tower_bamboo", 6, 4);

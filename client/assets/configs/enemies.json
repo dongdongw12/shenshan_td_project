@@ -22,8 +22,13 @@
     "radius": 0.6,
     "reward": {
       "coin": 10,
-      "hide": 1
+      "hide": 1,
+      "food": 15
     },
+    "rewardNames": {
+      "food": "肉"
+    },
+    "_note_reward": "打跑野猪掉野猪肉：计入口粮（粮），界面上显示成“肉”",
     "traits": [
       "charge"
     ]

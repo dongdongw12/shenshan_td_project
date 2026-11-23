@@ -718,6 +718,9 @@ async function boot(): Promise<void> {
         if (animIndex?.chars[e.enemy]) fx.push({ kind: "flee", enemy: e.enemy, x: e.x, y: e.y, vx: (ax / al) * fleeSpeed, vy: (ay / al) * fleeSpeed, t0: clock, life: 0.8 });
         fx.push({ kind: "smoke", x: e.x, y: e.y, t0: clock, life: 0.9 });
         if (e.reward.coin) fx.push({ kind: "text", x: e.x, y: e.y, t0: clock, life: 1.1, text: `+${e.reward.coin}`, color: "#d9a838" });
+        // 野猪掉肉（计入口粮）：第二行飘“+15 肉”
+        const names = cfg.enemies[e.enemy]?.rewardNames;
+        if (e.reward.food && names?.food) fx.push({ kind: "text", x: e.x + 0.4, y: e.y - 0.4, t0: clock, life: 1.3, text: `+${e.reward.food}${names.food}`, color: "#c4512e" });
         lastPos.delete(e.id); facing.delete(e.id); animFacing.delete(e.id); hitAt.delete(e.id);
       } else if (e.type === "nightStart") toast(e.title);
       else if (e.type === "married") toast("修好青瓦正房，迎娶阿莲！");

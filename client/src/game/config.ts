@@ -29,6 +29,8 @@ export interface TrapDef { name: string; footprint: string; cost: Cost; charges:
 export interface EnemyDef {
   name: string; hp: number; speed: number; damage: number; attackCd: number; armor: number; radius: number;
   reward: Cost; boss?: boolean; traits?: string[]; burnDps?: number; burnS?: number;
+  /** 掉落物在界面上的叫法（如野猪的 food 显示成“肉”），不影响结算 */
+  rewardNames?: Partial<Record<Resource, string>>;
   aura?: { radius: number; speedMul?: number; damageMul?: number };
 }
 export interface RoleDef {
