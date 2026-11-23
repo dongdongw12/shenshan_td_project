@@ -77,15 +77,18 @@ def repair_hf_cache(repo):
 
 def load_qwen_image():
     import torch
+    from diffusers import BitsAndBytesConfig as DiffusersBnb
     from diffusers import DiffusionPipeline
     from diffusers.quantizers import PipelineQuantizationConfig
+    from transformers import BitsAndBytesConfig as TransformersBnb
 
-    qc = PipelineQuantizationConfig(
-        quant_backend="bitsandbytes_4bit",
-        quant_kwargs={"load_in_4bit": True, "bnb_4bit_quant_type": "nf4",
-                      "bnb_4bit_compute_dtype": torch.bfloat16},
-        components_to_quantize=["transformer", "text_encoder"],
-    )
+    # transformer 与 text_encoder 分开配：transformer 第 0 个块的 img_mod（调制层）保持 bf16 不量化 ——
+    # 整个 transformer 一刀切 4bit 时出图满屏噪点（像没去噪完），T2 第二次跑就是这样
+    nf4 = {"load_in_4bit": True, "bnb_4bit_quant_type": "nf4", "bnb_4bit_compute_dtype": torch.bfloat16}
+    qc = PipelineQuantizationConfig(quant_mapping={
+        "transformer": DiffusersBnb(**nf4, llm_int8_skip_modules=["transformer_blocks.0.img_mod"]),
+        "text_encoder": TransformersBnb(**nf4),
+    })
     repair_hf_cache("Qwen/Qwen-Image")
     pipe = DiffusionPipeline.from_pretrained("Qwen/Qwen-Image", torch_dtype=torch.bfloat16, quantization_config=qc)
     pipe.enable_model_cpu_offload()
@@ -94,8 +97,32 @@ def load_qwen_image():
         prompt = f"{style['prefix_zh']}{asset['prompt_zh']}"
         g = torch.Generator(device="cuda").manual_seed(int(seed))
         return pipe(prompt=prompt, negative_prompt=style["negative_zh"], width=1024, height=1024,
-                    num_inference_steps=40, true_cfg_scale=4.0, generator=g).images[0]
+                    num_inference_steps=50, true_cfg_scale=4.0, generator=g).images[0]
     return pipe, run
+
+
+def grain_level(img):
+    """噪点强度：图像与 3×3 中值滤波之差的标准差（0–255）。干净的概念图一般 < 6，满屏噪点 > 12。"""
+    import numpy as np
+    from PIL import ImageFilter
+    a = np.asarray(img.convert("RGB"), dtype=np.float32)
+    m = np.asarray(img.convert("RGB").filter(ImageFilter.MedianFilter(3)), dtype=np.float32)
+    return float((a - m).std())
+
+
+def clean_grain(img, threshold=8.0):
+    """噪点超过阈值才做非局部均值去噪（保边），返回 (图, 去噪前噪点, 去噪后噪点)。"""
+    before = grain_level(img)
+    if before <= threshold:
+        return img, before, before
+    import cv2
+    import numpy as np
+    from PIL import Image
+    bgr = cv2.cvtColor(np.asarray(img.convert("RGB")), cv2.COLOR_RGB2BGR)
+    h = min(15.0, 3.0 + before * 0.6)
+    out = cv2.fastNlMeansDenoisingColored(bgr, None, h, h, 7, 21)
+    res = Image.fromarray(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
+    return res, before, grain_level(res)
 
 
 def load_hunyuandit():
@@ -151,9 +178,12 @@ def main():
         for seed in seeds:
             t0 = time.time()
             path = os.path.join(cand_dir, f"{i}_{model}_s{seed}.png")
-            run(asset, style, seed).save(path)
+            img = run(asset, style, seed)
+            img, g0, g1 = clean_grain(img)
+            img.save(path)
             cands.append(path)
-            log(f"{i}: {os.path.basename(path)} ({time.time() - t0:.0f}s)")
+            note = f"，噪点 {g0:.1f}" + (f" → 去噪后 {g1:.1f}" if g1 != g0 else "")
+            log(f"{i}: {os.path.basename(path)} ({time.time() - t0:.0f}s{note})")
         target = os.path.join(args.out, f"{i}.png")
         if i in regen or not os.path.exists(target):
             shutil.copy(cands[0], target)

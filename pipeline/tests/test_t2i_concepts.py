@@ -47,5 +47,24 @@ class SafetensorsOk(unittest.TestCase):
         self.assertFalse(t.safetensors_ok(self.p))
 
 
+try:
+    import numpy as np  # noqa: F401
+    from PIL import Image
+    HAVE_IMG = True
+except ImportError:
+    HAVE_IMG = False
+
+
+@unittest.skipUnless(HAVE_IMG, "需要 numpy + Pillow")
+class GrainLevel(unittest.TestCase):
+    def test_flat_image_is_clean_and_noise_is_not(self):
+        import numpy as np
+        flat = Image.fromarray(np.full((64, 64, 3), 128, np.uint8))
+        rng = np.random.default_rng(0)
+        noisy = Image.fromarray(np.clip(128 + rng.normal(0, 30, (64, 64, 3)), 0, 255).astype(np.uint8))
+        self.assertLess(t.grain_level(flat), 1.0)
+        self.assertGreater(t.grain_level(noisy), 12.0)
+
+
 if __name__ == "__main__":
     unittest.main()
