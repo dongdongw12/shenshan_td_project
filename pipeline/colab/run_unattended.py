@@ -9,7 +9,8 @@
 
 - 每个 notebook 的第一个代码格是参数格：先照常执行，再用 overrides 覆盖其中的变量。
 - 含 runtime.unassign() 的格子（各 notebook 的「释放运行时」）一律跳过，由 run_jobs 在全部结束后统一释放。
-- jobs 里也可以放普通函数，按顺序调用（例如 set_aside 把不要的模型挪走）。
+- jobs 里也可以放普通函数，按顺序调用（例如 set_aside 把不要的模型挪走）；返回 False 算失败。
+- 图生 3D 前放 need_gpu 守门并开 stop_on_fail=True：排到 T4 就立刻释放，不会 OOM 白烧。
 - 进度看云盘 `_unattended.log`（每格开始 / 结束一行），最后一行 UNATTENDED_DONE。
 """
 import json
@@ -64,6 +65,32 @@ def set_aside(ids, drive_dir="/content/drive/MyDrive/shenshan_td"):
             if os.path.exists(src):
                 os.replace(src, f"{rej}/{i}{ext}")
                 _log(f"挪走 {i}{ext} → raw_models/_rejected/")
+
+
+def need_gpu(min_vram_gb=20, min_ram_gb=20):
+    """图生 3D 前的守门：排到 T4 / 普通内存就返回 False（配 stop_on_fail=True 立刻释放运行时，不白烧 GPU）。"""
+    import torch
+    ram = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 1024**3
+    if not torch.cuda.is_available():
+        _log("NEED_GPU 没有 GPU")
+        return False
+    p = torch.cuda.get_device_properties(0)
+    vram = p.total_memory / 1024**3
+    ok = vram >= min_vram_gb and ram >= min_ram_gb
+    _log(f"NEED_GPU {p.name} 显存 {vram:.0f}GB 内存 {ram:.0f}GB → {'OK' if ok else '不够，放弃'}")
+    return ok
+
+
+def set_aside_baked(ids, drive_dir="/content/drive/MyDrive/shenshan_td"):
+    """把 baked_sprites/<id>_*（顶层文件）挪进 baked_sprites/_rejected/，下次不带 OVERWRITE 的烘培就只补烘这几件。"""
+    import glob
+    rej = f"{drive_dir}/baked_sprites/_rejected"
+    os.makedirs(rej, exist_ok=True)
+    for i in ids:
+        for src in glob.glob(f"{drive_dir}/baked_sprites/{i}_*"):
+            if os.path.isfile(src):
+                os.replace(src, f"{rej}/{os.path.basename(src)}")
+                _log(f"挪走 {os.path.basename(src)} → baked_sprites/_rejected/")
 
 
 def run_jobs(jobs, release=True, stop_on_fail=False):
