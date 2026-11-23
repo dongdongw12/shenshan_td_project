@@ -1,675 +1,30 @@
 {
-  "scale": 0.5,
-  "px_per_meter": 64.0,
+  "scale": 1.0,
+  "px_per_meter": 128.0,
   "sprites": {
-    "house_lv2_tile": {
-      "id": "house_lv2_tile",
-      "name": "青瓦正房（喜房）",
-      "angle": 0,
-      "resolution": [
-        432,
-        408
-      ],
-      "anchor_uv": [
-        0.41528,
-        0.76754
-      ],
-      "anchor_px": [
-        179.4,
-        313.15
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "2x2",
-      "fit_limited_by": "footprint",
-      "target_height_m": 4.2,
-      "actual_height_m": 3.939,
-      "actual_size_m": [
-        3.951,
-        3.533
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "house_lv2_tile_day.png",
-      "night_file": "house_lv2_tile_night.png",
-      "shadow_file": "house_lv2_tile_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 0.5
-    },
-    "prop_pine_tree": {
-      "id": "prop_pine_tree",
-      "name": "深山古松",
-      "angle": 0,
-      "resolution": [
-        452,
-        504
-      ],
-      "anchor_uv": [
-        0.38077,
-        0.81892
-      ],
-      "anchor_px": [
-        172.1,
-        412.74
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "1x1",
-      "fit_limited_by": "height",
-      "target_height_m": 5.8,
-      "actual_height_m": 5.8,
-      "actual_size_m": [
-        4.905,
-        2.222
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "prop_pine_tree_day.png",
-      "night_file": "prop_pine_tree_night.png",
-      "shadow_file": "prop_pine_tree_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 0.5
-    },
-    "tower_bamboo": {
-      "id": "tower_bamboo",
-      "name": "竹箭楼",
-      "angle": 0,
-      "resolution": [
-        500,
-        492
-      ],
-      "anchor_uv": [
-        0.40708,
-        0.78163
-      ],
-      "anchor_px": [
-        203.54,
-        384.56
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "1x1",
-      "fit_limited_by": "height",
-      "target_height_m": 5.0,
-      "actual_height_m": 5.0,
-      "actual_size_m": [
-        4.257,
-        4.257
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "tower_bamboo_day.png",
-      "night_file": "tower_bamboo_night.png",
-      "shadow_file": "tower_bamboo_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 0.5
-    },
-    "farm_rice_ripe": {
-      "id": "farm_rice_ripe",
-      "name": "开荒稻田（金穗）",
-      "angle": 0,
-      "resolution": [
-        392,
-        248
-      ],
-      "anchor_uv": [
-        0.47787,
-        0.60431
-      ],
-      "anchor_px": [
-        187.33,
-        149.87
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "2x2",
-      "fit_limited_by": "footprint",
-      "target_height_m": 1.1,
-      "actual_height_m": 0.933,
-      "actual_size_m": [
-        3.84,
-        3.84
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "farm_rice_ripe_day.png",
-      "night_file": "farm_rice_ripe_night.png",
-      "shadow_file": "farm_rice_ripe_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "farm_rice_young": {
-      "id": "farm_rice_young",
-      "name": "开荒稻田（青苗）",
-      "angle": 0,
-      "resolution": [
-        384,
-        232
-      ],
-      "anchor_uv": [
-        0.48337,
-        0.58208
-      ],
-      "anchor_px": [
-        185.62,
-        135.04
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "2x2",
-      "fit_limited_by": "footprint",
-      "target_height_m": 0.9,
-      "actual_height_m": 0.687,
-      "actual_size_m": [
-        3.84,
-        3.84
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "farm_rice_young_day.png",
-      "night_file": "farm_rice_young_night.png",
-      "shadow_file": "farm_rice_young_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "fence_wood_a0": {
-      "id": "fence_wood",
-      "name": "尖木篱笆",
-      "angle": 0,
-      "resolution": [
-        144,
-        168
-      ],
-      "anchor_uv": [
-        0.38385,
-        0.79692
-      ],
-      "anchor_px": [
-        55.27,
-        133.88
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "1x1",
-      "fit_limited_by": "height",
-      "target_height_m": 1.8,
-      "actual_height_m": 1.8,
-      "actual_size_m": [
-        1.71,
-        0.265
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "fence_wood_a0_day.png",
-      "night_file": "fence_wood_a0_night.png",
-      "shadow_file": "fence_wood_a0_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "fence_wood_a90": {
-      "id": "fence_wood",
-      "name": "尖木篱笆",
-      "angle": 90,
-      "resolution": [
-        144,
-        168
-      ],
-      "anchor_uv": [
-        0.38385,
-        0.79692
-      ],
-      "anchor_px": [
-        55.27,
-        133.88
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "1x1",
-      "fit_limited_by": "height",
-      "target_height_m": 1.8,
-      "actual_height_m": 1.8,
-      "actual_size_m": [
-        0.266,
-        1.71
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "fence_wood_a90_day.png",
-      "night_file": "fence_wood_a90_night.png",
-      "shadow_file": "fence_wood_a90_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "trap_bear": {
-      "id": "trap_bear",
-      "name": "精铁捕兽夹",
-      "angle": 0,
-      "resolution": [
-        104,
-        88
-      ],
-      "anchor_uv": [
-        0.44639,
-        0.68895
-      ],
-      "anchor_px": [
-        46.42,
-        60.63
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "1x1",
-      "fit_limited_by": "height",
-      "target_height_m": 0.6,
-      "actual_height_m": 0.6,
-      "actual_size_m": [
-        1.04,
-        0.495
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "trap_bear_day.png",
-      "night_file": "trap_bear_night.png",
-      "shadow_file": "trap_bear_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "wall_brick_a0": {
-      "id": "wall_brick",
-      "name": "青砖围墙",
-      "angle": 0,
-      "resolution": [
-        192,
-        216
-      ],
-      "anchor_uv": [
-        0.38385,
-        0.80792
-      ],
-      "anchor_px": [
-        73.7,
-        174.51
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "1x1",
-      "fit_limited_by": "height",
-      "target_height_m": 2.4,
-      "actual_height_m": 2.4,
-      "actual_size_m": [
-        1.866,
-        0.814
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "wall_brick_a0_day.png",
-      "night_file": "wall_brick_a0_night.png",
-      "shadow_file": "wall_brick_a0_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "wall_brick_a90": {
-      "id": "wall_brick",
-      "name": "青砖围墙",
-      "angle": 90,
-      "resolution": [
-        192,
-        216
-      ],
-      "anchor_uv": [
-        0.38385,
-        0.80792
-      ],
-      "anchor_px": [
-        73.7,
-        174.51
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "1x1",
-      "fit_limited_by": "height",
-      "target_height_m": 2.4,
-      "actual_height_m": 2.4,
-      "actual_size_m": [
-        0.814,
-        1.866
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "wall_brick_a90_day.png",
-      "night_file": "wall_brick_a90_night.png",
-      "shadow_file": "wall_brick_a90_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "granary": {
-      "id": "granary",
-      "name": "防潮粮仓",
-      "angle": 0,
-      "resolution": [
-        624,
-        496
-      ],
-      "anchor_uv": [
-        0.44341,
-        0.71232
-      ],
-      "anchor_px": [
-        276.69,
-        353.31
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "2x2",
-      "fit_limited_by": "height",
-      "target_height_m": 3.8,
-      "actual_height_m": 3.8,
-      "actual_size_m": [
-        5.813,
-        5.813
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "granary_day.png",
-      "night_file": "granary_night.png",
-      "shadow_file": "granary_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "house_lv1_thatch": {
-      "id": "house_lv1_thatch",
-      "name": "漏风茅草屋",
-      "angle": 0,
-      "resolution": [
-        384,
-        352
-      ],
-      "anchor_uv": [
-        0.42257,
-        0.75193
-      ],
-      "anchor_px": [
-        162.27,
-        264.68
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "2x2",
-      "fit_limited_by": "height",
-      "target_height_m": 3.2,
-      "actual_height_m": 3.2,
-      "actual_size_m": [
-        3.229,
-        3.425
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "house_lv1_thatch_day.png",
-      "night_file": "house_lv1_thatch_night.png",
-      "shadow_file": "house_lv1_thatch_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "house_wing_room": {
-      "id": "house_wing_room",
-      "name": "家族厢房",
-      "angle": 0,
-      "resolution": [
-        424,
-        392
-      ],
-      "anchor_uv": [
-        0.42111,
-        0.75451
-      ],
-      "anchor_px": [
-        178.55,
-        295.77
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "2x2",
-      "fit_limited_by": "height",
-      "target_height_m": 3.6,
-      "actual_height_m": 3.6,
-      "actual_size_m": [
-        3.818,
-        3.491
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "house_wing_room_day.png",
-      "night_file": "house_wing_room_night.png",
-      "shadow_file": "house_wing_room_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "hunt_lodge": {
-      "id": "hunt_lodge",
-      "name": "林间猎棚",
-      "angle": 0,
-      "resolution": [
-        376,
-        336
-      ],
-      "anchor_uv": [
-        0.42586,
-        0.74744
-      ],
-      "anchor_px": [
-        160.12,
-        251.14
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "2x2",
-      "fit_limited_by": "height",
-      "target_height_m": 3.0,
-      "actual_height_m": 3.0,
-      "actual_size_m": [
-        3.275,
-        3.275
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "hunt_lodge_day.png",
-      "night_file": "hunt_lodge_night.png",
-      "shadow_file": "hunt_lodge_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "tower_oil_fire": {
-      "id": "tower_oil_fire",
-      "name": "火油连弩塔",
-      "angle": 0,
-      "resolution": [
-        568,
-        568
-      ],
-      "anchor_uv": [
-        0.40185,
-        0.79274
-      ],
-      "anchor_px": [
-        228.25,
-        450.28
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "1x1",
-      "fit_limited_by": "height",
-      "target_height_m": 6.0,
-      "actual_height_m": 6.0,
-      "actual_size_m": [
-        4.74,
-        4.74
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "tower_oil_fire_day.png",
-      "night_file": "tower_oil_fire_night.png",
-      "shadow_file": "tower_oil_fire_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
     "ancestral_hall": {
       "id": "ancestral_hall",
       "name": "家族祠堂",
       "angle": 0,
       "resolution": [
-        464,
-        440
+        920,
+        880
       ],
       "anchor_uv": [
-        0.41412,
+        0.41338,
         0.7701
       ],
       "anchor_px": [
-        192.15,
-        338.84
+        380.31,
+        677.69
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "camera_elevation_deg": 30.0,
       "camera_azimuth_deg": 45.0,
       "tile_size_m": 2.0,
       "tile_px": [
-        181.02,
-        90.51
+        362.04,
+        181.02
       ],
       "footprint": "2x2",
       "fit_limited_by": "footprint",
@@ -695,24 +50,24 @@
       "name": "溪边鱼梁与水车",
       "angle": 0,
       "resolution": [
-        312,
-        224
+        616,
+        448
       ],
       "anchor_uv": [
-        0.46088,
+        0.46037,
         0.66253
       ],
       "anchor_px": [
-        143.79,
-        148.41
+        283.59,
+        296.81
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "camera_elevation_deg": 30.0,
       "camera_azimuth_deg": 45.0,
       "tile_size_m": 2.0,
       "tile_px": [
-        181.02,
-        90.51
+        362.04,
+        181.02
       ],
       "footprint": "2x1",
       "fit_limited_by": "footprint",
@@ -733,29 +88,158 @@
       "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
       "export_scale": 1.0
     },
+    "granary": {
+      "id": "granary",
+      "name": "防潮粮仓",
+      "angle": 0,
+      "resolution": [
+        1240,
+        992
+      ],
+      "anchor_uv": [
+        0.44305,
+        0.71232
+      ],
+      "anchor_px": [
+        549.38,
+        706.62
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "2x2",
+      "fit_limited_by": "height",
+      "target_height_m": 3.8,
+      "actual_height_m": 3.8,
+      "actual_size_m": [
+        5.813,
+        5.813
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "granary_day.png",
+      "night_file": "granary_night.png",
+      "shadow_file": "granary_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "house_lv1_thatch": {
+      "id": "house_lv1_thatch",
+      "name": "漏风茅草屋",
+      "angle": 0,
+      "resolution": [
+        768,
+        696
+      ],
+      "anchor_uv": [
+        0.42257,
+        0.75483
+      ],
+      "anchor_px": [
+        324.53,
+        525.36
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "2x2",
+      "fit_limited_by": "height",
+      "target_height_m": 3.2,
+      "actual_height_m": 3.2,
+      "actual_size_m": [
+        3.229,
+        3.425
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "house_lv1_thatch_day.png",
+      "night_file": "house_lv1_thatch_night.png",
+      "shadow_file": "house_lv1_thatch_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "house_lv2_tile": {
+      "id": "house_lv2_tile",
+      "name": "青瓦正房（喜房）",
+      "angle": 0,
+      "resolution": [
+        864,
+        816
+      ],
+      "anchor_uv": [
+        0.41528,
+        0.76754
+      ],
+      "anchor_px": [
+        358.8,
+        626.31
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "2x2",
+      "fit_limited_by": "footprint",
+      "target_height_m": 4.2,
+      "actual_height_m": 3.939,
+      "actual_size_m": [
+        3.951,
+        3.533
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "house_lv2_tile_day.png",
+      "night_file": "house_lv2_tile_night.png",
+      "shadow_file": "house_lv2_tile_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
     "house_lv3_courtyard": {
       "id": "house_lv3_courtyard",
       "name": "青砖大院",
       "angle": 0,
       "resolution": [
-        584,
-        440
+        1168,
+        880
       ],
       "anchor_uv": [
         0.45275,
         0.68706
       ],
       "anchor_px": [
-        264.4,
-        302.31
+        528.81,
+        604.61
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "camera_elevation_deg": 30.0,
       "camera_azimuth_deg": 45.0,
       "tile_size_m": 2.0,
       "tile_px": [
-        181.02,
-        90.51
+        362.04,
+        181.02
       ],
       "footprint": "3x3",
       "fit_limited_by": "footprint",
@@ -776,29 +260,158 @@
       "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
       "export_scale": 1.0
     },
+    "house_wing_room": {
+      "id": "house_wing_room",
+      "name": "家族厢房",
+      "angle": 0,
+      "resolution": [
+        840,
+        776
+      ],
+      "anchor_uv": [
+        0.42036,
+        0.75713
+      ],
+      "anchor_px": [
+        353.1,
+        587.53
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "2x2",
+      "fit_limited_by": "height",
+      "target_height_m": 3.6,
+      "actual_height_m": 3.6,
+      "actual_size_m": [
+        3.818,
+        3.491
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "house_wing_room_day.png",
+      "night_file": "house_wing_room_night.png",
+      "shadow_file": "house_wing_room_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "hunt_lodge": {
+      "id": "hunt_lodge",
+      "name": "林间猎棚",
+      "angle": 0,
+      "resolution": [
+        752,
+        672
+      ],
+      "anchor_uv": [
+        0.42586,
+        0.74744
+      ],
+      "anchor_px": [
+        320.25,
+        502.28
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "2x2",
+      "fit_limited_by": "height",
+      "target_height_m": 3.0,
+      "actual_height_m": 3.0,
+      "actual_size_m": [
+        3.275,
+        3.275
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "hunt_lodge_day.png",
+      "night_file": "hunt_lodge_night.png",
+      "shadow_file": "hunt_lodge_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "prop_bamboo_clump": {
+      "id": "prop_bamboo_clump",
+      "name": "翠竹丛",
+      "angle": 0,
+      "resolution": [
+        728,
+        832
+      ],
+      "anchor_uv": [
+        0.37747,
+        0.81976
+      ],
+      "anchor_px": [
+        274.8,
+        682.04
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 4.8,
+      "actual_height_m": 4.8,
+      "actual_size_m": [
+        2.982,
+        2.588
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "prop_bamboo_clump_day.png",
+      "night_file": "prop_bamboo_clump_night.png",
+      "shadow_file": "prop_bamboo_clump_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
     "prop_beacon_brazier": {
       "id": "prop_beacon_brazier",
       "name": "守夜烽火盆",
       "angle": 0,
       "resolution": [
-        192,
-        208
+        384,
+        416
       ],
       "anchor_uv": [
         0.39353,
         0.79312
       ],
       "anchor_px": [
-        75.56,
-        164.97
+        151.12,
+        329.94
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "camera_elevation_deg": 30.0,
       "camera_azimuth_deg": 45.0,
       "tile_size_m": 2.0,
       "tile_px": [
-        181.02,
-        90.51
+        362.04,
+        181.02
       ],
       "footprint": "1x1",
       "fit_limited_by": "height",
@@ -824,24 +437,24 @@
       "name": "进山货郎担",
       "angle": 0,
       "resolution": [
-        184,
-        192
+        360,
+        376
       ],
       "anchor_uv": [
-        0.40405,
-        0.77424
+        0.40192,
+        0.78008
       ],
       "anchor_px": [
-        74.35,
-        148.65
+        144.69,
+        293.31
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "camera_elevation_deg": 30.0,
       "camera_azimuth_deg": 45.0,
       "tile_size_m": 2.0,
       "tile_px": [
-        181.02,
-        90.51
+        362.04,
+        181.02
       ],
       "footprint": "1x1",
       "fit_limited_by": "height",
@@ -862,131 +475,45 @@
       "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
       "export_scale": 1.0
     },
-    "prop_stone_lantern": {
-      "id": "prop_stone_lantern",
-      "name": "山道石灯笼",
+    "prop_pine_tree": {
+      "id": "prop_pine_tree",
+      "name": "深山古松",
       "angle": 0,
       "resolution": [
-        200,
-        208
+        904,
+        1008
       ],
       "anchor_uv": [
-        0.40708,
-        0.76647
+        0.38077,
+        0.81892
       ],
       "anchor_px": [
-        81.42,
-        159.43
+        344.21,
+        825.47
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "camera_elevation_deg": 30.0,
       "camera_azimuth_deg": 45.0,
       "tile_size_m": 2.0,
       "tile_px": [
-        181.02,
-        90.51
+        362.04,
+        181.02
       ],
       "footprint": "1x1",
       "fit_limited_by": "height",
-      "target_height_m": 2.0,
-      "actual_height_m": 2.0,
+      "target_height_m": 5.8,
+      "actual_height_m": 5.8,
       "actual_size_m": [
-        1.57,
-        1.57
+        4.905,
+        2.222
       ],
       "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
       "mode": "stylized",
       "style": "mingqing_woodcut_gongbi",
       "style_version": 1,
-      "day_file": "prop_stone_lantern_day.png",
-      "night_file": "prop_stone_lantern_night.png",
-      "shadow_file": "prop_stone_lantern_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "tower_crossbow": {
-      "id": "tower_crossbow",
-      "name": "强弩箭楼",
-      "angle": 0,
-      "resolution": [
-        504,
-        520
-      ],
-      "anchor_uv": [
-        0.39676,
-        0.79845
-      ],
-      "anchor_px": [
-        199.97,
-        415.19
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "1x1",
-      "fit_limited_by": "height",
-      "target_height_m": 5.6,
-      "actual_height_m": 5.6,
-      "actual_size_m": [
-        4.176,
-        4.176
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "tower_crossbow_day.png",
-      "night_file": "tower_crossbow_night.png",
-      "shadow_file": "tower_crossbow_shadow.png",
-      "night_shadow_opacity": 0.6,
-      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
-      "export_scale": 1.0
-    },
-    "tower_rolling_log": {
-      "id": "tower_rolling_log",
-      "name": "滚木礌石楼",
-      "angle": 0,
-      "resolution": [
-        552,
-        568
-      ],
-      "anchor_uv": [
-        0.39662,
-        0.79965
-      ],
-      "anchor_px": [
-        218.93,
-        454.2
-      ],
-      "px_per_meter": 64.0,
-      "camera_elevation_deg": 30.0,
-      "camera_azimuth_deg": 45.0,
-      "tile_size_m": 2.0,
-      "tile_px": [
-        181.02,
-        90.51
-      ],
-      "footprint": "2x2",
-      "fit_limited_by": "footprint",
-      "target_height_m": 6.4,
-      "actual_height_m": 6.142,
-      "actual_size_m": [
-        4.532,
-        4.532
-      ],
-      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
-      "mode": "stylized",
-      "style": "mingqing_woodcut_gongbi",
-      "style_version": 1,
-      "day_file": "tower_rolling_log_day.png",
-      "night_file": "tower_rolling_log_night.png",
-      "shadow_file": "tower_rolling_log_shadow.png",
+      "day_file": "prop_pine_tree_day.png",
+      "night_file": "prop_pine_tree_night.png",
+      "shadow_file": "prop_pine_tree_shadow.png",
       "night_shadow_opacity": 0.6,
       "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
       "export_scale": 1.0
@@ -996,24 +523,24 @@
       "name": "院墙红梅树",
       "angle": 0,
       "resolution": [
-        288,
-        344
+        576,
+        680
       ],
       "anchor_uv": [
         0.37095,
-        0.82224
+        0.82603
       ],
       "anchor_px": [
-        106.83,
-        282.85
+        213.66,
+        561.7
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "camera_elevation_deg": 30.0,
       "camera_azimuth_deg": 45.0,
       "tile_size_m": 2.0,
       "tile_px": [
-        181.02,
-        90.51
+        362.04,
+        181.02
       ],
       "footprint": "1x1",
       "fit_limited_by": "height",
@@ -1034,29 +561,72 @@
       "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
       "export_scale": 1.0
     },
+    "prop_stone_lantern": {
+      "id": "prop_stone_lantern",
+      "name": "山道石灯笼",
+      "angle": 0,
+      "resolution": [
+        400,
+        408
+      ],
+      "anchor_uv": [
+        0.40708,
+        0.77169
+      ],
+      "anchor_px": [
+        162.83,
+        314.85
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 2.0,
+      "actual_height_m": 2.0,
+      "actual_size_m": [
+        1.57,
+        1.57
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "prop_stone_lantern_day.png",
+      "night_file": "prop_stone_lantern_night.png",
+      "shadow_file": "prop_stone_lantern_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
     "prop_wood_bridge_a0": {
       "id": "prop_wood_bridge",
       "name": "溪上木桥",
       "angle": 0,
       "resolution": [
-        304,
-        232
+        600,
+        464
       ],
       "anchor_uv": [
-        0.45321,
+        0.45258,
         0.68287
       ],
       "anchor_px": [
-        137.77,
-        158.43
+        271.55,
+        316.85
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "camera_elevation_deg": 30.0,
       "camera_azimuth_deg": 45.0,
       "tile_size_m": 2.0,
       "tile_px": [
-        181.02,
-        90.51
+        362.04,
+        181.02
       ],
       "footprint": "2x1",
       "fit_limited_by": "footprint",
@@ -1082,24 +652,24 @@
       "name": "溪上木桥",
       "angle": 90,
       "resolution": [
-        304,
-        232
+        600,
+        464
       ],
       "anchor_uv": [
-        0.45321,
+        0.45258,
         0.68287
       ],
       "anchor_px": [
-        137.77,
-        158.43
+        271.55,
+        316.85
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "camera_elevation_deg": 30.0,
       "camera_azimuth_deg": 45.0,
       "tile_size_m": 2.0,
       "tile_px": [
-        181.02,
-        90.51
+        362.04,
+        181.02
       ],
       "footprint": "2x1",
       "fit_limited_by": "footprint",
@@ -1120,45 +690,475 @@
       "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
       "export_scale": 1.0
     },
-    "prop_bamboo_clump": {
-      "id": "prop_bamboo_clump",
-      "name": "翠竹丛",
+    "tower_bamboo": {
+      "id": "tower_bamboo",
+      "name": "竹箭楼",
       "angle": 0,
       "resolution": [
-        368,
-        416
+        1000,
+        984
       ],
       "anchor_uv": [
-        0.3788,
-        0.81976
+        0.40708,
+        0.78163
       ],
       "anchor_px": [
-        139.4,
-        341.02
+        407.08,
+        769.13
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "camera_elevation_deg": 30.0,
       "camera_azimuth_deg": 45.0,
       "tile_size_m": 2.0,
       "tile_px": [
-        181.02,
-        90.51
+        362.04,
+        181.02
       ],
       "footprint": "1x1",
       "fit_limited_by": "height",
-      "target_height_m": 4.8,
-      "actual_height_m": 4.8,
+      "target_height_m": 5.0,
+      "actual_height_m": 5.0,
       "actual_size_m": [
-        2.982,
-        2.588
+        4.257,
+        4.257
       ],
       "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
       "mode": "stylized",
       "style": "mingqing_woodcut_gongbi",
       "style_version": 1,
-      "day_file": "prop_bamboo_clump_day.png",
-      "night_file": "prop_bamboo_clump_night.png",
-      "shadow_file": "prop_bamboo_clump_shadow.png",
+      "day_file": "tower_bamboo_day.png",
+      "night_file": "tower_bamboo_night.png",
+      "shadow_file": "tower_bamboo_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "tower_crossbow": {
+      "id": "tower_crossbow",
+      "name": "强弩箭楼",
+      "angle": 0,
+      "resolution": [
+        1008,
+        1040
+      ],
+      "anchor_uv": [
+        0.39676,
+        0.79845
+      ],
+      "anchor_px": [
+        399.93,
+        830.38
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 5.6,
+      "actual_height_m": 5.6,
+      "actual_size_m": [
+        4.176,
+        4.176
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "tower_crossbow_day.png",
+      "night_file": "tower_crossbow_night.png",
+      "shadow_file": "tower_crossbow_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "tower_oil_fire": {
+      "id": "tower_oil_fire",
+      "name": "火油连弩塔",
+      "angle": 0,
+      "resolution": [
+        1128,
+        1136
+      ],
+      "anchor_uv": [
+        0.40115,
+        0.79274
+      ],
+      "anchor_px": [
+        452.5,
+        900.55
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 6.0,
+      "actual_height_m": 6.0,
+      "actual_size_m": [
+        4.74,
+        4.74
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "tower_oil_fire_day.png",
+      "night_file": "tower_oil_fire_night.png",
+      "shadow_file": "tower_oil_fire_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "tower_rolling_log": {
+      "id": "tower_rolling_log",
+      "name": "滚木礌石楼",
+      "angle": 0,
+      "resolution": [
+        1096,
+        1136
+      ],
+      "anchor_uv": [
+        0.39586,
+        0.79965
+      ],
+      "anchor_px": [
+        433.87,
+        908.4
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "2x2",
+      "fit_limited_by": "footprint",
+      "target_height_m": 6.4,
+      "actual_height_m": 6.142,
+      "actual_size_m": [
+        4.532,
+        4.532
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "tower_rolling_log_day.png",
+      "night_file": "tower_rolling_log_night.png",
+      "shadow_file": "tower_rolling_log_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "farm_rice_ripe": {
+      "id": "farm_rice_ripe",
+      "name": "开荒稻田（金穗）",
+      "angle": 0,
+      "resolution": [
+        776,
+        496
+      ],
+      "anchor_uv": [
+        0.47765,
+        0.60431
+      ],
+      "anchor_px": [
+        370.65,
+        299.74
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "2x2",
+      "fit_limited_by": "footprint",
+      "target_height_m": 1.1,
+      "actual_height_m": 0.933,
+      "actual_size_m": [
+        3.84,
+        3.84
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "farm_rice_ripe_day.png",
+      "night_file": "farm_rice_ripe_night.png",
+      "shadow_file": "farm_rice_ripe_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "farm_rice_young": {
+      "id": "farm_rice_young",
+      "name": "开荒稻田（青苗）",
+      "angle": 0,
+      "resolution": [
+        768,
+        464
+      ],
+      "anchor_uv": [
+        0.48337,
+        0.58208
+      ],
+      "anchor_px": [
+        371.23,
+        270.08
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "2x2",
+      "fit_limited_by": "footprint",
+      "target_height_m": 0.9,
+      "actual_height_m": 0.687,
+      "actual_size_m": [
+        3.84,
+        3.84
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "farm_rice_young_day.png",
+      "night_file": "farm_rice_young_night.png",
+      "shadow_file": "farm_rice_young_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "fence_wood_a0": {
+      "id": "fence_wood",
+      "name": "尖木篱笆",
+      "angle": 0,
+      "resolution": [
+        288,
+        336
+      ],
+      "anchor_uv": [
+        0.38385,
+        0.79692
+      ],
+      "anchor_px": [
+        110.55,
+        267.77
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 1.8,
+      "actual_height_m": 1.8,
+      "actual_size_m": [
+        1.71,
+        0.265
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "fence_wood_a0_day.png",
+      "night_file": "fence_wood_a0_night.png",
+      "shadow_file": "fence_wood_a0_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "fence_wood_a90": {
+      "id": "fence_wood",
+      "name": "尖木篱笆",
+      "angle": 90,
+      "resolution": [
+        288,
+        336
+      ],
+      "anchor_uv": [
+        0.38385,
+        0.79692
+      ],
+      "anchor_px": [
+        110.55,
+        267.77
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 1.8,
+      "actual_height_m": 1.8,
+      "actual_size_m": [
+        0.266,
+        1.71
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "fence_wood_a90_day.png",
+      "night_file": "fence_wood_a90_night.png",
+      "shadow_file": "fence_wood_a90_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "trap_bear": {
+      "id": "trap_bear",
+      "name": "精铁捕兽夹",
+      "angle": 0,
+      "resolution": [
+        208,
+        176
+      ],
+      "anchor_uv": [
+        0.44639,
+        0.68895
+      ],
+      "anchor_px": [
+        92.85,
+        121.26
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 0.6,
+      "actual_height_m": 0.6,
+      "actual_size_m": [
+        1.04,
+        0.495
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "trap_bear_day.png",
+      "night_file": "trap_bear_night.png",
+      "shadow_file": "trap_bear_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "wall_brick_a0": {
+      "id": "wall_brick",
+      "name": "青砖围墙",
+      "angle": 0,
+      "resolution": [
+        376,
+        432
+      ],
+      "anchor_uv": [
+        0.38138,
+        0.80792
+      ],
+      "anchor_px": [
+        143.4,
+        349.02
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 2.4,
+      "actual_height_m": 2.4,
+      "actual_size_m": [
+        1.866,
+        0.814
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "wall_brick_a0_day.png",
+      "night_file": "wall_brick_a0_night.png",
+      "shadow_file": "wall_brick_a0_shadow.png",
+      "night_shadow_opacity": 0.6,
+      "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
+      "export_scale": 1.0
+    },
+    "wall_brick_a90": {
+      "id": "wall_brick",
+      "name": "青砖围墙",
+      "angle": 90,
+      "resolution": [
+        376,
+        432
+      ],
+      "anchor_uv": [
+        0.38138,
+        0.80792
+      ],
+      "anchor_px": [
+        143.4,
+        349.02
+      ],
+      "px_per_meter": 128.0,
+      "camera_elevation_deg": 30.0,
+      "camera_azimuth_deg": 45.0,
+      "tile_size_m": 2.0,
+      "tile_px": [
+        362.04,
+        181.02
+      ],
+      "footprint": "1x1",
+      "fit_limited_by": "height",
+      "target_height_m": 2.4,
+      "actual_height_m": 2.4,
+      "actual_size_m": [
+        0.814,
+        1.866
+      ],
+      "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
+      "mode": "stylized",
+      "style": "mingqing_woodcut_gongbi",
+      "style_version": 1,
+      "day_file": "wall_brick_a90_day.png",
+      "night_file": "wall_brick_a90_night.png",
+      "shadow_file": "wall_brick_a90_shadow.png",
       "night_shadow_opacity": 0.6,
       "shadow_note": "地影单独一层：先画全部地影，再按锚点 Y 排序画物体；夜晚地影透明度 × 0.6",
       "export_scale": 1.0

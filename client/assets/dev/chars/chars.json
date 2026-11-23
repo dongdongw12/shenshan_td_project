@@ -1,19 +1,19 @@
 {
-  "px_per_meter": 64.0,
+  "px_per_meter": 128.0,
   "chars": {
     "arsonist": {
       "id": "arsonist",
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        104,
-        152
+        200,
+        304
       ],
       "anchor_px": [
-        54.68,
-        125.67
+        105.36,
+        251.33
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "arsonist_front_day.png",
@@ -61,14 +61,14 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        200,
-        216
+        400,
+        432
       ],
       "anchor_px": [
-        104.28,
-        149.06
+        208.56,
+        298.12
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "bear_king_front_day.png",
@@ -116,14 +116,14 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        128,
-        136
+        256,
+        264
       ],
       "anchor_px": [
-        66.17,
-        91.82
+        133.76,
+        179.99
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "boar_front_day.png",
@@ -171,14 +171,14 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        136,
-        232
+        264,
+        456
       ],
       "anchor_px": [
-        64.21,
-        188.18
+        124.42,
+        372.36
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "chief_front_day.png",
@@ -226,14 +226,14 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        80,
-        112
+        152,
+        224
       ],
       "anchor_px": [
-        38.72,
-        91.09
+        73.44,
+        182.18
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "child_front_day.png",
@@ -295,14 +295,14 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        128,
-        184
+        256,
+        368
       ],
       "anchor_px": [
-        69.62,
-        147.08
+        139.25,
+        294.15
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "hero_front_day.png",
@@ -364,14 +364,14 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        96,
-        168
+        192,
+        328
       ],
       "anchor_px": [
-        50.13,
-        135.54
+        100.25,
+        267.09
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "scout_front_day.png",
@@ -419,14 +419,14 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        136,
-        232
+        264,
+        456
       ],
       "anchor_px": [
-        64.21,
-        188.18
+        124.42,
+        372.36
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "second_chief_front_day.png",
@@ -474,14 +474,14 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        104,
-        160
+        200,
+        320
       ],
       "anchor_px": [
-        55.33,
-        126.18
+        106.66,
+        252.36
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "shield_front_day.png",
@@ -529,14 +529,14 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        96,
-        152
+        192,
+        304
       ],
       "anchor_px": [
-        50.4,
-        124.71
+        100.81,
+        249.42
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "swordsman_front_day.png",
@@ -584,14 +584,14 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        104,
-        160
+        208,
+        312
       ],
       "anchor_px": [
-        50.38,
-        129.73
+        100.76,
+        255.45
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "wife_front_day.png",
@@ -653,14 +653,14 @@
       "frames": 8,
       "fps": 10,
       "frame_size": [
-        120,
-        136
+        248,
+        264
       ],
       "anchor_px": [
-        59.08,
-        90.42
+        123.52,
+        177.51
       ],
-      "px_per_meter": 64.0,
+      "px_per_meter": 128.0,
       "dirs": {
         "front": {
           "day": "wolf_front_day.png",
