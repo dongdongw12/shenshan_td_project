@@ -108,13 +108,23 @@
       "id": "fish_weir",
       "name": "溪边鱼梁与水车",
       "method": "ai",
-      "t2i_zh": "斜侧视角，溪水里的竹木鱼梁，一排竹桩围着鱼篓，旁边一架小木水车，浅水，石头",
-      "prompt_zh": "溪边的鱼梁与小水车：浅溪里打下一排竹桩与木栅，中间放着几个竹编鱼篓，旁边一架赭石色小木水车，水车轮半浸在石青色的溪水里，岸边几块青灰卵石。不要画大片水面，只画鱼梁、水车和脚下一小片浅水。画面里没有任何房屋、磨坊或其他建筑，水车是立在溪里的独立木架水车。",
-      "prompt_en": "A fish weir with a small waterwheel in a mountain stream: a row of bamboo stakes and a wooden fence in shallow water with several woven bamboo fish traps, a small red-ochre wooden waterwheel half dipped in azurite water, a few blue-grey pebbles on the bank. Only the weir, wheel and a small patch of shallow water, not a large water surface. No house, mill or any building in the picture; the waterwheel stands alone on a wooden frame in the stream.",
+      "prefix_zh": "中国明清木刻版画与矿物重彩工笔风格的游戏道具（溪中竹木结构，不是建筑），单个物体完整居中，纯白背景，从正面偏右约 25° 的三分之四视角、略微俯视约 20°，柔和均匀的漫射光，几乎无投影；古旧绢本设色的矿物颜料平涂色块（颜色略有褪色、整体偏暖、有历史感，但色块依然清楚）：石青、石绿、赭石、偏砖红的朱砂、竹青、竹黄；造型简洁结实、比例略微敦实可爱，轮廓清晰。",
+      "t2i_zh": "斜侧视角，溪中竹桩鱼梁和竹编鱼篓，一架小竹筒车立在溪里，浅水卵石，没有房屋",
+      "prompt_zh": "溪中的竹木鱼梁：浅溪里斜着打下一排竹桩，竹桩之间编着竹栅，栅口放着两三个竹编鱼篓；鱼梁一端立着一架小竹筒车（灌溉用的竹轮，轮缘绑着一圈竹筒，两根木桩把它架在溪水中央），轮子半浸在石青色的溪水里。脚下只有一小片浅水和几块青灰卵石，四周全部留白。画面里只有竹木结构：没有房屋、没有墙、没有屋顶、没有磨坊、没有台阶。",
+      "prompt_en": "A bamboo fish weir in a mountain stream: a diagonal row of bamboo stakes with woven bamboo fencing, two or three woven fish traps at the gap; at one end a small bamboo noria (irrigation wheel ringed with bamboo tubes) stands alone on two wooden posts in the middle of the stream, half dipped in azurite water. Only a small patch of shallow water and a few blue-grey pebbles, blank surroundings. Bamboo and wood only: no house, no wall, no roof, no mill, no steps.",
       "gen": {
-        "auto_align_yaw": true
+        "auto_align_yaw": true,
+        "t2i_seeds": [
+          7,
+          42,
+          2024,
+          8848,
+          314,
+          1234
+        ]
       },
-      "negative_zh": "房屋，磨坊，屋顶，墙，门窗，建筑"
+      "negative_zh": "房屋，房子，磨坊，屋顶，瓦片，屋檐，白墙，红门，窗户，台阶，台基，建筑，亭子",
+      "gen_note": "v1/v2 提示词写“水车”，Qwen-Image 每次都配一间磨坊（2026-11-24 四个种子全是房子）→ 改成溪中独立的竹筒车，6 个种子，烘前人工挑无房子的那张"
     },
     {
       "id": "hunt_lodge",

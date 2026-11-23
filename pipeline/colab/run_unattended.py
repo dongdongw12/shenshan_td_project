@@ -11,6 +11,7 @@
 - 含 runtime.unassign() 的格子（各 notebook 的「释放运行时」）一律跳过，由 run_jobs 在全部结束后统一释放。
 - jobs 里也可以放普通函数，按顺序调用（例如 set_aside 把不要的模型挪走）；返回 False 算失败。
 - 图生 3D 前放 need_gpu 守门并开 stop_on_fail=True：排到 T4 就立刻释放，不会 OOM 白烧。
+- `(name, overrides, n)`：第 n 个代码格前暂停，等云盘出现 `_go` 再继续（人工挑概念图用，最多等 40 分钟）。
 - 进度看云盘 `_unattended.log`（每格开始 / 结束一行），最后一行 UNATTENDED_DONE。
 """
 import json
@@ -33,7 +34,24 @@ def _log(msg):
         pass  # 云盘还没挂载（第一个格子之前）
 
 
-def run_notebook(name, overrides=None):
+FLAG = "/content/drive/MyDrive/shenshan_td/_go"
+
+
+def wait_flag(timeout_min=40):
+    """等云盘里出现 _go（在 Colab 终端 `touch /content/drive/MyDrive/shenshan_td/_go`），收到就删掉继续；超时也继续。"""
+    _log(f"WAIT_FLAG 暂停，等 {FLAG}（最多 {timeout_min} 分钟）")
+    t0 = time.time()
+    while time.time() - t0 < timeout_min * 60:
+        if os.path.exists(FLAG):
+            os.remove(FLAG)
+            _log("WAIT_FLAG 收到，继续")
+            return
+        time.sleep(15)
+    _log("WAIT_FLAG 超时，照常继续")
+
+
+def run_notebook(name, overrides=None, pause_before=None):
+    """pause_before=n：执行第 n 个代码格之前暂停等 _go（例如 colab_gen_3d 的 4 = 出完概念图、生成白模之前，留时间人工换概念图）。"""
     ip = get_ipython()  # noqa: F821 — Colab / IPython 内核里才有
     nb = json.load(urllib.request.urlopen(RAW + name))
     cells = [c for c in nb["cells"] if c["cell_type"] == "code"]
@@ -43,6 +61,10 @@ def run_notebook(name, overrides=None):
         if "runtime.unassign()" in src:
             _log(f"[{name}] 跳过释放运行时格：{title}")
             continue
+        if n == pause_before:
+            if os.path.exists(FLAG):
+                os.remove(FLAG)  # 上次留下的旧旗子不算
+            wait_flag()
         _log(f"[{name}] 格 {n} 开始：{title}")
         ok = ip.run_cell(src).success
         if n == 0 and overrides:
