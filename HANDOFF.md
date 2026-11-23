@@ -105,7 +105,7 @@
   - [ ] 正式 UI、接 `wx.createRewardedVideoAd`、可操控英雄、家族面板
   - 在 `client/assets/configs/` 落地完整 JSON 配置表，实现厢房建房、添丁成长、族人入驻塔楼羁绊、刀匪/盾牌匪/纵火贼/二当家与大当家 Boss。
 - [ ] **T6 · 下一步建议（按优先级，2026-11-23 整理）**
-  1. **用户**：登录 Colab（A100 或 L4 + 高 RAM）重跑 `colab_gen_3d.ipynb`（`REGEN_CONCEPTS` 填 3 件样张用 Qwen-Image 重出概念图）→ 验收样张 → 量产其余 AI 资产 → `colab_bake_sprites.ipynb` 正式烘培（建筑 + 角色）→ `pipeline/atlas/export_sprites.py` 导出到客户端，演示里的程序化占位会自动被精灵替换。
+  1. ~~AI 资产量产 + v2 正式烘培 + 导出~~（2026-11-23 晚完成，见交接日志）。只剩**鱼梁**在 L4 / A100 上重出一次（日志末尾有步骤）。
   2. **客户端落地方**：选定引擎（直接小游戏 Canvas / Cocos），把 `client/src/render` + `client/src/game` 接进去；真机验证 `wechat.ts`、触屏、图集、接 `wx.createRewardedVideoAd` 到 `adReward`。
   3. **用户（可选，不依赖 T2）**：登录 Colab 后直接跑 `colab_bake_sprites.ipynb`（`TEST_SINGLE=""`、`SCALE=1.0`、`SAMPLES=48`，`PROXY_FALLBACK` 默认开），就能拿到正式比例（128px/m）的全套替身 + 12 个角色。
   4. **Claude**：遮挡排序的空间分桶优化（现 250 物体 0.84ms/帧）、正式 UI 美术、T6 平衡（祠堂 / 滚木塔在 10 夜内很少出现，见 2026-11-23 凌晨日志）。已完成：家族面板（手动分工 / 驻守）、受击闪白 / 逃跑、家人干活、着火 / 血条 / 夜灯 / 炊烟 / 萤火、HUD 图标与缩略图。
@@ -241,3 +241,11 @@
 - **用户要求**：“画风色彩再中国画一点，颜色整体再偏历史感一点”。做了 A（中）/ B（强）两版与原画风同屏对比（`docs/art/samples/theme_compare_sheet.jpg`、`theme_compare_sprites.png`），**用户选 A**。
 - **已落地**：`style_profile.json` v2（古旧矿物色板、纯度 1.0、暖黄受光 / 灰靛暗部、赭褐旧墨、黛瓦调亮成青灰、明度吸附 35%、新增 `grade` 全局调色）；`stylize_sprites.grade_srgb`（建筑与角色帧都走）；客户端默认 `aged` 主题（旧绢天色、橄榄赭草地、灰石青溪水、灰青绿远山、绢纹 + 水渍），`?theme=qinglv` 看原画风；概念图提示词改成“古旧绢本设色”。美术圣经第 1、4 节已改。
 - **过渡状态**：`client/assets/dev` 里的精灵目前只是在旧图上补了一层 `grade`（色板没变），等 AI 资产量产完，用 `colab_bake_sprites.ipynb`（`OVERWRITE=True`）按 v2 正式重烘全部建筑与角色，才是完整效果。
+
+### 2026-11-23 晚 · Claude Opus（AI 资产量产完成 + 按画风 v2 正式重烘）
+- **AI 量产验收**：16 件 + 3 件样张全部出了模型并半比例试烘（`baked_sprites/_preview/`）。好：茅屋、青瓦正房、大院、厢房、祠堂、吊脚粮仓、猎棚、四座塔、石灯笼、烽火盆、货郎车、两向木桥（木桥底下自带一小块水面，进游戏后再看要不要裁）。不要：**古松**（松针成蓝色刀片）和**翠竹丛**（叶团发蓝、带怪脸）→ 已在 `gen_3d_jobs.json` 改 `method=procedural`，云盘旧模型挪到 `raw_models/_rejected/`，烘培自动用程序化替身。院墙红梅树是“墙 + 梅”，名字本意如此，保留。
+- **正式重烘（v2）**：`colab_bake_sprites.ipynb` `SCALE=1.0 / SAMPLES=48 / OVERWRITE=True`，建筑 25 张（含两向篱笆 / 青砖墙 / 木桥）+ 程序化古松 / 竹丛 + 12 个角色。L4、A100 都排不到，跑在 T4 上（建筑约 3–5 分钟一件，角色约 12 分钟一个，共约 3.5 小时）。已导出到 `client/assets/dev`（仍 23 MB），图鉴 0 警告，演示样张 `docs/art/samples/demo_v2_ai_assets_day2.jpg`。
+- **新工具 `pipeline/colab/run_unattended.py`**：在 Colab 内核里依次执行仓库里 notebook 的代码格（不依赖浏览器排队，网页断开照跑），参数格执行后用 overrides 覆盖，跳过各 notebook 的释放格、全部结束（含失败）后统一释放运行时；进度写云盘 `_unattended.log`。用法见文件头两行。
+- **修**：替身兜底以前不带 `--overwrite`、且把 `proxy_models/` 整个目录重烘 → 换画风后古松 / 竹丛替身不会更新；改为只烘缺的件并跟随 `OVERWRITE`。
+- **Colab 经验**：① 新运行时的“连接到 Google 云端硬盘”弹窗要在几十秒内点完，晚了 `drive.mount` 报 `mount failed`，`run_jobs` 会照常收尾释放 GPU（这次因此重跑了一次）；② 选 A100 / L4 排不到会自动降到 T4 + 普通内存（12.7GB），Hunyuan3D 会 OOM —— 这种情况只做 Blender 烘培，图生 3D 留到有 L4 / A100 时。
+- **未完成**：**鱼梁**仍是带小屋的旧模型（提示词已改成“不要房屋”，`ASSET_IDS=["fish_weir"]`、`REGEN_CONCEPTS=["fish_weir"]`、`OVERWRITE=True` 在 L4 / A100 上跑一次；然后删掉云盘 `baked_sprites/fish_weir_*`，用 `colab_bake_sprites.ipynb`（`TEST_SINGLE=""`、`OVERWRITE=False`、`BAKE_CHARACTERS=False`）补烘——已有的件会自动跳过，只烘鱼梁）。
