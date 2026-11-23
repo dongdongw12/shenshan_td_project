@@ -136,13 +136,19 @@ if not os.path.exists(HY3D_DIR):
     !git clone -q https://github.com/Tencent/Hunyuan3D-2.git {HY3D_DIR}
 !cd {HY3D_DIR} && git checkout -q {HY3D_COMMIT} && git log -1 --format="Hunyuan3D-2 @ %h (%cs)"
 # 只补依赖，不动 Colab 自带的 torch / torchvision
-!pip install -q diffusers transformers accelerate einops omegaconf opencv-python trimesh pymeshlab pygltflib xatlas rembg onnxruntime sentencepiece protobuf ninja pybind11
+# transformers 固定在 4.x：5.x 把 DINOv2 的注意力层改名（attention.attention.query → q_proj），
+# Hunyuan3D-DiT 的图像编码器权重会加载失败（Missing key ... q_proj / Unexpected key ... attention.attention.key）
+!pip install -q diffusers "transformers>=4.51,<5" accelerate einops omegaconf opencv-python trimesh pymeshlab pygltflib xatlas rembg onnxruntime sentencepiece protobuf ninja pybind11
 !pip install -q bitsandbytes
 try:  # Qwen-Image 需要 diffusers ≥ 0.35；已满足就不动，避免影响 Hunyuan3D-Paint 的自定义管线
     from diffusers import QwenImagePipeline  # noqa: F401
 except ImportError:
     !pip install -q -U "diffusers>=0.35"
 !pip install -q --no-deps -e {HY3D_DIR}
+import transformers
+if int(transformers.__version__.split(".")[0]) >= 5:
+    raise RuntimeError(f"当前进程里已加载 transformers {transformers.__version__}：请「代码执行程序 → 重启会话并运行所有单元」")
+print("transformers", transformers.__version__)
 if HY3D_DIR not in sys.path:
     sys.path.insert(0, HY3D_DIR)
 
