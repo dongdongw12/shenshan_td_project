@@ -51,8 +51,9 @@ interface Fx { kind: "smoke" | "text" | "arrow" | "flee"; enemy?: string; vx?: n
 
 async function boot(): Promise<void> {
   const qs = new URLSearchParams(location.search);
-  // 画风主题：?theme=aged 换成古旧绢本设色的地面 / 远山 / 天色 / 绢纹；&set=A|B 同时换上本地预览用的重新风格化精灵（assets/_preview/）
-  const THEME: ThemeId = qs.get("theme") === "aged" ? "aged" : "qinglv";
+  // 画风主题：默认 aged（古旧绢本设色，2026-11-23 用户选定）；?theme=qinglv 看原来的青绿重彩；
+  // &set=A|B 换上本地预览用的重新风格化精灵（assets/_preview/，不进仓库）
+  const THEME: ThemeId = qs.get("theme") === "qinglv" ? "qinglv" : "aged";
   const PREVIEW_SET = qs.get("set");
   const ASSET_DIR = THEME === "aged" && PREVIEW_SET ? `/_preview/aged_${PREVIEW_SET}` : "/dev";
   const canvas = document.getElementById("stage") as HTMLCanvasElement;

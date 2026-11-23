@@ -1,0 +1,176 @@
+{
+  "version": 1,
+  "name": "mingqing_woodcut_gongbi",
+  "note": "《深山传家》统一画风参数。bake_isometric_sprites.py 读 scale/camera/lighting/ink.outer_*，stylize_sprites.py 读其余全部。改这里 = 全部 24 件资产一起变，禁止单件私调画风（单件只允许在 assets_manifest.json 调尺寸/灯光强度）。说明见 docs/art/ART_BIBLE.md。",
+  "scale": {
+    "tile_size_m": 2.0,
+    "px_per_meter": 128,
+    "supersample": 2,
+    "canvas_multiple": 8,
+    "margin_px": 20,
+    "footprint_fill": 0.96
+  },
+  "camera": {
+    "elevation_deg": 30.0,
+    "azimuth_deg": 45.0
+  },
+  "lighting": {
+    "day": {
+      "sun_euler_deg": [
+        35.0,
+        0.0,
+        20.5
+      ],
+      "sun_energy": 3.6,
+      "sun_color": "#fff0d8",
+      "sun_angle_deg": 3.0,
+      "fill_euler_deg": [
+        55.0,
+        0.0,
+        108.4
+      ],
+      "fill_energy": 0.7,
+      "fill_color": "#c8dcff",
+      "world_color": "#9fb5ad",
+      "world_strength": 0.55
+    },
+    "night": {
+      "moon_euler_deg": [
+        42.0,
+        0.0,
+        -118.0
+      ],
+      "moon_energy": 1.0,
+      "moon_color": "#7aa2ff",
+      "world_color": "#1a2550",
+      "world_strength": 0.5,
+      "lantern_color": "#ff9a3c"
+    }
+  },
+  "palette": {
+    "lime_white": {
+      "hex": "#ede3cc",
+      "zh": "蛎灰白"
+    },
+    "tile_dark": {
+      "hex": "#3e4552",
+      "zh": "黛瓦"
+    },
+    "tile_light": {
+      "hex": "#6b7482",
+      "zh": "瓦灰"
+    },
+    "stone": {
+      "hex": "#7d8a8c",
+      "zh": "青石"
+    },
+    "azurite": {
+      "hex": "#2e5f8f",
+      "zh": "石青"
+    },
+    "azurite_light": {
+      "hex": "#5d8fb6",
+      "zh": "二青"
+    },
+    "malachite": {
+      "hex": "#3f8a63",
+      "zh": "石绿"
+    },
+    "malachite_light": {
+      "hex": "#7fb98a",
+      "zh": "二绿"
+    },
+    "pine_deep": {
+      "hex": "#24574a",
+      "zh": "松青"
+    },
+    "ochre": {
+      "hex": "#9a5a35",
+      "zh": "赭石"
+    },
+    "ochre_light": {
+      "hex": "#c88f5f",
+      "zh": "浅赭"
+    },
+    "wood_dark": {
+      "hex": "#5c3a26",
+      "zh": "檀褐"
+    },
+    "cinnabar": {
+      "hex": "#b8352a",
+      "zh": "朱砂"
+    },
+    "vermilion_light": {
+      "hex": "#d9694a",
+      "zh": "朱膘"
+    },
+    "gamboge": {
+      "hex": "#d9a838",
+      "zh": "藤黄"
+    },
+    "straw": {
+      "hex": "#c9a66b",
+      "zh": "草黄"
+    }
+  },
+  "harmonize": {
+    "smooth_radius_px": 3.5,
+    "smooth_passes": 2,
+    "palette_strength": 0.45,
+    "palette_lightness_strength": 0.15,
+    "saturation": 1.25
+  },
+  "ink": {
+    "color": "#1c1510",
+    "outer_px": 4.5,
+    "outer_min_ratio": 0.45,
+    "calligraphy_angle_deg": 60.0,
+    "wobble_px": 0.5,
+    "freestyle_crease_deg": null,
+    "inner_px": 1.6,
+    "inner_normal_deg": 32.0,
+    "inner_depth_m": 0.3,
+    "inner_normal_blur_px": 1.0,
+    "inner_opacity": 0.8,
+    "inner_min_feature_px": 3.0
+  },
+  "shading": {
+    "day": {
+      "light_reference": 1.25,
+      "exposure": 1.0,
+      "bands": 3,
+      "band_softness": 0.18,
+      "light_color": "#fff6e4",
+      "shadow_color": "#6d7cae",
+      "shadow_floor": 0.0,
+      "edge_wash": 0.22,
+      "edge_wash_px": 5.0
+    },
+    "night": {
+      "light_reference": 0.9,
+      "exposure": 1.0,
+      "bands": 3,
+      "band_softness": 0.22,
+      "albedo_desaturate": 0.35,
+      "ambient_color": "#8796c8",
+      "ambient_level": 0.32,
+      "edge_wash": 0.25,
+      "edge_wash_px": 5.0,
+      "bloom_threshold": 0.55,
+      "bloom_strength": 0.75,
+      "bloom_radius_px": 14.0,
+      "lamp_gain": 1.1
+    }
+  },
+  "ground_shadow": {
+    "color": "#1f2740",
+    "opacity": 0.42,
+    "blur_px": 1.5,
+    "separate": true
+  },
+  "paper": {
+    "enabled": false,
+    "strength": 0.05,
+    "note": "宣纸纹理建议由客户端全屏叠加，避免每张精灵各自的纹理在地图上拼出接缝"
+  }
+}
