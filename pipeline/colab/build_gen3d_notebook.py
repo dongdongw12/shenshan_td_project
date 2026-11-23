@@ -163,7 +163,7 @@ if TEXTURE:
     !pip install -q --force-reinstall --no-deps "{cached[0]}"
     import custom_rasterizer_kernel  # 冒烟测试：能 import 说明 CUDA 扩展可用
 
-# 只下载实际会加载的权重：形状模型 5 份同模型只要 fp16 safetensors；贴图 UNet 跳过 7.3GB 的 .bin
+# 只下载实际会加载的权重：形状模型 5 份同模型只要 fp16 safetensors；贴图 UNet 的 hunyuanpaint 自定义加载器只认 .bin（7.3GB），不能跳过
 from huggingface_hub import snapshot_download
 shape_sub = "hunyuan3d-dit-v2-0-turbo" if SHAPE_MODEL == "turbo" else "hunyuan3d-dit-v2-0"
 patterns = [f"{shape_sub}/config.yaml", f"{shape_sub}/model.fp16.safetensors"]
@@ -171,7 +171,7 @@ if TEXTURE:
     patterns += ["hunyuan3d-delight-v2-0/*", "hunyuan3d-paint-v2-0-turbo/*"]
 t0 = time.time()
 snapshot_download("tencent/Hunyuan3D-2", local_dir=f"{os.environ['HY3DGEN_MODELS']}/tencent/Hunyuan3D-2",
-                  allow_patterns=patterns, ignore_patterns=["*unet/diffusion_pytorch_model.bin"])
+                  allow_patterns=patterns)
 print(f"Hunyuan3D-2 权重就绪（{time.time() - t0:.0f}s，缓存在 {os.environ['HY3DGEN_MODELS']}）")
 print("Hunyuan3D-2 就绪")
 ''')
