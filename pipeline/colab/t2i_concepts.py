@@ -35,6 +35,46 @@ def has_native_bf16():
     return major >= 8  # Ampere 及以上（A100/L4/H100）；T4 = 7.5
 
 
+def safetensors_ok(path):
+    """只读文件头检查 .safetensors 是否完整：头长度合理、头是 JSON、文件大小正好等于 8 + 头长 + 数据末尾偏移。
+    云盘不支持符号链接，HF 缓存会退化成整份拷贝，中途崩溃 / 断线就会留下截断的文件（加载时报 "header too large"）。"""
+    import struct
+    try:
+        size = os.path.getsize(path)
+        if size < 16:
+            return False
+        with open(path, "rb") as f:
+            n = struct.unpack("<Q", f.read(8))[0]
+            if n <= 0 or n > size - 8 or n > 200_000_000:
+                return False
+            header = json.loads(f.read(n))
+    except (OSError, ValueError, struct.error):
+        return False
+    end = max((v["data_offsets"][1] for k, v in header.items() if k != "__metadata__"), default=0)
+    return size == 8 + n + end
+
+
+def repair_hf_cache(repo):
+    """先补齐缺的文件，再把损坏的 .safetensors 删掉强制重下。返回重下的文件列表。"""
+    from huggingface_hub import hf_hub_download, snapshot_download
+    local = snapshot_download(repo)
+    bad = []
+    for root, _, files in os.walk(local):
+        for fn in files:
+            if fn.endswith(".safetensors") and not safetensors_ok(os.path.join(root, fn)):
+                bad.append(os.path.relpath(os.path.join(root, fn), local))
+    for rel in bad:
+        log(f"权重文件损坏，重新下载：{repo}/{rel}")
+        path = os.path.join(local, rel)
+        for q in {path, os.path.realpath(path)}:
+            try:
+                os.remove(q)
+            except FileNotFoundError:
+                pass
+        hf_hub_download(repo, rel, force_download=True)
+    return bad
+
+
 def load_qwen_image():
     import torch
     from diffusers import DiffusionPipeline
@@ -46,6 +86,7 @@ def load_qwen_image():
                       "bnb_4bit_compute_dtype": torch.bfloat16},
         components_to_quantize=["transformer", "text_encoder"],
     )
+    repair_hf_cache("Qwen/Qwen-Image")
     pipe = DiffusionPipeline.from_pretrained("Qwen/Qwen-Image", torch_dtype=torch.bfloat16, quantization_config=qc)
     pipe.enable_model_cpu_offload()
 
