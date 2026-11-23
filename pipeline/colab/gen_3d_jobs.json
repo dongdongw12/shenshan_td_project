@@ -57,7 +57,8 @@
         "auto_align_yaw": false,
         "note": "树没有明确朝向，跳过自动对齐。"
       },
-      "method": "ai"
+      "method": "procedural",
+      "method_note": "2026-11-23 试过 AI：松针成蓝色团块 / 竹叶带怪脸，不如程序化替身（make_proxy_assets.py），改回程序化。旧模型在云盘 raw_models/_rejected/。"
     },
     {
       "id": "house_lv1_thatch",
@@ -173,13 +174,14 @@
     {
       "id": "prop_bamboo_clump",
       "name": "翠竹丛",
-      "method": "ai",
+      "method": "procedural",
       "t2i_zh": "斜侧视角，一丛翠竹，七八根青绿竹竿，竹叶成团，根部有竹笋和小石头",
       "prompt_zh": "一丛翠竹：七八根粗细不一的青绿竹竿，竹节清楚，略向一侧倾斜，竹叶在上部聚成几团块面分明的叶簇（石绿与松青两色），根部冒出两三个竹笋和几块小石头。版画里的竹子那样块面清楚。",
       "prompt_en": "A clump of green bamboo: seven or eight malachite-green culms of varied thickness with clear nodes, leaning slightly to one side, leaves gathered into a few bold, distinct clusters near the top (malachite and pine green), two or three bamboo shoots and a few small rocks at the base. Bold masses like bamboo in a woodblock print.",
       "gen": {
         "auto_align_yaw": false
-      }
+      },
+      "method_note": "2026-11-23 试过 AI：松针成蓝色团块 / 竹叶带怪脸，不如程序化替身（make_proxy_assets.py），改回程序化。旧模型在云盘 raw_models/_rejected/。"
     },
     {
       "id": "prop_wood_bridge",
