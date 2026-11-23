@@ -120,7 +120,9 @@ def bake_char(name, out, profile, profile_path, args):
             bk.render_to(scene, path)
             passes = st.read_exr_passes(path)
             C, A = st.stylize_image(passes, passes, style, info, "day")
-            day_frames.append(st.finalize(C, A, res_x, res_y))
+            frame = st.finalize(C, A, res_x, res_y)
+            frame[..., :3] = st.grade_srgb(frame[..., :3], style, "day")
+            day_frames.append(frame)
         day_sheet = np.concatenate(day_frames, axis=1)
         suffix = "" if action == "walk" else f"_{action}"
         st.write_png(out / f"{name}_{dname}{suffix}_day.png", day_sheet)

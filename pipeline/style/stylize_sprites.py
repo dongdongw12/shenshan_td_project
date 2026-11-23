@@ -485,6 +485,31 @@ def finalize(C, A, out_w, out_h):
     return np.concatenate([rgb, a], axis=-1)
 
 
+def grade_srgb(rgb, profile, which="day"):
+    """全局调色（sRGB 0–1，作用在最终精灵上，不进 Lab 归色）：模拟古旧绢本设色 ——
+    先整体略去饱和，再向绢色保亮度地染一层（暖黄、矿物色褪色感），最后把最暗处轻轻托向暖褐（旧墨不是纯黑）。
+    profile["grade"] 不存在时原样返回。夜晚按 night_scale 减弱。"""
+    g = profile.get("grade")
+    if not g:
+        return rgb
+    k = float(g.get("night_scale", 0.5)) if which == "night" else 1.0
+    out = np.asarray(rgb, dtype=np.float32)
+    lum = (0.2126 * out[..., 0] + 0.7152 * out[..., 1] + 0.0722 * out[..., 2])[..., None]
+    d = float(g.get("desaturate", 0.0)) * k
+    out = lum + (out - lum) * (1 - d)
+    if g.get("tint"):
+        t = hex_to_srgb(g["tint"])
+        t_l = max(float(0.2126 * t[0] + 0.7152 * t[1] + 0.0722 * t[2]), 1e-4)
+        s = float(g.get("tint_strength", 0.0)) * k
+        out = out * (1 - s) + out * (t / t_l) * s
+    if g.get("lift"):
+        lc = hex_to_srgb(g["lift"])
+        f = float(g.get("lift_strength", 0.0)) * k
+        dark = np.clip(1 - lum / 0.45, 0, 1)  # 只托暗部，亮部不动
+        out = out + (lc - out) * f * dark
+    return np.clip(out, 0, 1)
+
+
 def load_profile(path=None):
     with open(path or DEFAULT_PROFILE, "r", encoding="utf-8") as f:
         return json.load(f)
@@ -504,6 +529,7 @@ def stylize_asset(render_json, out_dir, profile_path=None, debug=False):
     for which, passes in (("day", day), ("night", night)):
         C, A = stylize_image(passes, day, profile, info, which, dbg)
         rgba = finalize(C, A, out_w, out_h)
+        rgba[..., :3] = grade_srgb(rgba[..., :3], profile, which)
         files[which] = out_dir / f"{stem}_{which}.png"
         write_png(files[which], rgba)
     separate = bool(profile["ground_shadow"].get("separate", True))

@@ -5,10 +5,10 @@
  */
 import { BrowserPlatform } from "../platform/browser";
 import { IsoProjection, type Vec2 } from "../render/iso";
-import { IsoRenderer, type Camera, type SpriteImages } from "../render/renderer";
+import { DEFAULT_GROUND, IsoRenderer, type Camera, type SpriteImages } from "../render/renderer";
 import { Scene } from "../render/scene";
 import type { SpriteAtlasIndex } from "../render/spriteMeta";
-import { paintGround, paintPaper, parseGroundMap, paintBackdrop } from "../render/groundPainter";
+import { paintGround, paintPaper, parseGroundMap, paintBackdrop, THEME_SKY, type ThemeId } from "../render/groundPainter";
 import { defaultConfig, parseFp, type Cost } from "../game/config";
 import {
   assignWork, build, buildCost, canBuildAt, createGame, drainEvents, garrison, kindInfo, repairAll, repairCost, startNight, step, upgrade, upgradeHouse,
@@ -51,14 +51,18 @@ interface Fx { kind: "smoke" | "text" | "arrow" | "flee"; enemy?: string; vx?: n
 
 async function boot(): Promise<void> {
   const qs = new URLSearchParams(location.search);
+  // 画风主题：?theme=aged 换成古旧绢本设色的地面 / 远山 / 天色 / 绢纹；&set=A|B 同时换上本地预览用的重新风格化精灵（assets/_preview/）
+  const THEME: ThemeId = qs.get("theme") === "aged" ? "aged" : "qinglv";
+  const PREVIEW_SET = qs.get("set");
+  const ASSET_DIR = THEME === "aged" && PREVIEW_SET ? `/_preview/aged_${PREVIEW_SET}` : "/dev";
   const canvas = document.getElementById("stage") as HTMLCanvasElement;
   const platform = new BrowserPlatform(canvas);
-  const atlas = await platform.loadJson<SpriteAtlasIndex>("/dev/sprites.json");
+  const atlas = await platform.loadJson<SpriteAtlasIndex>(`${ASSET_DIR}/sprites.json`);
   const images = new Map<string, SpriteImages>();
   await Promise.all(Object.entries(atlas.sprites).map(async ([stem, m]) => {
     const [day, night, shadow] = await Promise.all([
-      platform.loadImage(`/dev/${m.day_file}`), platform.loadImage(`/dev/${m.night_file}`),
-      m.shadow_file ? platform.loadImage(`/dev/${m.shadow_file}`) : Promise.resolve(undefined),
+      platform.loadImage(`${ASSET_DIR}/${m.day_file}`), platform.loadImage(`${ASSET_DIR}/${m.night_file}`),
+      m.shadow_file ? platform.loadImage(`${ASSET_DIR}/${m.shadow_file}`) : Promise.resolve(undefined),
     ]);
     images.set(stem, { day, night, shadow });
   }));
@@ -67,9 +71,9 @@ async function boot(): Promise<void> {
   const anims = new Map<string, AnimImages>();
   let animIndex: AnimIndex | null = null;
   try {
-    animIndex = await platform.loadJson<AnimIndex>("/dev/chars/chars.json");
+    animIndex = await platform.loadJson<AnimIndex>(`${ASSET_DIR}/chars/chars.json`);
     await Promise.all(Object.entries(animIndex.chars).map(async ([id, m]) => {
-      const L = (f: string) => platform.loadImage(`/dev/chars/${f}`);
+      const L = (f: string) => platform.loadImage(`${ASSET_DIR}/chars/${f}`);
       const [fd, fn, bd, bn] = await Promise.all([L(m.dirs.front.day), L(m.dirs.front.night), L(m.dirs.back.day), L(m.dirs.back.night)]);
       const entry: AnimImages = { front: { day: fd, night: fn }, back: { day: bd, night: bn }, actions: {} };
       for (const [act, a] of Object.entries(m.actions ?? {})) {
@@ -89,10 +93,10 @@ async function boot(): Promise<void> {
   const iso = new IsoProjection({ pxPerMeter: atlas.px_per_meter, tileSize: T, elevationDeg: 30 });
   const map = parseGroundMap(cfg.map.terrain);
   const off = (w: number, h: number) => platform.createOffscreen(w, h);
-  const ground = { day: paintGround(off, map, atlas.px_per_meter, false, 11), night: paintGround(off, map, atlas.px_per_meter, true, 11) };
-  const paper = paintPaper(off);
+  const ground = { day: paintGround(off, map, atlas.px_per_meter, false, 11, 2, THEME), night: paintGround(off, map, atlas.px_per_meter, true, 11, 2, THEME) };
+  const paper = paintPaper(off, 256, 7, THEME);
   const ctx = canvas.getContext("2d")!;
-  const renderer = new IsoRenderer(ctx, iso, images);
+  const renderer = new IsoRenderer(ctx, iso, images, { ...DEFAULT_GROUND, sky: THEME_SKY[THEME] });
 
   // 山石上点缀几棵古松（纯装饰，不进玩法）
   const decor: { i: number; j: number }[] = [];
@@ -291,7 +295,7 @@ async function boot(): Promise<void> {
   const toast = (msg: string) => { toastEl.textContent = msg; toastEl.style.opacity = "1"; toastTimer = 2.6; };
   const costText = (c: Cost | null | undefined) => c ? Object.entries(c).filter(([, v]) => v).map(([k, v]) => `${resIcon(k)}${v}`).join(" ") : "";
   const costPlain = (c: Cost | null | undefined) => c ? Object.entries(c).filter(([, v]) => v).map(([k, v]) => `${v}${RES_ZH[k]}`).join(" ") : "";
-  const thumb = (stem: string | undefined) => stem && atlas.sprites[stem] ? `<img class="thumb" src="/dev/${atlas.sprites[stem]!.day_file}" alt="">` : "";
+  const thumb = (stem: string | undefined) => stem && atlas.sprites[stem] ? `<img class="thumb" src="${ASSET_DIR}/${atlas.sprites[stem]!.day_file}" alt="">` : "";
 
   // 底栏按钮只创建一次，之后只改文字/状态：频繁重建会让“按下-抬起”之间按钮被替换，点击丢失
   type Btn = { el: HTMLButtonElement; update: () => void };
@@ -630,7 +634,7 @@ async function boot(): Promise<void> {
   // 远山背景：按屏幕尺寸缓存白昼 / 夜晚两张，入夜交叉淡入
   let backdrop: { w: number; h: number; day: HTMLCanvasElement; night: HTMLCanvasElement } | null = null;
   const drawBackdrop = (c: CanvasRenderingContext2D, w: number, h: number, a: number) => {
-    if (!backdrop || backdrop.w !== w || backdrop.h !== h) backdrop = { w, h, day: paintBackdrop(off, w, h, false), night: paintBackdrop(off, w, h, true) };
+    if (!backdrop || backdrop.w !== w || backdrop.h !== h) backdrop = { w, h, day: paintBackdrop(off, w, h, false, 5, THEME), night: paintBackdrop(off, w, h, true, 5, THEME) };
     c.globalAlpha = 1; c.drawImage(backdrop.day, 0, 0, w, h);
     if (a > 0.002) { c.globalAlpha = a; c.drawImage(backdrop.night, 0, 0, w, h); }
     c.globalAlpha = 1;
@@ -754,7 +758,7 @@ async function boot(): Promise<void> {
     nightA += Math.sign(target - nightA) * Math.min(Math.abs(target - nightA), dt * 0.8);
     syncScene();
     const { w, h } = platform.screenSize();
-    renderer.render(scene, cam, nightA, { w, h, dpr: platform.pixelRatio() }, { ground, paper, drawDecals, drawOverlay, drawBackdrop });
+    renderer.render(scene, cam, nightA, { w, h, dpr: platform.pixelRatio() }, { ground, paper, paperAlpha: THEME === "aged" ? 1 : undefined, drawDecals, drawOverlay, drawBackdrop });
     uiT -= dt;
     if (uiT <= 0) { renderTop(); renderBottom(); if (selected !== null) renderPanel(); if (familyOpen) renderFamily(); uiT = 0.25; }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) toastEl.style.opacity = "0"; }

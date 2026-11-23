@@ -70,6 +70,38 @@ const NIGHT: Palette = {
   peakTop: "#2a3c66", peakMid: "#223a44", peakBase: "#3a3442", moss: "#121c2c",
 };
 
+/** 古旧绢本设色：矿物色褪色、整体偏暖黄（青绿 → 灰青绿，草地 → 橄榄赭，水 → 灰石青），夜晚少一点蓝紫 */
+const AGED_DAY: Palette = {
+  grass: "#a3a273", grassLight: "#b4b288", grassDark: "#86865e",
+  dirt: "#c7ad82", dirtDark: "#9a7b52",
+  field: "#a2a768", fieldRow: "#6f7a45", ridge: "#a88a5e",
+  water: "#7e9aa0", waterLight: "#dcd9c4", waterDeep: "#5d7b85",
+  rock: "#9a988a", rockDark: "#6d6c62",
+  ink: "#2a1d13", inkAlpha: 0.55,
+  edge: "#4a4a33", sky: "#d9cba6",
+  peakTop: "#5e7a87", peakMid: "#6f8c6c", peakBase: "#a48460", moss: "#3b5244",
+};
+
+const AGED_NIGHT: Palette = {
+  grass: "#2a2d3c", grassLight: "#323546", grassDark: "#212433",
+  dirt: "#3b3a48", dirtDark: "#2b2a36",
+  field: "#283040", fieldRow: "#1c2232", ridge: "#3a3644",
+  water: "#25344e", waterLight: "#8396b4", waterDeep: "#1a2740",
+  rock: "#373b4a", rockDark: "#262a37",
+  ink: "#0d0b0c", inkAlpha: 0.6,
+  edge: "#0a0c14", sky: "#14161f",
+  peakTop: "#2f3c58", peakMid: "#273a40", peakBase: "#3c3640", moss: "#151c26",
+};
+
+/** 画风主题：qinglv = 青绿重彩（原样）；aged = 古旧绢本设色（更“中国画”、更有历史感） */
+export type ThemeId = "qinglv" | "aged";
+const PALETTES: Record<ThemeId, { day: Palette; night: Palette }> = {
+  qinglv: { day: DAY, night: NIGHT },
+  aged: { day: AGED_DAY, night: AGED_NIGHT },
+};
+/** 渲染器的天色（白昼 / 夜晚），与地面主题配套 */
+export const THEME_SKY: Record<ThemeId, [string, string]> = { qinglv: ["#cdd8cf", "#0f1528"], aged: ["#d9cba6", "#14161f"] };
+
 /** 可复现的伪随机（mulberry32） */
 function rng(seed: number): () => number {
   let a = seed >>> 0;
@@ -104,9 +136,10 @@ export function paintGround(
   night: boolean,
   seed = 20261123,
   tileSize = 2,
+  theme: ThemeId = "qinglv",
 ): GroundTexture {
   const iso = new IsoProjection({ pxPerMeter, tileSize, elevationDeg: 30 });
-  const pal = night ? NIGHT : DAY;
+  const pal = night ? PALETTES[theme].night : PALETTES[theme].day;
   const margin = Math.round(pxPerMeter * 4); // 留够空间给向上画的山峰
   const b = textureBounds(iso, map, margin);
   const canvas = createCanvas(b.w, b.h);
@@ -461,14 +494,35 @@ export function paintGround(
 }
 
 /** 宣纸纹理（小方块平铺，用 createPattern 盖满全屏）：细纤维 + 颗粒。 */
-export function paintPaper(createCanvas: (w: number, h: number) => HTMLCanvasElement, size = 256, seed = 7): HTMLCanvasElement {
+export function paintPaper(createCanvas: (w: number, h: number) => HTMLCanvasElement, size = 256, seed = 7, theme: ThemeId = "qinglv"): HTMLCanvasElement {
+  const aged = theme === "aged";
+  if (aged) size = Math.max(size, 512); // 旧绢的水渍斑块需要更大的平铺块，否则重复感明显
   const c = createCanvas(size, size);
   const ctx = c.getContext("2d")!;
   const R = rng(seed);
   ctx.clearRect(0, 0, size, size);
-  for (let k = 0; k < 900; k++) {
+  if (aged) {
+    // 旧绢：几块极淡的暖褐水渍 + 一层很淡的暖黄底，营造年代感（叠在最上层，透明度很低）
+    for (let k = 0; k < 7; k++) {
+      const x = R() * size, y = R() * size, r = size * (0.12 + 0.22 * R());
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, "rgba(140,104,58,0.10)");
+      g.addColorStop(1, "rgba(140,104,58,0)");
+      ctx.fillStyle = g;
+      for (const dx of [-size, 0, size]) for (const dy of [-size, 0, size]) { ctx.save(); ctx.translate(dx, dy); ctx.fillRect(x - r, y - r, r * 2, r * 2); ctx.restore(); }
+    }
+    // 绢的经纬：极细的横竖线
+    ctx.lineWidth = 0.5;
+    for (let k = 0; k < size; k += 3) {
+      ctx.globalAlpha = 0.025 + 0.02 * R();
+      ctx.strokeStyle = "#7a6040";
+      ctx.beginPath(); ctx.moveTo(0, k + 0.5); ctx.lineTo(size, k + 0.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(k + 0.5, 0); ctx.lineTo(k + 0.5, size); ctx.stroke();
+    }
+  }
+  for (let k = 0; k < (aged ? 3600 : 900); k++) {
     ctx.globalAlpha = 0.05 + 0.1 * R();
-    ctx.fillStyle = R() < 0.5 ? "#5a4630" : "#ffffff";
+    ctx.fillStyle = R() < 0.5 ? (aged ? "#6b5236" : "#5a4630") : (aged ? "#f3e6c4" : "#ffffff");
     ctx.fillRect(R() * size, R() * size, 1 + R(), 1 + R());
   }
   ctx.lineWidth = 0.6;
@@ -490,14 +544,17 @@ export function paintPaper(createCanvas: (w: number, h: number) => HTMLCanvasEle
  * 山脊墨线 + 几笔皴，层与层之间留白雾。只占屏幕上半部；谷地菱形盖在中间，四角露出山。
  * night = true 时整体压成夜靛、山脊线更淡。按屏幕尺寸缓存，尺寸变了再画。
  */
-export function paintBackdrop(createCanvas: (w: number, h: number) => HTMLCanvasElement, w: number, h: number, night: boolean, seed = 5): HTMLCanvasElement {
+export function paintBackdrop(createCanvas: (w: number, h: number) => HTMLCanvasElement, w: number, h: number, night: boolean, seed = 5, theme: ThemeId = "qinglv"): HTMLCanvasElement {
+  const aged = theme === "aged";
   const c = createCanvas(Math.max(1, Math.round(w)), Math.max(1, Math.round(h)));
   const ctx = c.getContext("2d")!;
   const R = rng(seed);
   ctx.clearRect(0, 0, w, h);
   const layers = night
     ? [{ top: "#3a4a78", bot: "#25315c", y: 0.1, amp: 0.07 }, { top: "#33456b", bot: "#222c52", y: 0.2, amp: 0.08 }, { top: "#2d4a5e", bot: "#1f2a4c", y: 0.32, amp: 0.07 }]
-    : [{ top: "#a9c1cc", bot: "#d3ddd6", y: 0.1, amp: 0.07 }, { top: "#86a9b4", bot: "#c5d4cc", y: 0.2, amp: 0.08 }, { top: "#6f9a8e", bot: "#bfd0c3", y: 0.32, amp: 0.07 }];
+    : aged
+      ? [{ top: "#a8ae9f", bot: "#d6cbac", y: 0.1, amp: 0.07 }, { top: "#8e9a8c", bot: "#cdc2a2", y: 0.2, amp: 0.08 }, { top: "#7b8c76", bot: "#c6bb98", y: 0.32, amp: 0.07 }]
+      : [{ top: "#a9c1cc", bot: "#d3ddd6", y: 0.1, amp: 0.07 }, { top: "#86a9b4", bot: "#c5d4cc", y: 0.2, amp: 0.08 }, { top: "#6f9a8e", bot: "#bfd0c3", y: 0.32, amp: 0.07 }];
   for (const [li, L] of layers.entries()) {
     const f1 = (2 + R() * 2) / w, f2 = (5 + R() * 4) / w, f3 = (13 + R() * 6) / w;
     const p1 = R() * 6.28, p2 = R() * 6.28, p3 = R() * 6.28;
@@ -538,16 +595,18 @@ export function paintBackdrop(createCanvas: (w: number, h: number) => HTMLCanvas
     }
     // 层间白雾
     const mist = ctx.createLinearGradient(0, h * (L.y + L.amp * 0.6), 0, h * (L.y + L.amp * 0.6 + 0.12));
-    mist.addColorStop(0, night ? "rgba(40,52,90,0)" : "rgba(236,232,220,0)");
-    mist.addColorStop(1, night ? "rgba(40,52,90,0.55)" : "rgba(236,232,220,0.7)");
+    const mistRgb = night ? (aged ? "36,40,56" : "40,52,90") : (aged ? "232,222,196" : "236,232,220");
+    mist.addColorStop(0, `rgba(${mistRgb},0)`);
+    mist.addColorStop(1, `rgba(${mistRgb},${night ? 0.55 : 0.7})`);
     ctx.globalAlpha = 1;
     ctx.fillStyle = mist;
     ctx.fillRect(0, h * (L.y + L.amp * 0.6), w, h * 0.12);
   }
   // 下半部渐隐回纸色，避免和地面贴图边缘撞色
   const fade = ctx.createLinearGradient(0, h * 0.42, 0, h * 0.62);
-  fade.addColorStop(0, night ? "rgba(15,21,40,0)" : "rgba(205,216,207,0)");
-  fade.addColorStop(1, night ? "rgba(15,21,40,1)" : "rgba(205,216,207,1)"); // = renderer 的天色
+  const skyRgb = night ? (aged ? "20,22,31" : "15,21,40") : (aged ? "217,203,166" : "205,216,207"); // = THEME_SKY
+  fade.addColorStop(0, `rgba(${skyRgb},0)`);
+  fade.addColorStop(1, `rgba(${skyRgb},1)`);
   ctx.fillStyle = fade;
   ctx.fillRect(0, h * 0.42, w, h * 0.58);
   ctx.globalAlpha = 1;

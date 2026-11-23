@@ -21,3 +21,6 @@ client/library/
 client/local/
 __pycache__/
 *.pyc
+
+# 本地画风预览（重新风格化的临时精灵，不进仓库）
+client/assets/_preview/
