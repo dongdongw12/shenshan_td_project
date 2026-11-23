@@ -108,11 +108,12 @@
       "name": "溪边鱼梁与水车",
       "method": "ai",
       "t2i_zh": "斜侧视角，溪水里的竹木鱼梁，一排竹桩围着鱼篓，旁边一架小木水车，浅水，石头",
-      "prompt_zh": "溪边的鱼梁与小水车：浅溪里打下一排竹桩与木栅，中间放着几个竹编鱼篓，旁边一架赭石色小木水车，水车轮半浸在石青色的溪水里，岸边几块青灰卵石。不要画大片水面，只画鱼梁、水车和脚下一小片浅水。",
-      "prompt_en": "A fish weir with a small waterwheel in a mountain stream: a row of bamboo stakes and a wooden fence in shallow water with several woven bamboo fish traps, a small red-ochre wooden waterwheel half dipped in azurite water, a few blue-grey pebbles on the bank. Only the weir, wheel and a small patch of shallow water, not a large water surface.",
+      "prompt_zh": "溪边的鱼梁与小水车：浅溪里打下一排竹桩与木栅，中间放着几个竹编鱼篓，旁边一架赭石色小木水车，水车轮半浸在石青色的溪水里，岸边几块青灰卵石。不要画大片水面，只画鱼梁、水车和脚下一小片浅水。画面里没有任何房屋、磨坊或其他建筑，水车是立在溪里的独立木架水车。",
+      "prompt_en": "A fish weir with a small waterwheel in a mountain stream: a row of bamboo stakes and a wooden fence in shallow water with several woven bamboo fish traps, a small red-ochre wooden waterwheel half dipped in azurite water, a few blue-grey pebbles on the bank. Only the weir, wheel and a small patch of shallow water, not a large water surface. No house, mill or any building in the picture; the waterwheel stands alone on a wooden frame in the stream.",
       "gen": {
         "auto_align_yaw": true
-      }
+      },
+      "negative_zh": "房屋，磨坊，屋顶，墙，门窗，建筑"
     },
     {
       "id": "hunt_lodge",

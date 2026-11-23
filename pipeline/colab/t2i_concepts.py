@@ -96,7 +96,8 @@ def load_qwen_image():
     def run(asset, style, seed):
         prompt = f"{style['prefix_zh']}{asset['prompt_zh']}"
         g = torch.Generator(device="cuda").manual_seed(int(seed))
-        return pipe(prompt=prompt, negative_prompt=style["negative_zh"], width=1024, height=1024,
+        negative = style["negative_zh"] + ("，" + asset["negative_zh"] if asset.get("negative_zh") else "")  # 单件可追加反向词
+        return pipe(prompt=prompt, negative_prompt=negative, width=1024, height=1024,
                     num_inference_steps=50, true_cfg_scale=4.0, generator=g).images[0]
     return pipe, run
 
