@@ -249,6 +249,13 @@ if todo:
 code(r'''
 # ⑥ 贴图 → 墙面朝向对齐 → 导出 raw_models/<id>.glb
 if todo and TEXTURE:
+    # diffusers ≥ 0.35（Qwen-Image 需要）加载本地 custom pipeline 时要求 trust_remote_code=True；
+    # Hunyuan3D-Paint 用的是仓库里自带的 hunyuanpaint/pipeline.py（已固定 commit），这里统一放行
+    import diffusers
+    if not getattr(diffusers.DiffusionPipeline, "_shenshan_trust_patch", False):
+        _fp = diffusers.DiffusionPipeline.from_pretrained.__func__
+        diffusers.DiffusionPipeline.from_pretrained = classmethod(lambda cls, *a, **k: _fp(cls, *a, **{**k, "trust_remote_code": True}))
+        diffusers.DiffusionPipeline._shenshan_trust_patch = True
     from hy3dgen.texgen import Hunyuan3DPaintPipeline
     paint = Hunyuan3DPaintPipeline.from_pretrained("tencent/Hunyuan3D-2")  # 默认 paint-v2-0-turbo
     if low_vram:
