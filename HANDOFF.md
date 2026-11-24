@@ -107,7 +107,7 @@
   - 在 `client/assets/configs/` 落地完整 JSON 配置表，实现厢房建房、添丁成长、族人入驻塔楼羁绊、刀匪/盾牌匪/纵火贼/二当家与大当家 Boss。
 - [ ] **T6 · 下一步建议（按优先级，2026-11-23 整理）**
   1. ~~AI 资产量产 + v2 正式烘培 + 导出~~（2026-11-23 晚完成；鱼梁 2026-11-24 重出完成，见交接日志）。
-  2. **客户端落地方**：~~选定引擎~~（2026-11-24 用户选定**直接小游戏 Canvas**，不上 Cocos；已能在微信开发者工具模拟器里玩，见交接日志）。剩：**真机预览**（开发者工具「预览」扫码）、接 `wx.createRewardedVideoAd` 到 `adReward`、存档（`wx.setStorage`）、音效、分包加载进度。
+  2. **客户端落地方**：~~选定引擎~~（2026-11-24 用户选定**直接小游戏 Canvas**，不上 Cocos；已能在微信开发者工具模拟器里玩，见交接日志）。剩（真机预览 2026-11-24 已跑通）：接 `wx.createRewardedVideoAd` 到 `adReward`、存档（`wx.setStorage`）、音效、分包加载进度。
   3. **用户（可选，不依赖 T2）**：登录 Colab 后直接跑 `colab_bake_sprites.ipynb`（`TEST_SINGLE=""`、`SCALE=1.0`、`SAMPLES=48`，`PROXY_FALLBACK` 默认开），就能拿到正式比例（128px/m）的全套替身 + 12 个角色。
   4. **Claude**：遮挡排序的空间分桶优化（现 250 物体 0.84ms/帧）、正式 UI 美术、T6 平衡（祠堂 / 滚木塔在 10 夜内很少出现，见 2026-11-23 凌晨日志）。已完成：家族面板（手动分工 / 驻守）、受击闪白 / 逃跑、家人干活、着火 / 血条 / 夜灯 / 炊烟 / 萤火、HUD 图标与缩略图。
 - [ ] **T5 · 资质与软著并行启动**
@@ -272,4 +272,5 @@
 - **打包**：`npm --prefix client run build:minigame` → `client/build/minigame/`（`game.js` 0.11MB 主包 + `assets/` 分包 16.4MB，限 4MB / 合计 30MB）。重新生成手机版资源：`$PY -I pipeline/atlas/make_mobile.py`（Blender 自带 Python）。
 - **开发者工具**：已装 2.02.2609250（`~/Downloads/wechat_devtools/`），用户扫码登录并打开了「设置 → 安全设置 → 服务端口」，命令行可用：`/Applications/wechatwebdevtools.app/Contents/MacOS/cli open --project <仓库>/client/build/minigame`（改完重新 build 后工具自动重编译）。AppID 用**小游戏测试号 `wx16352051ede3d1a1`**（写在 `client/minigame/project.config.json`；环境变量 `WX_APPID` 可覆盖）。注意：游客号 `touristappid` 命令行不认；小程序测试号会被工具强制切成小程序模式（日志 `compileType changed old=game new=weapp`，模拟器报找不到 app.json）——必须是**小游戏**测试号。
 - **验收**：模拟器（iPhone 12/13）里封面 → 开荒 → 选竹箭楼 → 点地放塔（扣钱）→ 拖动地图 → 入夜 → 狼群来袭 → 天亮第二天，全程无报错（控制台只有微信自己 WAGame.js 的 HarmonyOS 兼容提示）。`npm test` 48/48。
-- **未做**：真机预览（需要手机扫码）、激励视频、存档、音效、性能实测（真机帧率 / 内存）。
+- **真机预览**：`cli preview --project <build/minigame> --qr-format image --qr-output qr.png` 出二维码（上传 16.6MB），用户手机扫码试玩，反馈**运行正常**。
+- **未做**：激励视频、存档、音效、真机帧率 / 内存的量化数据（目前只有“玩起来正常”的主观反馈）。
