@@ -12,7 +12,7 @@ shenshan_td_project/
 ├── docs/                                  # 策划案、数值表、美术规范与开发日志
 │   ├── art/ART_BIBLE.md                   # 美术圣经：画风原则、比例镜头、光源、色板、墨线层级
 │   ├── art/T2_concept_prompts.md          # 概念图提示词、出图规范与样张验收清单
-│   ├── art/samples/                       # 风格化效果样张（替身模型）
+│   ├── art/samples/                       # 风格化效果样张（只在 Google 云端硬盘，tools/sync_docs.py 同步到本地）
 │   └── prototype_v0/                      # 前 3 天浏览器可玩原型（原 mountain_td_mvp，含初版 config.js）
 ├── pipeline/                              # 离线美术与 3D 烘培管线（不打包进小游戏）
 │   ├── colab/
@@ -51,7 +51,7 @@ shenshan_td_project/
 
 ## 2. 路线 B 核心工作流（4 步闭环）
 
-> 画风规范见 [`docs/art/ART_BIBLE.md`](docs/art/ART_BIBLE.md)，参数唯一来源 [`pipeline/style/style_profile.json`](pipeline/style/style_profile.json)。效果样张：`docs/art/samples/`。
+> 画风规范见 [`docs/art/ART_BIBLE.md`](docs/art/ART_BIBLE.md)，参数唯一来源 [`pipeline/style/style_profile.json`](pipeline/style/style_profile.json)。效果样张：`docs/art/samples/`（不进 Git，`python3 tools/sync_docs.py` 从云盘 `shenshan_td/docs/` 拉下来；文档也在那里双向同步，可跨电脑直接改）。
 
 1. **生成 3D 建筑模型**：按 [`docs/art/T2_concept_prompts.md`](docs/art/T2_concept_prompts.md) 出无描边概念图放进云盘 `shenshan_td/concepts/<id>.png`（或让笔记本用 HunyuanDiT 自动出），再在 Colab 运行 `pipeline/colab/colab_gen_3d.ipynb`，用 Hunyuan3D-2 生成带贴图、墙面已转正的 `.glb` 到 `shenshan_td/raw_models/`（文件名 = `assets_manifest.json` 的 `id`）。
 2. **Blender 烘培渲染通道**（`pipeline/blender/bake_isometric_sprites.py`，stylized 模式）：

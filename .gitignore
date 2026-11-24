@@ -24,3 +24,6 @@ __pycache__/
 
 # 本地画风预览（重新风格化的临时精灵，不进仓库）
 client/assets/_preview/
+
+# 样张截图只放 Google 云端硬盘 shenshan_td/docs/art/samples/（tools/sync_docs.py 同步到本地），不进 Git
+docs/art/samples/

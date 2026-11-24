@@ -1,6 +1,7 @@
 # 《深山传家：开荒守寨》跨设备 / 跨模型交接文档（HANDOFF）
 
 > **用途**：供 **Claude Opus** 与 **Antigravity** 在不同电脑（MacBook Air / Mac mini 等）上无缝接手本项目。每次开工前**先读完本文件**，收工前更新底部「交接日志」并 `git push`。  
+> **文档同步（2026-11-24 起）**：`HANDOFF.md` 与 `docs/` 同时放在 Git 和 Google 云端硬盘 `shenshan_td/docs/`（Colab 用的那个 20TB 账号），任何电脑都能直接在云盘里改。开工 `git pull` 之后、提交文档之前各跑一次 `python3 tools/sync_docs.py`（双向：哪边改了拷到另一边；两边都改了会留一份 `*.drive-conflict-*` 让你合并，exit 2）。样张 `docs/art/samples/` 只在云盘，不进 Git（同步脚本拉到本地）。  
 > **最后更新**：2026-11-23 凌晨（第二夜自主工作：24 件资产全部有烘培替身、家人干活动作、战斗与氛围特效、精灵图鉴；T2 的 AI 图生 3D 已跑通 3 件样张，待决定量产）
 
 ---
@@ -255,3 +256,4 @@
 - **鱼梁**：第一次按“不要房屋”提示词重出，Qwen-Image 4 个种子**全都**在水车旁画了一间磨坊 —— “水车”这个词本身就带出磨坊，公共画风前缀里的“游戏建筑道具 / 黛瓦青灰 / 蛎灰旧白”也在推它。改法：`gen_3d_jobs.json` 里鱼梁单独的 `prefix_zh`（`t2i_concepts.py` 新支持单件覆盖前缀），把水车写成溪中独立的**竹筒车**，反向词加瓦 / 白墙 / 红门 / 台阶，6 个种子 → 6 张全部没有房子（对比图 `docs/art/samples/fish_weir_concepts_noria.jpg`）。人工选 s1234（A 字架筒车、轮廓最清楚），L4 上出模型 + 正式比例烘培，导出 `fish_weir` 568×416、2×1 格、高 1.16m，图鉴 0 警告。旧精灵在云盘 `baked_sprites/_rejected/`。
 - **`run_unattended.py` 新增**：`need_gpu`（显存 / 内存不够直接放弃并释放，防 T4 上 OOM 白烧）、`set_aside_baked`（把 `baked_sprites/<id>_*` 挪进 `_rejected/`，不带 OVERWRITE 的烘培就只补这几件）、`(name, overrides, n)` 在第 n 个代码格前暂停等云盘 `_go`（人工挑概念图；最多等 40 分钟，超时照常继续）。驱动格把 `G`（raw.githubusercontent 的提交 SHA 路径）同时传给 `RAW` 和两个 notebook 的 `GITHUB_RAW`，避开 raw 缓存。
 - **Colab 经验**：① Qwen-Image 从云盘缓存加载约 45 分钟，出图每张只要约 3 分钟 —— 要多出几个候选就一次出够；② 网页前端常卡在“正在恢复执行”看不到输出，内核其实在跑：看云盘 `_unattended.log`，或开底栏「终端」（xterm 只认粘贴事件：往 `.xterm-helper-textarea` 派发 ClipboardEvent('paste')）；③ 在终端 `pkill -INT -f colab_kernel_launcher` 中断时，若正卡在 `!` 子进程里，只会杀掉子进程、本格照常往下跑，要再发一次才会让本格失败；④ “连接到 Google 云端硬盘”之后还有一个账号授权窗口，要点到最后的“允许”，否则 mount 失败、运行时被释放（这次白等了一轮）。
+- **文档上云盘**（用户要求：文档能跨电脑编辑，云盘 20TB 够放）：新增 `tools/sync_docs.py`，`HANDOFF.md` + `docs/` ⇄ 云盘 `shenshan_td/docs/` 三方比较双向同步（基线记在云盘 `docs/.sync_state.json`；删除默认不传播，`--delete` 才删；冲突用 `--prefer repo|drive` 或手动合并）。`docs/art/samples/`（35 张、约 9MB）移出 Git，只在云盘 + 本地。另：这台 Mac 现在同步了 Colab 那个云盘账号（`~/Library/CloudStorage/GoogleDrive-…/我的云端硬盘/shenshan_td`），Colab 输出以后可以直接从本地读，不用再从网页下载 zip。
