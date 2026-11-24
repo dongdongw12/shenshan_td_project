@@ -257,3 +257,10 @@
 - **`run_unattended.py` 新增**：`need_gpu`（显存 / 内存不够直接放弃并释放，防 T4 上 OOM 白烧）、`set_aside_baked`（把 `baked_sprites/<id>_*` 挪进 `_rejected/`，不带 OVERWRITE 的烘培就只补这几件）、`(name, overrides, n)` 在第 n 个代码格前暂停等云盘 `_go`（人工挑概念图；最多等 40 分钟，超时照常继续）。驱动格把 `G`（raw.githubusercontent 的提交 SHA 路径）同时传给 `RAW` 和两个 notebook 的 `GITHUB_RAW`，避开 raw 缓存。
 - **Colab 经验**：① Qwen-Image 从云盘缓存加载约 45 分钟，出图每张只要约 3 分钟 —— 要多出几个候选就一次出够；② 网页前端常卡在“正在恢复执行”看不到输出，内核其实在跑：看云盘 `_unattended.log`，或开底栏「终端」（xterm 只认粘贴事件：往 `.xterm-helper-textarea` 派发 ClipboardEvent('paste')）；③ 在终端 `pkill -INT -f colab_kernel_launcher` 中断时，若正卡在 `!` 子进程里，只会杀掉子进程、本格照常往下跑，要再发一次才会让本格失败；④ “连接到 Google 云端硬盘”之后还有一个账号授权窗口，要点到最后的“允许”，否则 mount 失败、运行时被释放（这次白等了一轮）。
 - **文档上云盘**（用户要求：文档能跨电脑编辑，云盘 20TB 够放）：新增 `tools/sync_docs.py`，`HANDOFF.md` + `docs/` ⇄ 云盘 `shenshan_td/docs/` 三方比较双向同步（基线记在云盘 `docs/.sync_state.json`；删除默认不传播，`--delete` 才删；冲突用 `--prefer repo|drive` 或手动合并）。`docs/art/samples/`（35 张、约 9MB）移出 Git，只在云盘 + 本地。另：这台 Mac 现在同步了 Colab 那个云盘账号（`~/Library/CloudStorage/GoogleDrive-…/我的云端硬盘/shenshan_td`），Colab 输出以后可以直接从本地读，不用再从网页下载 zip。
+
+### 2026-11-24 下午 · Claude Opus（角色五官表情 + 圆润四肢，Colab 正式烘培）
+- **用户要求**：人物和动物要看到表情和五官；四肢和脚要逼真，不要方块。
+- **`make_characters.py` 重写人物 / 野兽造型**：五官用“贴花”小物体（`obj["feature"]=1`，pass_index 2，进 NoInk 集合不描 Freestyle 线）；`stylize_sprites.py` 识别这层：Kuwahara 之前先用周边颜色填掉、之后把原色贴回，并去掉五官周围的内描线，所以眼睛 / 眉毛 / 嘴不会被抹糊。12 个角色各有表情（`FACE` 表：刀疤、独眼眼罩、络腮胡、八字胡、眯眼坏笑、狂笑；女眷睫毛唇色腮红，孩子大眼笑脸双髻），行走 / 攻击 / 干活嘴型不同；头整体朝镜头转 30°（`HEAD_TURN`），两只眼都看得到。野兽：琥珀狼眼、怒眉、攻击张嘴（下颌骨）、獠牙、猪鼻孔、熊月牙白斑。
+- **四肢**：人物改成肩 / 肘 / 膝关节球 + 锥形上下臂和大小腿（新骨骼 `fore_*` / `shin_*`，走路屈膝、摆臂屈肘），绑腿斜纹、草鞋（村民）/ 黑布鞋（山匪），手有拇指；野兽两段腿（`low_*` 骨）+ 后腿臀部肌肉，狼 / 熊三趾爪，野猪分蹄。
+- **烘培**：Colab L4，提交 `e72c30c`，`SCALE=1.0 SAMPLES=48`，04:00–06:01 UTC，12 个角色 120 张图全部成功；从本机同步的云盘直接拷出导出，图鉴 / 可玩演示无报错，`npm test` 48/48。样张（云盘）：`characters_v3_bake_humans.png`、`characters_v3_bake_bandits_beasts.png`、`characters_v3_bake_actions.png`。
+- **待改进（未做）**：角色在手机画面里显示得比较小，五官主要靠眼睛和嘴的深色点辨认；如还要更清楚，可考虑在游戏里把角色放大 1.2–1.3 倍，或给 Colab 笔记本存一份云盘副本，免去每次挂载云盘的授权点击。
