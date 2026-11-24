@@ -53,6 +53,7 @@ def main():
     ap.add_argument("--xfade", type=float, default=2.5)
     ap.add_argument("--rms", type=float, default=-20.0, help="目标 RMS（dBFS）")
     ap.add_argument("--kbps", type=int, default=96)
+    ap.add_argument("--highpass", type=float, default=0.0, help="低切频率（Hz）：手机喇叭放不出的低音切掉，把响度留给听得见的频段")
     a = ap.parse_args()
 
     x = decode(a.src)
@@ -80,16 +81,23 @@ def main():
     loop = seg[:L].copy()
     fin = np.sin(np.linspace(0, np.pi / 2, xf)) ** 2
     loop[:xf] = seg[:xf] * fin + seg[L:L + xf] * (1 - fin)
+    if a.highpass > 0:
+        X = np.fft.rfft(loop)
+        f = np.fft.rfftfreq(len(loop), 1 / SR)
+        X *= 1 / np.sqrt(1 + (a.highpass / np.maximum(f, 1)) ** 4)  # 二阶低切
+        loop = np.fft.irfft(X, len(loop))
     rms = np.sqrt(np.mean(loop ** 2)) + 1e-9
     loop *= 10 ** (a.rms / 20) / rms
-    peak = np.max(np.abs(loop))
-    if peak > 0.89:
-        loop *= 0.89 / peak
+    # 软限幅：0.7 以上平滑压到不超过 0.95（响度拉高了也不削波）
+    over = np.abs(loop) > 0.7
+    loop[over] = np.sign(loop[over]) * (0.7 + 0.25 * np.tanh((np.abs(loop[over]) - 0.7) / 0.25))
     with tempfile.TemporaryDirectory() as d:
         raw = os.path.join(d, "a.f32")
         loop.astype("<f4").tofile(raw)
         subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "f32le", "-ar", str(SR), "-ac", "1", "-i", raw,
                         "-codec:a", "libmp3lame", "-b:a", f"{a.kbps}k", a.dst], check=True)
+    out_rms = 20 * np.log10(np.sqrt(np.mean(loop ** 2)) + 1e-9)
+    print(f"输出 RMS {out_rms:.1f} dBFS，峰值 {np.max(np.abs(loop)):.2f}")
     print(f"{a.src}: 原长 {dur:.1f}s → 循环 {start:.1f}s–{start + L / SR:.1f}s（{L / SR:.1f}s，相似度 {best:.3f}），交叉淡化 {a.xfade}s → {a.dst}")
 
 

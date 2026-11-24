@@ -35,7 +35,7 @@ interface Wx {
   onWindowResize?(cb: () => void): void;
   onHide(cb: () => void): void;
   onShow(cb: () => void): void;
-  createInnerAudioContext(): Voice;
+  createInnerAudioContext(): Voice & { onError(cb: (e: { errCode: number; errMsg: string }) => void): void };
   getStorageSync(key: string): unknown;
   setStorageSync(key: string, value: string): void;
   removeStorageSync(key: string): void;
@@ -152,7 +152,10 @@ export class WechatPlatform implements Platform {
 
   /** InnerAudioContext 本身就有 src / volume / loop / play / stop / pause；默认跟随 iPhone 静音键 */
   makeVoice(): Voice {
-    return wx.createInnerAudioContext();
+    const ctx = wx.createInnerAudioContext();
+    // 出错只记日志（真机调试的控制台能看到），不打断游戏
+    ctx.onError((e) => console.warn("音频出错", ctx.src, e?.errCode, e?.errMsg));
+    return ctx;
   }
 
   // 小游戏本地缓存：单个 key 上限 1MB、总共 10MB（存档只有几 KB）

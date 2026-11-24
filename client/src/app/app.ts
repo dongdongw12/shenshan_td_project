@@ -176,6 +176,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   const audio = new Mixer({
     makeVoice: () => platform.makeVoice(), url: (n) => platform.asset(`audio/${n}.mp3`),
     storageGet: (k) => platform.storageGet(k), storageSet: (k, v) => platform.storageSet(k, v),
+    fades: platform.name !== "wechat",
   });
   ui.onTap = () => audio.sfx("ui_tap");
   platform.onHide(() => audio.setHidden(true));
