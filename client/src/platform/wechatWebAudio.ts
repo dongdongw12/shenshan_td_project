@@ -9,7 +9,7 @@
  */
 import type { Voice } from "../app/audio";
 
-interface WaParam { value: number }
+interface WaParam { value: number; setValueAtTime?(v: number, t: number): void }
 interface WaNode { connect(n: unknown): void; disconnect?(): void }
 interface WaGain extends WaNode { gain: WaParam }
 interface WaBuffer { duration: number }
@@ -70,6 +70,11 @@ function load(src: string): Promise<WaBuffer> {
   return p;
 }
 
+function setGain(g: WaGain, v: number): void {
+  try { g.gain.setValueAtTime?.(v, context().currentTime); } catch { /* 没有这个方法 */ }
+  g.gain.value = v;
+}
+
 export class WebAudioVoice implements Voice {
   src = "";
   loop = false;
@@ -87,17 +92,21 @@ export class WebAudioVoice implements Voice {
   get volume(): number { return this.vol; }
   set volume(v: number) {
     this.vol = v;
-    if (this.gainNode) this.gainNode.gain.value = v;
+    if (this.gainNode) setGain(this.gainNode, v);
   }
 
-  private gain(): WaGain {
-    if (!this.gainNode) {
-      const ctx = context();
-      this.gainNode = ctx.createGain();
-      this.gainNode.gain.value = this.vol;
-      this.gainNode.connect(ctx.destination);
-    }
-    return this.gainNode;
+  /**
+   * 每次开播都新建一个增益节点、建的时候就把音量定好。2026-11-24 真机：开播后改 gain.value 不生效
+   * （从 0.03 开始淡入，读数到了 0.75 但实际一直几乎无声），所以不能依赖“先小后大”。
+   */
+  private freshGain(): WaGain {
+    const ctx = context();
+    this.gainNode?.disconnect?.();
+    const g = ctx.createGain();
+    setGain(g, this.vol);
+    g.connect(ctx.destination);
+    this.gainNode = g;
+    return g;
   }
 
   play(): Promise<void> {
@@ -111,7 +120,7 @@ export class WebAudioVoice implements Voice {
       const s = ctx.createBufferSource();
       s.buffer = buf;
       s.loop = this.loop;
-      s.connect(this.gain());
+      s.connect(this.freshGain());
       const off = buf.duration > 0 ? this.offset % buf.duration : 0;
       s.start(0, off);
       this.startedAt = ctx.currentTime - off;

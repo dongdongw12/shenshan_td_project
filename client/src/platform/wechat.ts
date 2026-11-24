@@ -212,8 +212,9 @@ export class WechatPlatform implements Platform {
     return v;
   }
 
+  /** 真机上开播后改音量不生效（InnerAudio 和 WebAudio 都是），小游戏里背景音乐一律不淡入淡出、开播前定好音量 */
   musicCanFade(): boolean {
-    return webAudioAvailable();
+    return false;
   }
 
   diagnostics(): string[] {
