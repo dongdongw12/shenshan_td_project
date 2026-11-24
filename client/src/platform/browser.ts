@@ -1,4 +1,5 @@
 import type { ImageLike, Platform, PointerEvt } from "./platform";
+import type { Voice } from "../app/audio";
 
 export class BrowserPlatform implements Platform {
   readonly name = "browser" as const;
@@ -97,6 +98,23 @@ export class BrowserPlatform implements Platform {
   onHide(cb: () => void): void {
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") cb(); });
     window.addEventListener("pagehide", cb);
+  }
+
+  onShow(cb: () => void): void {
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") cb(); });
+  }
+
+  makeVoice(): Voice {
+    const a = new Audio();
+    a.preload = "auto";
+    return {
+      get src() { return a.src; }, set src(v: string) { if (!a.src.endsWith(v)) a.src = v; },
+      get volume() { return a.volume; }, set volume(v: number) { a.volume = v; },
+      get loop() { return a.loop; }, set loop(v: boolean) { a.loop = v; },
+      play: () => a.play(),
+      stop: () => { a.pause(); try { a.currentTime = 0; } catch { /* 还没加载 */ } },
+      pause: () => a.pause(),
+    };
   }
 
   // 隐私模式 / 禁用存储时 localStorage 会抛错：一律当没有

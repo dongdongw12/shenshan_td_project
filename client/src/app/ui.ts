@@ -177,7 +177,7 @@ export class Ui {
     this.press.delete(e.id);
     if (e.type === "up" && p.key && !p.scrolling) {
       const g = this.hit(e.x, e.y, "button");
-      if (g && g.key === p.key && !g.disabled) g.onClick?.();
+      if (g && g.key === p.key && !g.disabled) { this.onTap?.(); g.onClick?.(); }
     }
     return true;
   }
@@ -207,6 +207,9 @@ export class Ui {
     const tw = b.thumb ? Math.min(46, (30 * b.thumb.width) / Math.max(1, b.thumb.height)) : 0;
     return { w: Math.ceil(Math.max(lw, sw, tw) + 14), h: Math.ceil(8 + (b.thumb ? 31 : 0) + size * 1.3 + (b.sub ? (size - 2) * 1.3 : 0)) };
   }
+
+  /** 每次按钮点击成功时调用（放“嗒”一声） */
+  onTap: (() => void) | null = null;
 
   /** 滚动面板里画按钮时设成面板可见区：区外的按钮不登记点击（否则会挡住面板外面的地图 / 底栏） */
   clip: Rect | null = null;

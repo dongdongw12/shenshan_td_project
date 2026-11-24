@@ -25,6 +25,7 @@ import {
 } from "./inkDraw";
 import { COLORS, FONT, KAI, Ui, drawRich, font, richW, roundRect, wrapRich, type ButtonSpec, type Rect, type Rich } from "./ui";
 import { RES_KINDS, RES_ZH } from "./icons";
+import { Mixer } from "./audio";
 
 export interface AppOptions {
   /** 资源目录（相对 assets/），默认 "dev" */
@@ -171,6 +172,14 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   const paper = paintPaper(off, 256, 7, THEME);
   const renderer = new IsoRenderer(ctx, iso, images, { ...DEFAULT_GROUND, sky: THEME_SKY[THEME] });
   const ui = new Ui();
+  // 声音（audio.ts）：背景音乐 + 音效；按钮点一下“嗒”一声
+  const audio = new Mixer({
+    makeVoice: () => platform.makeVoice(), url: (n) => platform.asset(`audio/${n}.mp3`),
+    storageGet: (k) => platform.storageGet(k), storageSet: (k, v) => platform.storageSet(k, v),
+  });
+  ui.onTap = () => audio.sfx("ui_tap");
+  platform.onHide(() => audio.setHidden(true));
+  platform.onShow(() => audio.setHidden(false));
 
   // 山石上点缀几棵古松（纯装饰，不进玩法）。2026-11-24 用户嫌田边树太多：紧挨谷地的一圈不种，
   // 隔一格的那圈只留一半，松树都往山里退，把田地露出来
@@ -323,7 +332,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
 
   // 开发台截图用：控制台里 __demo.speed = 1 / __demo.g 查看状态（只在 dev server 里存在）
   if (import.meta.env?.DEV) {
-    Object.defineProperty(globalThis, "__demo", { configurable: true, value: { get g() { return g; }, get villagers() { return villagers; }, get cam() { return cam; }, get speed() { return speed; }, set speed(v: number) { speed = v; } } });
+    Object.defineProperty(globalThis, "__demo", { configurable: true, value: { get g() { return g; }, get villagers() { return villagers; }, get cam() { return cam; }, get audio() { return audio; }, get speed() { return speed; }, set speed(v: number) { speed = v; } } });
   }
 
   // ---------------------------------------------------------------- 家人（纯表现层：白天走动干活，夜里当家的守门）
@@ -431,7 +440,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     const next = g.houseLevel === 1 ? cfg.economy.house.lv2 : g.houseLevel === 2 ? cfg.economy.house.lv3 : null;
     out.push(next
       ? { key: "house", label: g.houseLevel === 1 ? "修房娶妻" : "扩建大院", thumb: thumb(g.houseLevel === 1 ? "house_lv2_tile" : "house_lv3_courtyard"), sub: costRich(next.cost),
-        disabled: !day || !canAfford(g, next.cost), onClick: () => { const r = upgradeHouse(g); if (!r.ok) toast(r.reason); } }
+        disabled: !day || !canAfford(g, next.cost), onClick: () => { const r = upgradeHouse(g); if (!r.ok) { toast(r.reason); audio.sfx("deny"); } else audio.sfx("upgrade"); } }
       : { key: "house", label: "大院已成", disabled: true, onClick: () => {} });
     const rc = repairCost(g);
     out.push({ key: "repair", label: "修补", sub: (rc.coin ?? 0) > 0 ? costRich(rc) : ["完好"], disabled: !day || (rc.coin ?? 0) === 0 || !canAfford(g, rc), onClick: () => repairAll(g) });
@@ -444,6 +453,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
         const before = g.res.coin;
         for (const r of ["food", "wood"] as const) { const n = Math.floor(g.res[r] - keep[r]); if (n > 0) sellToPeddler(g, r, n); }
         toast(g.res.coin > before ? `卖给货郎，得 ${Math.floor(g.res.coin - before)} 钱` : "没有多余的粮木可卖");
+        if (g.res.coin > before) audio.sfx("coin");
       },
     });
     // 激励视频（演示里直接模拟看完；接 wx.createRewardedVideoAd 时改这里）
@@ -462,7 +472,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   // ---------------------------------------------------------------- 激励视频：放完再发奖励，中途关掉不发
   const finishAd = (kind: AdKind, r: AdResult) => {
     adBusy = null;
-    if (r === "rewarded") { const res = adReward(g, kind); toast(res.ok ? AD_DONE[kind] : res.reason); }
+    if (r === "rewarded") { const res = adReward(g, kind); toast(res.ok ? AD_DONE[kind] : res.reason); if (res.ok) audio.sfx("reward"); }
     else if (r === "skipped") toast("看完广告才能领奖励");
     else toast("暂时没有广告，稍后再试");
   };
@@ -556,7 +566,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     const lines: Rich[] = [[{ b: name }, `　${Math.round(b.hp)}/${b.maxHp}`]];
     if (crew.length) lines.push(...wrapRich(c, [`驻守：${crew.join("、")}`], 12, w - 16));
     const btn: ButtonSpec[] = upDef ? [{ key: `up:${b.id}`, label: `升级为${upDef.name}`, sub: costRich(upDef.cost), disabled: g.phase !== "day",
-      onClick: () => { const r = upgrade(g, b.id); toast(r.ok ? `已升级为${upDef.name}` : r.reason); } }] : [];
+      onClick: () => { const r = upgrade(g, b.id); toast(r.ok ? `已升级为${upDef.name}` : r.reason); audio.sfx(r.ok ? "upgrade" : "deny"); } }] : [];
     btn.push({ key: "info:close", label: "收起", onClick: () => { selected = null; } });
     const bh = ui.flow(btn, 0, 0, w - 16, 6, false);
     const h = 8 + lines.length * 18 + 4 + bh + 8;
@@ -739,6 +749,22 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     if (!started) drawCover();
     if (bannerText) drawBanner(bannerText);
     if (adBusy?.demo) drawDemoAd(adBusy.kind);
+    if (started && !bannerText && !adBusy) drawMuteButton();
+  };
+  /** 右上角（顶栏下方）一个圆形小按钮：开 / 关声音 */
+  const drawMuteButton = () => {
+    const c = ui.c, r = 15, cx = ui.w - 8 - r - 2, cy = layout.topBottom + 8 + r;
+    ui.button({ key: "mute", label: "", onClick: () => audio.setMuted(!audio.muted) }, { x: cx - r, y: cy - r, w: r * 2, h: r * 2 });
+    c.save();
+    c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2);
+    c.fillStyle = COLORS.bar; c.fill(); c.lineWidth = 1.5; c.strokeStyle = COLORS.ink; c.stroke();
+    // 喇叭
+    c.fillStyle = COLORS.ink; c.beginPath();
+    c.moveTo(cx - 8, cy - 3); c.lineTo(cx - 4, cy - 3); c.lineTo(cx + 1, cy - 7); c.lineTo(cx + 1, cy + 7); c.lineTo(cx - 4, cy + 3); c.lineTo(cx - 8, cy + 3); c.closePath(); c.fill();
+    c.strokeStyle = audio.muted ? COLORS.cinnabar : COLORS.ink; c.lineWidth = 1.6; c.lineCap = "round";
+    if (audio.muted) { c.beginPath(); c.moveTo(cx + 4, cy - 4); c.lineTo(cx + 9, cy + 4); c.moveTo(cx + 9, cy - 4); c.lineTo(cx + 4, cy + 4); c.stroke(); }
+    else { for (const rr of [4.5, 8]) { c.beginPath(); c.arc(cx + 1, cy, rr, -0.7, 0.7); c.stroke(); } }
+    c.restore();
   };
   /** 只量顶栏 / 底栏位置（相机 fit 要用） */
   const measureUi = () => {
@@ -781,6 +807,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     if (tool) {
       const r = build(g, tool, t.i, t.j);
       if (!r.ok) toast(r.reason);
+      audio.sfx(r.ok ? "build" : "deny");
     } else {
       selected = pickBuilding(x, y, t);
     }
@@ -1076,10 +1103,11 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   // ---------------------------------------------------------------- 事件 → 特效 / 提示
   const handleEvents = () => {
     for (const e of drainEvents(g)) {
-      if (e.type === "hit") hitAt.set(e.target, clock);
+      if (e.type === "hit") { hitAt.set(e.target, clock); audio.sfx("hit"); }
       else if (e.type === "shot") {
         const b = g.buildings.get(e.tower);
         if (b) fx.push({ kind: "arrow", fromX: (b.i + b.w / 2) * T, fromY: (b.j + b.d / 2) * T, x: e.x, y: e.y, t0: clock, life: 0.35 / speed, fire: b.kind === "tower_oil_fire" });
+        audio.sfx(b?.kind === "tower_oil_fire" ? "fire_shot" : "shot");
       } else if (e.type === "enemyFled") {
         // 掉头往离主屋更远的方向跑
         const h = g.buildings.get(g.houseId);
@@ -1087,20 +1115,25 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
         const al = Math.hypot(ax, ay) || 1, fleeSpeed = 4.5;
         if (animIndex?.chars[e.enemy]) fx.push({ kind: "flee", enemy: e.enemy, x: e.x, y: e.y, vx: (ax / al) * fleeSpeed, vy: (ay / al) * fleeSpeed, t0: clock, life: 0.8 });
         fx.push({ kind: "smoke", x: e.x, y: e.y, t0: clock, life: 0.9 });
+        audio.sfx("flee");
+        if (e.reward.coin) audio.sfx("coin", 0.6);
         if (e.reward.coin) fx.push({ kind: "text", x: e.x, y: e.y, t0: clock, life: 1.1, text: `+${e.reward.coin}`, color: "#d9a838" });
         // 野猪掉肉（计入口粮）：第二行飘“+15 肉”
         const names = cfg.enemies[e.enemy]?.rewardNames;
         if (e.reward.food && names?.food) fx.push({ kind: "text", x: e.x + 0.4, y: e.y - 0.4, t0: clock, life: 1.3, text: `+${e.reward.food}${names.food}`, color: "#c4512e" });
         lastPos.delete(e.id); facing.delete(e.id); animFacing.delete(e.id); hitAt.delete(e.id);
-      } else if (e.type === "nightStart") toast(e.title);
-      else if (e.type === "married") toast("修好青瓦正房，迎娶阿莲！");
+      } else if (e.type === "nightStart") { toast(e.title); audio.sfx("night"); }
+      else if (e.type === "married") { toast("修好青瓦正房，迎娶阿莲！"); audio.sfx("joy"); }
       else if (e.type === "peddler") toast("货郎进山了！可以卖掉余粮余木");
-      else if (e.type === "birth") toast(`厢房添丁：${e.name}`);
-      else if (e.type === "grownUp") toast(`${e.name}长成少年：${cfg.family.roles[e.role]?.name}`);
-      else if (e.type === "buildingDestroyed") toast(`${cfg.defense.towers[e.kind]?.name ?? cfg.economy.buildings[e.kind]?.name ?? cfg.defense.walls[e.kind]?.name ?? "建筑"}被毁！`);
-      else if (e.type === "dawn") { toast(`天亮了 · 收获 ${costPlain(e.reward)}${e.starved ? " · 口粮不够！" : ""}`); saveT = 0; }
-      else if (e.type === "victory") { bannerText = "击退黑风大当家\n深山传家 · 大获全胜"; clearSave(); }
-      else if (e.type === "defeat") { bannerText = `第${NUM[e.night] ?? e.night}夜 · 寨破`; clearSave(); }
+      else if (e.type === "birth") { toast(`厢房添丁：${e.name}`); audio.sfx("joy"); }
+      else if (e.type === "grownUp") { toast(`${e.name}长成少年：${cfg.family.roles[e.role]?.name}`); audio.sfx("joy", 0.8); }
+      else if (e.type === "buildingDestroyed") {
+        audio.sfx("destroyed");
+        toast(`${cfg.defense.towers[e.kind]?.name ?? cfg.economy.buildings[e.kind]?.name ?? cfg.defense.walls[e.kind]?.name ?? "建筑"}被毁！`);
+      }
+      else if (e.type === "dawn") { toast(`天亮了 · 收获 ${costPlain(e.reward)}${e.starved ? " · 口粮不够！" : ""}`); saveT = 0; audio.sfx("dawn"); }
+      else if (e.type === "victory") { bannerText = "击退黑风大当家\n深山传家 · 大获全胜"; clearSave(); audio.sfx("victory"); }
+      else if (e.type === "defeat") { bannerText = `第${NUM[e.night] ?? e.night}夜 · 寨破`; clearSave(); audio.sfx("defeat"); audio.music(null); }
     }
   };
 
@@ -1130,6 +1163,9 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     if (w !== lastSize.w || h !== lastSize.h) { lastSize.w = w; lastSize.h = h; resize(); }
     renderer.render(scene, cam, nightA, { w, h, dpr: platform.pixelRatio() }, { ground, paper, paperAlpha: THEME === "aged" ? 1 : undefined, drawDecals, drawOverlay, drawBackdrop });
     if (toastT > 0) toastT -= dt;
+    // 背景音乐：开局后按昼夜切换（浏览器要等第一次点击才能出声，“开荒 / 继续”那一下就是）；寨破时停
+    if (started && g.phase !== "defeat") audio.music(g.phase === "night" ? "night" : "day");
+    audio.update(dt);
     // 白天每 5 秒自动存一次（天亮时 saveT 清零 → 马上存）
     if (started && !bannerText && g.phase === "day") { saveT -= dt; if (saveT <= 0) saveNow(); }
     drawUi();

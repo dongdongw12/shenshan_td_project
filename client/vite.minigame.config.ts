@@ -28,6 +28,8 @@ function packMinigame(): Plugin {
       const dst = join(out, "assets/dev");
       mkdirSync(dst, { recursive: true });
       cpSync(src, dst, { recursive: true, filter: (s) => !s.endsWith(".DS_Store") });
+      // 音乐音效（pipeline/audio/make_audio.py 生成）也放分包
+      if (existsSync(resolve(root, "assets/audio"))) cpSync(resolve(root, "assets/audio"), join(out, "assets/audio"), { recursive: true, filter: (s) => !s.endsWith(".DS_Store") });
       // 分包根目录必须有一个 game.js
       writeFileSync(join(out, "assets/game.js"), "// 精灵图分包（只放图片和索引）\n");
       const size = (p: string): number => statSync(p).isDirectory() ? readdirSync(p).reduce((s, f) => s + size(join(p, f)), 0) : statSync(p).size;

@@ -3,6 +3,7 @@
  * 包内文件用文件系统接口读，触摸用 wx.onTouchStart / Move / End。
  */
 import type { ImageLike, Platform, PointerEvt } from "./platform";
+import type { Voice } from "../app/audio";
 
 interface WxImage {
   width: number;
@@ -33,6 +34,8 @@ interface Wx {
   onTouchCancel(cb: (e: WxTouchEvent) => void): void;
   onWindowResize?(cb: () => void): void;
   onHide(cb: () => void): void;
+  onShow(cb: () => void): void;
+  createInnerAudioContext(): Voice;
   getStorageSync(key: string): unknown;
   setStorageSync(key: string, value: string): void;
   removeStorageSync(key: string): void;
@@ -141,6 +144,15 @@ export class WechatPlatform implements Platform {
 
   onHide(cb: () => void): void {
     wx.onHide(cb);
+  }
+
+  onShow(cb: () => void): void {
+    wx.onShow(cb);
+  }
+
+  /** InnerAudioContext 本身就有 src / volume / loop / play / stop / pause；默认跟随 iPhone 静音键 */
+  makeVoice(): Voice {
+    return wx.createInnerAudioContext();
   }
 
   // 小游戏本地缓存：单个 key 上限 1MB、总共 10MB（存档只有几 KB）

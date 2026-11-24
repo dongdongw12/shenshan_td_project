@@ -3,6 +3,8 @@
  * 渲染核心只依赖 Canvas2D 的通用子集（drawImage / globalAlpha / path / setTransform），微信小游戏同样支持。
  */
 
+import type { Voice } from "../app/audio";
+
 export type ImageLike = CanvasImageSource & { width: number; height: number };
 
 /** 统一的指针事件（逻辑像素，相对画布左上角）：鼠标 / 触摸都变成这个 */
@@ -40,6 +42,10 @@ export interface Platform {
   onResize(cb: () => void): void;
   /** 切到后台 / 关页面 / 小游戏被收起时（来得及同步存一下档） */
   onHide(cb: () => void): void;
+  /** 回到前台 */
+  onShow(cb: () => void): void;
+  /** 一个声道（音乐 / 音效播放器） */
+  makeVoice(): Voice;
   /** 本地存储（同步；拿不到就返回 null，写失败静默） */
   storageGet(key: string): string | null;
   storageSet(key: string, value: string): void;
