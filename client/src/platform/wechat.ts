@@ -4,7 +4,7 @@
  */
 import type { ImageLike, Platform, PointerEvt } from "./platform";
 import type { Voice } from "../app/audio";
-import { WebAudioVoice, unlockWebAudio, webAudioAvailable, webAudioState } from "./wechatWebAudio";
+import { WebAudioVoice, testBeep, unlockWebAudio, webAudioAvailable, webAudioState } from "./wechatWebAudio";
 
 interface WxImage {
   width: number;
@@ -43,6 +43,7 @@ interface Wx {
   };
   setInnerAudioOption?(opts: { mixWithOther?: boolean; obeyMuteSwitch?: boolean; success?: () => void; fail?: (e: unknown) => void }): void;
   getStorageSync(key: string): unknown;
+  env?: { USER_DATA_PATH: string };
   setStorageSync(key: string, value: string): void;
   removeStorageSync(key: string): void;
   getPerformance?(): { now(): number };
@@ -213,6 +214,28 @@ export class WechatPlatform implements Platform {
   }
 
   /** 真机上开播后改音量不生效（InnerAudio 和 WebAudio 都是），小游戏里背景音乐一律不淡入淡出、开播前定好音量 */
+  diagTests(): Record<string, () => void> {
+    const log = (m: string) => this.logAudio(`[测试] ${m}`);
+    const inner = (src: string, name: string) => {
+      const c = wx.createInnerAudioContext();
+      c.onPlay(() => log(`${name} 开始`)); c.onWaiting(() => log(`${name} 缓冲中`)); c.onCanplay(() => log(`${name} 可以播放`));
+      c.onError((e) => log(`${name} 出错 ${e?.errCode} ${e?.errMsg}`)); c.onEnded(() => log(`${name} 放完`));
+      c.volume = 1; c.src = src; c.play();
+      setTimeout(() => { try { c.stop(); } catch { /* 忽略 */ } }, 6000);
+    };
+    const fs = wx.getFileSystemManager() as unknown as { copyFile(o: { srcPath: string; destPath: string; success: () => void; fail: (e: unknown) => void }): void };
+    return {
+      "哔": () => testBeep(log),
+      "音效": () => inner(this.asset("audio/sfx_coin.mp3"), "音效"),
+      "WA音效": () => { const v = new WebAudioVoice(log); v.volume = 1; v.src = this.asset("audio/sfx_coin.mp3"); void v.play(); },
+      "音乐-复制": () => {
+        const dst = `${wx.env?.USER_DATA_PATH ?? ""}/bgm_day_test.mp3`;
+        fs.copyFile({ srcPath: this.asset("audio/bgm_day.mp3"), destPath: dst, success: () => inner(dst, "复制的音乐"), fail: (e) => log(`复制失败 ${JSON.stringify(e)}`) });
+      },
+      "音乐-m4a": () => inner(this.asset("audio/bgm_day_test.m4a"), "m4a 音乐"),
+    };
+  }
+
   musicCanFade(): boolean {
     return false;
   }

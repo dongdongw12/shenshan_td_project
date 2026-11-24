@@ -758,6 +758,10 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
       const lines = [...(platform.diagnostics?.() ?? []), `帧 ${(fpsDt * 1000).toFixed(0)}ms · 游戏时间 ${g.t.toFixed(1)}s · ${speed}×`, audio.diag()];
       ctx.save(); ctx.font = font(9); ctx.textAlign = "left"; ctx.textBaseline = "top";
       const y0 = layout.bottomTop - 6 - lines.length * 12;
+      // 声音测试按钮（一排小按钮，点了各用一种方式放声音，结果写进上面的日志）
+      const tests = platform.diagTests?.() ?? {};
+      const btns: ButtonSpec[] = Object.entries(tests).map(([k, fn]) => ({ key: `diag:${k}`, label: k, size: 11, onClick: fn }));
+      if (btns.length) { const bh = ui.flow(btns, 6, 0, ui.w - 12, 4, false); ui.flow(btns, 6, y0 - 8 - bh, ui.w - 12, 4, true); }
       ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(4, y0 - 2, ui.w - 8, lines.length * 12 + 4);
       ctx.fillStyle = "#e8ffd0"; lines.forEach((l, k) => ctx.fillText(l, 7, y0 + k * 12));
       ctx.restore();

@@ -13,6 +13,7 @@ interface WaParam { value: number; setValueAtTime?(v: number, t: number): void }
 interface WaNode { connect(n: unknown): void; disconnect?(): void }
 interface WaGain extends WaNode { gain: WaParam }
 interface WaBuffer { duration: number }
+interface WaOsc extends WaNode { frequency: WaParam; start(when?: number): void; stop(when?: number): void }
 interface WaSource extends WaNode { buffer: WaBuffer | null; loop: boolean; start(when?: number, offset?: number): void; stop(when?: number): void }
 interface WaContext {
   currentTime: number;
@@ -20,6 +21,7 @@ interface WaContext {
   destination: unknown;
   createGain(): WaGain;
   createBufferSource(): WaSource;
+  createOscillator?(): WaOsc;
   decodeAudioData(data: ArrayBuffer, ok: (b: WaBuffer) => void, fail?: (e: unknown) => void): void;
   resume?(): Promise<void> | void;
 }
@@ -45,6 +47,20 @@ export function unlockWebAudio(): void {
   if (ctx.state !== "running") {
     try { void Promise.resolve(ctx.resume?.()).catch(() => {}); } catch { /* 忽略 */ }
   }
+}
+
+/** 排查用：WebAudio 振荡器“哔”半秒（不读文件、不解码），看 WebAudio 本身能不能出声 */
+export function testBeep(log: (m: string) => void): void {
+  const ctx = context();
+  void Promise.resolve(ctx.resume?.()).catch(() => {});
+  if (!ctx.createOscillator) { log("没有 createOscillator"); return; }
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  setGain(g, 0.6);
+  o.frequency.value = 660;
+  o.connect(g); g.connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime + 0.5);
+  log(`哔 → ${ctx.state} t=${ctx.currentTime.toFixed(1)}`);
 }
 
 /** 排查用：上下文状态 + 当前时间 */

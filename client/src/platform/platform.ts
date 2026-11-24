@@ -46,6 +46,8 @@ export interface Platform {
   onShow(cb: () => void): void;
   /** 排查用的几行状态（系统、音频事件……），没有就不显示 */
   diagnostics?(): string[];
+  /** 排查用：几种放声音的方式各试一下（名字 → 动作） */
+  diagTests?(): Record<string, () => void>;
   /** 一个声道（音乐 / 音效播放器） */
   makeVoice(): Voice;
   /** 背景音乐专用的声道（没有就用 makeVoice） */
