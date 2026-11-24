@@ -88,6 +88,24 @@ def _cone(name, r1, r2, depth, loc, mat, rot=(0, 0, 0), verts=10):
     return _assign(o, mat)
 
 
+def _limb(name, p0, p1, r0, r1, mat, verts=14):
+    """两点之间的圆台（四肢）：p0 端半径 r0、p1 端半径 r1"""
+    p0, p1 = Vector(p0), Vector(p1)
+    d = p1 - p0
+    o = _cone(name, r0, r1, d.length, (p0 + p1) / 2, mat, verts=verts)
+    o.rotation_mode = "QUATERNION"
+    o.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(d.normalized())
+    return o
+
+
+def _oval_cone(name, r_bottom, r_top, depth, loc, mat, squash_y, verts=18):
+    """前后压扁的圆台（躯干、腰带）：截面是椭圆"""
+    o = _cone(name, r_bottom, r_top, depth, loc, mat, verts=verts)
+    o.scale = (1, squash_y, 1)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    return o
+
+
 # ----------------------------------------------------------------------------- 五官（贴面薄片）
 
 def _feature(o):
@@ -198,6 +216,8 @@ def _cyclic(arm):
 
 # ----------------------------------------------------------------------------- 四足兽
 
+KNEE_Z = 0.21  # 四足兽腿关节高度（前腿腕 / 后腿跗）
+
 QUAD = {
     # kind: (整体缩放, 身体色, 深色, 是否有獠牙, 尾巴长短, 步幅)
     "wolf": (1.0, "fur_grey", "fur_dark", False, 2.2, 30),
@@ -244,10 +264,14 @@ def build_wolf(frames=8, kind="wolf", action="walk"):
         ("head", (0, -0.38, hip_z + 0.1), (0, -0.75, hip_z + 0.14), "body"),
         ("jaw", (0, -0.6, hip_z + 0.1), (0, -0.9, hip_z + 0.07), "head"),
         ("tail", (0, 0.4, hip_z + 0.05), (0, 0.85, hip_z - 0.05), "body"),
-        ("leg_fl", (0.14, -0.24, hip_z - 0.04), (0.14, -0.24, 0.0), "body"),
-        ("leg_fr", (-0.14, -0.24, hip_z - 0.04), (-0.14, -0.24, 0.0), "body"),
-        ("leg_bl", (0.14, 0.24, hip_z - 0.04), (0.14, 0.24, 0.0), "body"),
-        ("leg_br", (-0.14, 0.24, hip_z - 0.04), (-0.14, 0.24, 0.0), "body"),
+        ("leg_fl", (0.14, -0.24, hip_z - 0.04), (0.14, -0.24, KNEE_Z), "body"),
+        ("leg_fr", (-0.14, -0.24, hip_z - 0.04), (-0.14, -0.24, KNEE_Z), "body"),
+        ("leg_bl", (0.14, 0.24, hip_z - 0.04), (0.14, 0.24, KNEE_Z), "body"),
+        ("leg_br", (-0.14, 0.24, hip_z - 0.04), (-0.14, 0.24, KNEE_Z), "body"),
+        ("low_fl", (0.14, -0.24, KNEE_Z), (0.14, -0.25, 0.0), "leg_fl"),
+        ("low_fr", (-0.14, -0.24, KNEE_Z), (-0.14, -0.25, 0.0), "leg_fr"),
+        ("low_bl", (0.14, 0.24, KNEE_Z), (0.14, 0.23, 0.0), "leg_bl"),
+        ("low_br", (-0.14, 0.24, KNEE_Z), (-0.14, 0.23, 0.0), "leg_br"),
     ])
     parts = []
     fat = 1.2 if kind != "wolf" else 1.0
@@ -313,21 +337,34 @@ def build_wolf(frames=8, kind="wolf", action="walk"):
         parts.append((_box("w_sash", (0.58, 0.07, 0.56), (0, -0.12, hip_z + 0.06), "sash"), "body"))
         # 胸前白月牙（黑熊）
         parts += [(o, "body") for o in _stroke("f_moon", ruff_c, ruff_a,
-                                               [(-0.17, -0.06), (-0.09, -0.13), (0.0, -0.155), (0.09, -0.13), (0.17, -0.06)],
-                                               0.045, "moon", push=0.006)]
+                                               [(-0.2, -0.1), (-0.11, -0.18), (0.0, -0.21), (0.11, -0.18), (0.2, -0.1)],
+                                               0.05, "moon", push=0.006)]
     if kind == "bear_king":
         parts.append((_ell("w_tail", 0.07, (0, 0.5, hip_z - 0.05), dark_c), "tail"))  # 熊尾巴小且低
     else:
         parts.append((_ell("w_tail", 0.12, (0, 0.62, hip_z + 0.0), dark_c, scale=(0.8, tail_len, 0.8)), "tail"))
         if kind == "wolf":
             parts.append((_ell("w_tail_tip", 0.08, (0, 0.62 + 0.12 * tail_len * 0.8, hip_z - 0.01), "fur_light", scale=(0.8, 1.3, 0.8)), "tail"))
+    # 腿：上段（前腿肩臂 / 后腿大腿，后腿根部有鼓起的腿肚）→ 关节 → 下段 → 爪 / 蹄
+    thick = 1.3 if kind == "bear_king" else 1.2 if kind == "boar" else 1.0
     for name, (x, y) in {"leg_fl": (0.14, -0.24), "leg_fr": (-0.14, -0.24), "leg_bl": (0.14, 0.24), "leg_br": (-0.14, 0.24)}.items():
-        parts.append((_cone(f"w_{name}", 0.085 * (1.25 if kind != "wolf" else 1), 0.06, hip_z - 0.02, (x, y, (hip_z - 0.02) / 2), dark_c, verts=8), name))
-        parts.append((_ell(f"w_paw_{name}", 0.07, (x, y - 0.03, 0.04), "ink", scale=(1, 1.3, 0.6), seg=8), name))
-        if kind != "boar":  # 爪子
-            for cx in (-0.03, 0.0, 0.03):
-                parts.append((_feature(_cone(f"w_claw_{name}{cx}", 0.012, 0.0, 0.04, (x + cx, y - 0.115, 0.03), "tusk",
-                                             rot=(math.radians(100), 0, 0), verts=5)), name))
+        low = "low" + name[3:]
+        hind = name in ("leg_bl", "leg_br")
+        parts.append((_limb(f"w_{name}", (x, y, hip_z + 0.02), (x, y, KNEE_Z), 0.09 * thick, 0.058 * thick, body_c if hind else dark_c), name))
+        if hind:
+            parts.append((_ell(f"w_haunch_{name}", 0.13 * thick, (x * 0.85, y + 0.02, hip_z - 0.02), body_c, scale=(0.7, 1.0, 1.15), seg=12), name))
+        parts.append((_ell(f"w_joint_{name}", 0.056 * thick, (x, y, KNEE_Z), dark_c, seg=10), low))
+        parts.append((_limb(f"w_{low}", (x, y, KNEE_Z), (x, y - 0.01, 0.05), 0.054 * thick, 0.042 * thick, dark_c), low))
+        if kind == "boar":  # 偶蹄：两瓣黑蹄
+            for cx in (-0.022, 0.022):
+                parts.append((_ell(f"w_hoof_{name}{cx}", 0.03 * thick, (x + cx, y - 0.025, 0.032), "ink", scale=(0.75, 1.25, 1.0), seg=10), low))
+        else:  # 爪：掌 + 三个趾头 + 爪子
+            pw = 1.25 if kind == "bear_king" else 1.0
+            parts.append((_ell(f"w_paw_{name}", 0.055 * pw, (x, y - 0.035, 0.032), dark_c, scale=(1.1, 1.35, 0.6), seg=12), low))
+            for cx in (-0.028, 0.0, 0.028):
+                parts.append((_ell(f"w_toe_{name}{cx}", 0.022 * pw, (x + cx * pw, y - 0.085 * pw, 0.024), dark_c, seg=8), low))
+                parts.append((_feature(_cone(f"w_claw_{name}{cx}", 0.011 * pw, 0.0, 0.035 * pw, (x + cx * pw, y - 0.11 * pw, 0.02), "tusk",
+                                             rot=(math.radians(100), 0, 0), verts=5)), low))
     if tusks:
         for sd in (-1, 1):
             parts.append((_cone(f"w_tusk{sd}", 0.035, 0.0, 0.17, (sd * 0.08, tip_y + 0.12, hip_z + 0.2), "tusk",
@@ -345,6 +382,7 @@ def build_wolf(frames=8, kind="wolf", action="walk"):
             _key(arm, "jaw", f + 1, rot=(-(14 if kind == "boar" else 32) * (0.35 + 0.65 * lunge), 0, 0))
             for leg, sgn in (("leg_fl", 1), ("leg_fr", 1), ("leg_bl", -1), ("leg_br", -1)):
                 _key(arm, leg, f + 1, rot=(sgn * 22 * lunge, 0, 0))
+                _key(arm, "low" + leg[3:], f + 1, rot=((-18 if sgn > 0 else 25) * lunge, 0, 0))  # 前腿撑地、后腿蹬
             _key(arm, "tail", f + 1, rot=(20 * lunge, 0, 0))
         _cyclic(arm)
         return arm, [o for o, _ in parts], frames
@@ -355,6 +393,13 @@ def build_wolf(frames=8, kind="wolf", action="walk"):
         _key(arm, "leg_br", f + 1, rot=(sw, 0, 0))
         _key(arm, "leg_fr", f + 1, rot=(-sw, 0, 0))
         _key(arm, "leg_bl", f + 1, rot=(-sw, 0, 0))
+        # 腿往前摆时下段往后折（抬爪），着地时伸直
+        lift_a = 40 * max(0.0, -math.cos(t))   # fl / br 的摆动相
+        lift_b = 40 * max(0.0, math.cos(t))    # fr / bl
+        _key(arm, "low_fl", f + 1, rot=(lift_a, 0, 0))
+        _key(arm, "low_br", f + 1, rot=(lift_a * 0.8, 0, 0))
+        _key(arm, "low_fr", f + 1, rot=(lift_b, 0, 0))
+        _key(arm, "low_bl", f + 1, rot=(lift_b * 0.8, 0, 0))
         _key(arm, "body", f + 1, loc=(0, 0, 0.03 * abs(math.sin(t))))
         _key(arm, "head", f + 1, rot=(5 * math.sin(2 * t), 0, 0))
         _key(arm, "jaw", f + 1, rot=(-6 if kind == "wolf" else 0, 0, 0))  # 狼走路微张嘴、露犬齿
@@ -489,26 +534,48 @@ def build_bandit(variant="swordsman", frames=8, action="walk"):
         ("hips", (0, 0, 0.9 * s), (0, 0, 1.05 * s), None),
         ("chest", (0, 0, 1.05 * s), (0, 0, 1.45 * s), "hips"),
         ("head", (0, 0, 1.45 * s), (0, 0, 1.75 * s), "chest"),
-        ("arm_l", (0.24 * s, 0, 1.38 * s), (0.28 * s, 0, 0.95 * s), "chest"),
-        ("arm_r", (-0.24 * s, 0, 1.38 * s), (-0.28 * s, 0, 0.95 * s), "chest"),
-        ("leg_l", (0.1 * s, 0, 0.9 * s), (0.1 * s, 0, 0.0), "hips"),
-        ("leg_r", (-0.1 * s, 0, 0.9 * s), (-0.1 * s, 0, 0.0), "hips"),
+        ("arm_l", (0.245 * s, 0, 1.38 * s), (0.27 * s, 0, 1.13 * s), "chest"),
+        ("fore_l", (0.27 * s, 0, 1.13 * s), (0.28 * s, 0, 0.9 * s), "arm_l"),
+        ("arm_r", (-0.245 * s, 0, 1.38 * s), (-0.27 * s, 0, 1.13 * s), "chest"),
+        ("fore_r", (-0.27 * s, 0, 1.13 * s), (-0.28 * s, 0, 0.9 * s), "arm_r"),
+        ("leg_l", (0.1 * s, 0, 0.9 * s), (0.1 * s, 0, 0.48 * s), "hips"),
+        ("shin_l", (0.1 * s, 0, 0.48 * s), (0.1 * s, 0, 0.06 * s), "leg_l"),
+        ("leg_r", (-0.1 * s, 0, 0.9 * s), (-0.1 * s, 0, 0.48 * s), "hips"),
+        ("shin_r", (-0.1 * s, 0, 0.48 * s), (-0.1 * s, 0, 0.06 * s), "leg_r"),
     ])
     parts = []
-    for side, bone in ((1, "leg_l"), (-1, "leg_r")):
-        parts.append((_box(f"b_leg{side}", (0.15 * s, 0.17 * s, 0.85 * s), (side * 0.1 * s, 0, 0.45 * s), "pants_blue" if villager else "pants"), bone))
-        if variant != "wife":  # 绑腿
-            parts.append((_box(f"b_wrap{side}", (0.165 * s, 0.185 * s, 0.24 * s), (side * 0.1 * s, 0, 0.2 * s), "wrap"), bone))
-        parts.append((_box(f"b_foot{side}", (0.15 * s, 0.24 * s, 0.08 * s), (side * 0.1 * s, -0.04 * s, 0.04 * s), "straw" if villager else "ink"), bone))
+    pants = "pants_blue" if villager else "pants"
+    # 腿：宽松的裤腿（大腿 → 膝 → 小腿），绑腿，布鞋 / 草鞋（家人露脚背）
+    for side, thigh, shin in ((1, "leg_l", "shin_l"), (-1, "leg_r", "shin_r")):
+        x = side * 0.1 * s
+        parts.append((_limb(f"b_thigh{side}", (x, 0, 0.93 * s), (x, 0, 0.48 * s), 0.09 * s, 0.072 * s, pants), thigh))
+        parts.append((_ell(f"b_knee{side}", 0.07 * s, (x, -0.005 * s, 0.48 * s), pants, seg=12), shin))
+        parts.append((_limb(f"b_shin{side}", (x, 0, 0.48 * s), (x, 0, 0.1 * s), 0.068 * s, 0.052 * s, pants), shin))
+        if variant != "wife":  # 绑腿：小腿下半截缠一层浅布
+            parts.append((_limb(f"b_wrap{side}", (x, 0, 0.36 * s), (x, 0, 0.1 * s), 0.066 * s, 0.056 * s, "wrap"), shin))
+            for i, z in enumerate((0.3, 0.22, 0.15)):  # 缠布的斜纹
+                parts.append((_limb(f"b_wrapline{side}{i}", (x - 0.06 * s, -0.03 * s, z * s + 0.02 * s), (x + 0.06 * s, -0.03 * s, z * s - 0.02 * s),
+                                    0.006 * s, 0.006 * s, "scar", verts=6), shin))
+        if villager:  # 草鞋：草编鞋底 + 露出的脚背 + 一道绳襻
+            parts.append((_ell(f"b_sole{side}", 0.07 * s, (x, -0.055 * s, 0.014 * s), "straw", scale=(0.95, 1.85, 0.25), seg=14), shin))
+            parts.append((_ell(f"b_foot{side}", 0.06 * s, (x, -0.05 * s, 0.045 * s), "skin", scale=(0.9, 1.75, 0.62), seg=14), shin))
+            parts.append((_limb(f"b_strap{side}", (x - 0.058 * s, -0.07 * s, 0.05 * s), (x + 0.058 * s, -0.07 * s, 0.05 * s), 0.012 * s, 0.012 * s, "ochre", verts=8), shin))
+        else:  # 黑布鞋：圆头，鞋底一圈深褐
+            parts.append((_ell(f"b_sole{side}", 0.07 * s, (x, -0.055 * s, 0.014 * s), "cloth_brown", scale=(0.95, 1.85, 0.28), seg=14), shin))
+            parts.append((_ell(f"b_foot{side}", 0.064 * s, (x, -0.05 * s, 0.05 * s), "ink", scale=(0.95, 1.8, 0.75), seg=14), shin))
+    parts.append((_ell("b_pelvis", 0.19 * s, (0, 0, 0.92 * s), pants, scale=(1, 0.66, 0.55)), "hips"))
     if variant == "wife":  # 长裙
-        parts.append((_cone("b_skirt", 0.3 * s, 0.22 * s, 0.62 * s, (0, 0, 0.62 * s), cloth, verts=14), "hips"))
-    parts.append((_box("b_torso", (0.42 * s, 0.26 * s, 0.6 * s), (0, 0, 1.2 * s), cloth), "chest"))
+        parts.append((_oval_cone("b_skirt", 0.34 * s, 0.2 * s, 0.7 * s, (0, 0, 0.6 * s), cloth, 0.9), "hips"))
+    # 躯干：上宽下窄、前后扁的圆台 + 肩
+    parts.append((_oval_cone("b_torso", 0.19 * s, 0.215 * s, 0.6 * s, (0, 0, 1.2 * s), cloth, 0.64), "chest"))
+    parts.append((_ell("b_shoulders", 0.24 * s, (0, 0, 1.44 * s), cloth, scale=(1, 0.58, 0.36)), "chest"))
+    parts.append((_cyl("b_neck", 0.055 * s, 0.12 * s, (0, 0, 1.49 * s), "skin", verts=10), "chest"))
     # 交领：里衣白领口斜着露出来（右衽）
     for sd in (-1, 1):  # 两片领子从肩颈斜下来在胸口交成 V（左片压右片）
         parts.append((_box(f"b_collar{sd}", (0.055 * s, 0.02 * s, 0.24 * s), (sd * 0.06 * s, -0.132 * s - (0.002 if sd > 0 else 0), 1.38 * s),
                            "undershirt", rot=(0, math.radians(sd * 30), 0)), "chest"))
     sash_c = "ink" if villager else "sash"
-    parts.append((_box("b_sash", (0.44 * s, 0.28 * s, 0.08 * s), (0, 0, 1.0 * s), sash_c), "hips"))
+    parts.append((_oval_cone("b_sash", 0.205 * s, 0.205 * s, 0.085 * s, (0, 0, 1.0 * s), sash_c, 0.66), "hips"))
     parts.append((_box("b_sash_tail", (0.06 * s, 0.03 * s, 0.2 * s), (0.13 * s, -0.145 * s, 0.88 * s), sash_c,
                        rot=(0, math.radians(-8), 0)), "hips"))
     # 大头：半径 0.19（原 0.14），五官才看得见
@@ -528,10 +595,10 @@ def build_bandit(variant="swordsman", frames=8, action="walk"):
         parts.append((_box("b_band_tail", (0.045 * s, 0.02 * s, 0.17 * s), (0.07 * s, 0.19 * s, 1.67 * s), "sash", rot=(math.radians(12), 0, 0)), "head"))
     if variant == "hero":
         parts.append((_cone("b_hat", 0.38, 0.03, 0.2, (0, 0, 1.92), "hat", verts=18), "head"))
-        parts.append((_cyl("b_hoe", 0.025, 1.2, (-0.3, -0.05, 1.05), "wood", rot=(math.radians(-12), 0, 0)), "arm_r"))
-        parts.append((_box("b_hoe_blade", (0.05, 0.22, 0.14), (-0.3, -0.18, 0.47), "steel"), "arm_r"))
+        parts.append((_cyl("b_hoe", 0.025, 1.2, (-0.3, -0.05, 1.05), "wood", rot=(math.radians(-12), 0, 0)), "fore_r"))
+        parts.append((_box("b_hoe_blade", (0.05, 0.22, 0.14), (-0.3, -0.18, 0.47), "steel"), "fore_r"))
     if variant == "wife":
-        parts.append((_box("b_apron", (0.3, 0.04, 0.5), (0, -0.15, 1.0), "apron"), "chest"))
+        parts.append((_box("b_apron", (0.28, 0.025, 0.5), (0, -0.138, 0.98), "apron"), "chest"))
         parts.append((_ell("b_bun", 0.085, (0, 0.13, 1.79), "hair"), "head"))
         parts.append((_cyl("b_pin", 0.008, 0.26, (0, 0.13, 1.82), "gold", rot=(0, math.radians(80), math.radians(20)), verts=6), "head"))
         parts.append((_ell("b_flower", 0.03, (0.09, 0.08, 1.8), "sash", seg=8), "head"))
@@ -539,25 +606,32 @@ def build_bandit(variant="swordsman", frames=8, action="walk"):
         for sd in (-1, 1):
             parts.append((_ell(f"b_tuft{sd}", 0.05, (sd * 0.085, 0.01, 1.64 * s + 0.125), "hair"), "head"))
             parts.append((_cyl(f"b_tie{sd}", 0.03, 0.02, (sd * 0.085, 0.01, 1.64 * s + 0.085), "sash", verts=8), "head"))
-    for side, bone in ((1, "arm_l"), (-1, "arm_r")):
-        parts.append((_box(f"b_arm{side}", (0.11 * s, 0.13 * s, 0.48 * s), (side * 0.27 * s, 0, 1.15 * s), cloth), bone))
-        parts.append((_box(f"b_cuff{side}", (0.12 * s, 0.14 * s, 0.06 * s), (side * 0.275 * s, 0, 0.95 * s), "undershirt" if villager else "wrap"), bone))
-        parts.append((_ell(f"b_hand{side}", 0.06 * s, (side * 0.28 * s, 0, 0.88 * s), "skin"), bone))
+    # 手臂：肩 → 上臂 → 肘 → 前臂（袖口略放宽）→ 袖口 → 手掌 + 拇指
+    for side, up, fore in ((1, "arm_l", "fore_l"), (-1, "arm_r", "fore_r")):
+        sx = side * s
+        parts.append((_ell(f"b_shoulder{side}", 0.074 * s, (0.24 * sx, 0, 1.38 * s), cloth, seg=12), up))
+        parts.append((_limb(f"b_upper{side}", (0.245 * sx, 0, 1.38 * s), (0.27 * sx, 0, 1.13 * s), 0.068 * s, 0.064 * s, cloth), up))
+        parts.append((_ell(f"b_elbow{side}", 0.064 * s, (0.27 * sx, 0, 1.13 * s), cloth, seg=12), fore))
+        parts.append((_limb(f"b_fore{side}", (0.27 * sx, 0, 1.13 * s), (0.28 * sx, 0, 0.96 * s), 0.064 * s, 0.078 * s, cloth), fore))
+        parts.append((_limb(f"b_cuff{side}", (0.28 * sx, 0, 0.975 * s), (0.28 * sx, 0, 0.94 * s), 0.08 * s, 0.078 * s,
+                            "undershirt" if villager else "wrap"), fore))
+        parts.append((_ell(f"b_hand{side}", 0.05 * s, (0.282 * sx, -0.005 * s, 0.885 * s), "skin", scale=(0.72, 1.0, 1.2), seg=12), fore))
+        parts.append((_ell(f"b_thumb{side}", 0.02 * s, (0.268 * sx, -0.045 * s, 0.9 * s), "skin", scale=(1, 1, 1.6), seg=8), fore))
     if variant in ("swordsman", "chief", "second_chief"):
-        parts.append((_box("b_blade", (0.04, 0.06, 0.7 * s), (-0.3 * s, -0.12 * s, 1.15 * s), "steel", rot=(math.radians(-25), 0, 0)), "arm_r"))
-        parts.append((_box("b_guard", (0.1, 0.05, 0.03), (-0.3 * s, -0.04 * s, 0.86 * s), "gold", rot=(math.radians(-25), 0, 0)), "arm_r"))
+        parts.append((_box("b_blade", (0.04, 0.06, 0.7 * s), (-0.3 * s, -0.12 * s, 1.15 * s), "steel", rot=(math.radians(-25), 0, 0)), "fore_r"))
+        parts.append((_box("b_guard", (0.1, 0.05, 0.03), (-0.3 * s, -0.04 * s, 0.86 * s), "gold", rot=(math.radians(-25), 0, 0)), "fore_r"))
     if variant == "shield":
-        parts.append((_box("b_shield", (0.08, 0.5, 0.65), (0.36, -0.12, 1.05), "shield"), "arm_l"))
-        parts.append((_cyl("b_boss", 0.07, 0.03, (0.405, -0.12, 1.05), "steel", rot=(0, math.radians(90), 0), verts=12), "arm_l"))
+        parts.append((_box("b_shield", (0.08, 0.5, 0.65), (0.36, -0.12, 1.05), "shield"), "fore_l"))
+        parts.append((_cyl("b_boss", 0.07, 0.03, (0.405, -0.12, 1.05), "steel", rot=(0, math.radians(90), 0), verts=12), "fore_l"))
     if variant == "arsonist":
-        parts.append((_cyl("b_torch", 0.03, 0.5, (-0.3, -0.12, 1.1), "wood", rot=(math.radians(-20), 0, 0)), "arm_r"))
-        parts.append((_ell("b_flame", 0.09, (-0.3, -0.21, 1.37), "flame", scale=(1, 1, 1.6)), "arm_r"))
+        parts.append((_cyl("b_torch", 0.03, 0.5, (-0.3, -0.12, 1.1), "wood", rot=(math.radians(-20), 0, 0)), "fore_r"))
+        parts.append((_ell("b_flame", 0.09, (-0.3, -0.21, 1.37), "flame", scale=(1, 1, 1.6)), "fore_r"))
     if variant == "chief":
         parts.append((_cyl("b_pole", 0.025, 1.5, (0.32 * s, 0.1, 1.5 * s), "wood"), "chest"))
         parts.append((_box("b_flag", (0.03, 0.5, 0.4), (0.32 * s, 0.37, 2.05 * s), "cloth_black"), "chest"))
         parts.append((_ell("b_beard", 0.1 * s, (0, -0.09 * s, 1.43 * s), "hair", scale=(1.1, 0.75, 1.15)), "head"))  # 下巴胡子，不挡嘴
     if variant == "second_chief":
-        parts.append((_box("b_vest", (0.44 * s, 0.27 * s, 0.4 * s), (0, 0.002, 1.27 * s), "cloth_brown"), "chest"))
+        parts.append((_oval_cone("b_vest", 0.2 * s, 0.222 * s, 0.4 * s, (0, 0.002, 1.28 * s), "cloth_brown", 0.66), "chest"))
     if variant == "scout":
         parts.append((_cone("b_hat", 0.32, 0.02, 0.18, (0, 0, 1.9), "hat", verts=18), "head"))
     # 侧脸改“半侧脸”：头和头上所有东西绕竖轴朝镜头转 HEAD_TURN 度（身体不转）。
@@ -589,7 +663,12 @@ def build_bandit(variant="swordsman", frames=8, action="walk"):
                 _key(arm, "chest", f + 1, rot=(bend, 0, 0))
                 _key(arm, "leg_l", f + 1, rot=(-16, 0, 0))
                 _key(arm, "leg_r", f + 1, rot=(14, 0, 0))
-                _key(arm, "hips", f + 1, loc=(0, 0, -0.05 * max(0.0, -bend) / 28))
+                crouch = max(0.0, -bend) / 28
+                _key(arm, "shin_l", f + 1, rot=(10 + 18 * crouch, 0, 0))   # 刨下去时屈膝
+                _key(arm, "shin_r", f + 1, rot=(14 + 18 * crouch, 0, 0))
+                _key(arm, "fore_r", f + 1, rot=(-25, 0, 0))
+                _key(arm, "fore_l", f + 1, rot=(-35, 0, 0))
+                _key(arm, "hips", f + 1, loc=(0, 0, -0.05 * crouch))
             else:
                 t = ph * 2 * math.pi
                 _key(arm, "chest", f + 1, rot=(-38 + 5 * math.sin(t), 0, 0))
@@ -598,7 +677,11 @@ def build_bandit(variant="swordsman", frames=8, action="walk"):
                 _key(arm, "arm_r", f + 1, rot=(35 + 50 * max(0.0, -math.sin(t)), 0, -8))
                 _key(arm, "leg_l", f + 1, rot=(-10, 0, 0))
                 _key(arm, "leg_r", f + 1, rot=(10, 0, 0))
-                _key(arm, "hips", f + 1, loc=(0, 0.04, -0.06))
+                _key(arm, "shin_l", f + 1, rot=(24, 0, 0))   # 弯腰插秧：膝盖微屈
+                _key(arm, "shin_r", f + 1, rot=(28, 0, 0))
+                _key(arm, "fore_l", f + 1, rot=(-20 - 15 * max(0.0, math.sin(t)), 0, 0))
+                _key(arm, "fore_r", f + 1, rot=(-20 - 15 * max(0.0, -math.sin(t)), 0, 0))
+                _key(arm, "hips", f + 1, loc=(0, 0.04, -0.07))
         _cyclic(arm)
         return arm, [o for o, _ in parts], frames
     if action == "attack":
@@ -617,16 +700,26 @@ def build_bandit(variant="swordsman", frames=8, action="walk"):
             _key(arm, "chest", f + 1, rot=(-14 * lean, 0, 0))
             _key(arm, "leg_l", f + 1, rot=(-18, 0, 0))
             _key(arm, "leg_r", f + 1, rot=(16, 0, 0))
-            _key(arm, "hips", f + 1, loc=(0, -0.06 * lean, -0.04))
+            _key(arm, "shin_l", f + 1, rot=(14 + 10 * lean, 0, 0))   # 弓步：前腿屈膝、后腿微屈
+            _key(arm, "shin_r", f + 1, rot=(10, 0, 0))
+            strike = 0.0 if ph < 0.45 else min(1.0, (ph - 0.45) / 0.25)
+            _key(arm, "fore_r", f + 1, rot=(-10 if variant == "shield" else -55 * (1 - strike) - 8, 0, 0))  # 举刀时屈肘，劈下时伸直
+            _key(arm, "fore_l", f + 1, rot=(-15 if variant == "shield" else -30, 0, 0))
+            _key(arm, "hips", f + 1, loc=(0, -0.06 * lean, -0.05))
         _cyclic(arm)
         return arm, [o for o, _ in parts], frames
     for f in range(frames + 1):
         t = f / frames * 2 * math.pi
-        sw = 30 * math.sin(t)
+        sw = (16 if variant == "wife" else 30) * math.sin(t)  # 阿莲穿长裙，步子小
         _key(arm, "leg_l", f + 1, rot=(sw, 0, 0))
         _key(arm, "leg_r", f + 1, rot=(-sw, 0, 0))
+        # 迈步：腿往前摆的那半程屈膝抬脚（+X = 小腿往后折）
+        _key(arm, "shin_l", f + 1, rot=(6 + 48 * max(0.0, -math.cos(t)), 0, 0))
+        _key(arm, "shin_r", f + 1, rot=(6 + 48 * max(0.0, math.cos(t)), 0, 0))
         _key(arm, "arm_l", f + 1, rot=(-sw * 0.8, 0, 0))
         _key(arm, "arm_r", f + 1, rot=(sw * 0.5 - 15, 0, 0))
+        _key(arm, "fore_l", f + 1, rot=(-18 - 10 * max(0.0, math.sin(t)), 0, 0))   # 手臂自然弯（−X = 前臂往前）
+        _key(arm, "fore_r", f + 1, rot=(-22, 0, 0))
         _key(arm, "hips", f + 1, loc=(0, 0, 0.035 * abs(math.sin(t))))
         _key(arm, "chest", f + 1, rot=(-4, 0, 3 * math.sin(t)))
     _cyclic(arm)
