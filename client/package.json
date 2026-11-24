@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "balance": "vite-node scripts/balance.ts",
-    "tune": "vite-node scripts/tune.ts"
+    "tune": "vite-node scripts/tune.ts",
+    "build:minigame": "tsc --noEmit && vite build -c vite.minigame.config.ts"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",

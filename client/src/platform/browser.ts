@@ -1,9 +1,9 @@
-import type { ImageLike, Platform } from "./platform";
+import type { ImageLike, Platform, PointerEvt } from "./platform";
 
 export class BrowserPlatform implements Platform {
   readonly name = "browser" as const;
 
-  constructor(private readonly canvas: HTMLCanvasElement) {}
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly assetRoot = "") {}
 
   pixelRatio(): number {
     return Math.min(3, window.devicePixelRatio || 1);
@@ -12,6 +12,10 @@ export class BrowserPlatform implements Platform {
   screenSize(): { w: number; h: number } {
     const r = this.canvas.getBoundingClientRect();
     return { w: Math.max(1, r.width), h: Math.max(1, r.height) };
+  }
+
+  safeInsets(): { top: number; bottom: number } {
+    return { top: 0, bottom: 0 };
   }
 
   mainCanvas(): HTMLCanvasElement {
@@ -23,6 +27,10 @@ export class BrowserPlatform implements Platform {
     c.width = Math.max(1, Math.round(w));
     c.height = Math.max(1, Math.round(h));
     return c;
+  }
+
+  asset(path: string): string {
+    return `${this.assetRoot}/${path}`;
   }
 
   loadImage(src: string): Promise<ImageLike> {
@@ -43,5 +51,46 @@ export class BrowserPlatform implements Platform {
 
   requestFrame(cb: (timeMs: number) => void): void {
     requestAnimationFrame(cb);
+  }
+
+  now(): number {
+    return performance.now();
+  }
+
+  onPointer(cb: (e: PointerEvt) => void): void {
+    const c = this.canvas;
+    const pressed = new Set<number>();
+    const at = (e: PointerEvent, type: PointerEvt["type"]): PointerEvt => {
+      const r = c.getBoundingClientRect();
+      // 鼠标恒为 1 号触点，触摸用浏览器给的 pointerId
+      const id = e.pointerType === "mouse" ? 1 : e.pointerId;
+      return { type, id, x: e.clientX - r.left, y: e.clientY - r.top, pressed: pressed.has(id) };
+    };
+    c.addEventListener("pointerdown", (e) => {
+      const id = e.pointerType === "mouse" ? 1 : e.pointerId;
+      pressed.add(id);
+      c.setPointerCapture(e.pointerId);
+      cb(at(e, "down"));
+    });
+    c.addEventListener("pointermove", (e) => cb(at(e, "move")));
+    const end = (type: "up" | "cancel") => (e: PointerEvent) => {
+      const ev = at(e, type);
+      pressed.delete(ev.id);
+      cb({ ...ev, pressed: false });
+    };
+    c.addEventListener("pointerup", end("up"));
+    c.addEventListener("pointercancel", end("cancel"));
+  }
+
+  onWheel(cb: (x: number, y: number, deltaY: number) => void): void {
+    this.canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const r = this.canvas.getBoundingClientRect();
+      cb(e.clientX - r.left, e.clientY - r.top, e.deltaY);
+    }, { passive: false });
+  }
+
+  onResize(cb: () => void): void {
+    window.addEventListener("resize", cb);
   }
 }
