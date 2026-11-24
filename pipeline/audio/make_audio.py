@@ -11,7 +11,9 @@
 
 音乐用五声音阶：白天 D 宫（D E F# A B），慢、舒展；夜里 B 羽（B D E F# A），鼓点紧、低音持续。
 用法（Blender 自带 Python 即可，只要 numpy；mp3 用 ffmpeg 转）：
-  $PY -I pipeline/audio/make_audio.py --out client/assets/audio
+  $PY -I pipeline/audio/make_audio.py --out client/assets/audio          # 只出音效
+  $PY -I pipeline/audio/make_audio.py --out client/assets/audio --music  # 另出合成版背景音乐 bgm_*_synth.mp3
+正式背景音乐是 Suno 生成后用 make_loop.py 剪的循环（bgm_day.mp3 / bgm_night.mp3），原曲在云盘 shenshan_td/audio_sources/。
 """
 
 import argparse
@@ -362,13 +364,17 @@ def sfx():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="client/assets/audio")
+    ap.add_argument("--music", action="store_true", help="也合成背景音乐（写成 bgm_*_synth.mp3）")
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    to_mp3(day_music(), out / "bgm_day.mp3", 96)
-    print("bgm_day.mp3", flush=True)
-    to_mp3(night_music(), out / "bgm_night.mp3", 96)
-    print("bgm_night.mp3", flush=True)
+    if args.music:
+        # 2026-11-24 起游戏里的背景音乐换成 Suno 生成的（见 make_loop.py 和云盘 audio_sources/），程序合成版只在 --music 时才写，
+        # 而且写成 *_synth.mp3，不覆盖正式曲
+        to_mp3(day_music(), out / "bgm_day_synth.mp3", 96)
+        print("bgm_day_synth.mp3", flush=True)
+        to_mp3(night_music(), out / "bgm_night_synth.mp3", 96)
+        print("bgm_night_synth.mp3", flush=True)
     for name, x in sfx().items():
         to_mp3(x, out / f"sfx_{name}.mp3", 80)
         print(f"sfx_{name}.mp3", flush=True)
