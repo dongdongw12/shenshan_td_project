@@ -26,6 +26,7 @@ import {
 import { COLORS, FONT, KAI, Ui, drawRich, font, richW, roundRect, wrapRich, type ButtonSpec, type Rect, type Rich } from "./ui";
 import { RES_KINDS, RES_ZH } from "./icons";
 import { Mixer } from "./audio";
+import { LoadingScreen } from "./loading";
 
 export interface AppOptions {
   /** 资源目录（相对 assets/），默认 "dev" */
@@ -41,6 +42,10 @@ export interface AppOptions {
   timerFrames?: boolean;
   /** 封面上的操作提示 */
   coverTip?: string;
+  /** 启动画面（小游戏入口先建好、用来显示分包下载进度；不给就自己建） */
+  loading?: LoadingScreen;
+  /** 解码精灵这一段从进度条的哪里开始（前面一段是下载分包） */
+  loadingFrom?: number;
   /** 屏幕左下角显示几行排查信息（系统、帧时间、声音状态） */
   diag?: boolean;
   /** 存档的本地存储 key；不给就不存（自动演示 / 截图模式） */
@@ -75,31 +80,6 @@ const TOOLS: { kind: string; label: string }[] = [
 
 interface Fx { kind: "smoke" | "text" | "arrow" | "flee"; enemy?: string; vx?: number; vy?: number; x: number; y: number; z?: number; t0: number; life: number; text?: string; color?: string; fromX?: number; fromY?: number; fire?: boolean }
 
-/** 启动画面：旧绢底 + 标题 + 进度条（小游戏里加载全部精灵要几秒） */
-function drawLoading(platform: Platform, ctx: CanvasRenderingContext2D, frac: number, msg = "进山中…"): void {
-  const dpr = platform.pixelRatio();
-  const { w, h } = platform.screenSize();
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = "#e9dfc6";
-  ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = COLORS.ink;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = `700 44px ${KAI}`;
-  ctx.fillText("深山传家", w / 2, h * 0.4);
-  const bw = Math.min(240, w * 0.6), bx = w / 2 - bw / 2, by = h * 0.4 + 52;
-  roundRect(ctx, bx, by, bw, 8, 4);
-  ctx.fillStyle = COLORS.hpBack; ctx.fill();
-  ctx.lineWidth = 1; ctx.strokeStyle = COLORS.ink; ctx.stroke();
-  if (frac > 0) { roundRect(ctx, bx, by, bw * Math.min(1, frac), 8, 4); ctx.fillStyle = COLORS.cinnabar; ctx.fill(); }
-  ctx.font = font(12);
-  ctx.fillStyle = COLORS.ink;
-  ctx.globalAlpha = 0.7;
-  ctx.fillText(msg, w / 2, by + 26);
-  ctx.globalAlpha = 1;
-}
-
 export function drawFatal(platform: Platform, e: unknown): void {
   const canvas = platform.mainCanvas();
   const ctx = canvas.getContext("2d")!;
@@ -131,7 +111,9 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     const dpr = platform.pixelRatio(), { w, h } = platform.screenSize();
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
   }
-  drawLoading(platform, ctx, 0);
+  const loading = opts.loading ?? new LoadingScreen(platform);
+  const from = opts.loadingFrom ?? 0;
+  loading.set(from, "展开画卷…");
 
   const atlas = await platform.loadJson<SpriteAtlasIndex>(A("sprites.json"));
   let animIndex: AnimIndex | null = null;
@@ -141,7 +123,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   let total = 0, done = 0;
   const L = (f: string): Promise<ImageLike> => {
     total++;
-    return platform.loadImage(A(f)).then((img) => { done++; drawLoading(platform, ctx, done / total); return img; });
+    return platform.loadImage(A(f)).then((img) => { done++; loading.set(from + (1 - from) * (done / total), `展开画卷 ${done}/${total}`); return img; });
   };
   const images = new Map<string, SpriteImages>();
   const anims = new Map<string, AnimImages>();
@@ -1155,6 +1137,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
 
   // ---------------------------------------------------------------- 主循环
   const nextFrame = (cb: (t: number) => void) => (opts.timerFrames ? setTimeout(() => cb(platform.now()), 60) : platform.requestFrame(cb));
+  loading.done();
   resize();
   let last = platform.now();
   let fpsDt = 0;
