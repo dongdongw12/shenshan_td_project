@@ -9,7 +9,8 @@ import { IsoProjection, type Vec2 } from "../render/iso";
 import { DEFAULT_GROUND, IsoRenderer, type Camera, type SpriteImages } from "../render/renderer";
 import { Scene } from "../render/scene";
 import type { SpriteAtlasIndex } from "../render/spriteMeta";
-import { paintGround, paintPaper, parseGroundMap, paintBackdrop, THEME_SKY, type ThemeId } from "../render/groundPainter";
+import { paintGround, paintPaper, parseGroundMap, THEME_SKY, type ThemeId } from "../render/groundPainter";
+import { drawBackdropLayers, paintBackdropLayers, type BackdropLayer } from "../render/backdrop";
 import { defaultConfig, parseFp, type Cost } from "../game/config";
 import {
   assignWork, build, buildCost, canBuildAt, createGame, drainEvents, garrison, kindInfo, repairAll, repairCost, startNight, step, upgrade, upgradeHouse,
@@ -250,6 +251,8 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   // ---------------------------------------------------------------- 相机
   const cam: Camera = { x: 0, y: 0, zoom: 1 };
   let fitZoom = 1;
+  /** 刚框好地图时的相机位置：远山视差按相对它的平移量算 */
+  const fitCam = { x: 0, y: 0 };
   const fit = () => {
     const { w } = platform.screenSize();
     // 只框住谷地（非山石格），两侧山石让它出画
@@ -267,6 +270,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     cam.zoom = fitZoom = Math.min((w * 1.15) / (maxX - minX), usableH / (maxY - minY));
     cam.x = w / 2 - ((minX + maxX) / 2) * cam.zoom;
     cam.y = topY + usableH / 2 - ((minY + maxY) / 2) * cam.zoom;
+    fitCam.x = cam.x; fitCam.y = cam.y;
   };
   const resize = () => {
     const dpr = platform.pixelRatio();
@@ -910,13 +914,15 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     }
   };
 
-  // 远山背景：按屏幕尺寸缓存白昼 / 夜晚两张，入夜交叉淡入
-  let backdrop: { w: number; h: number; day: HTMLCanvasElement; night: HTMLCanvasElement } | null = null;
+  // 深山远景（render/backdrop.ts）：远 / 中 / 近三层视差，按屏幕尺寸缓存；夜晚那套第一次入夜前才画（省开机时间和显存）
+  let backdrop: { w: number; h: number; day: BackdropLayer[]; night: BackdropLayer[] | null } | null = null;
   const drawBackdrop = (c: CanvasRenderingContext2D, w: number, h: number, a: number) => {
-    if (!backdrop || backdrop.w !== w || backdrop.h !== h) backdrop = { w, h, day: paintBackdrop(off, w, h, false, 5, THEME), night: paintBackdrop(off, w, h, true, 5, THEME) };
-    c.globalAlpha = 1; c.drawImage(backdrop.day, 0, 0, w, h);
-    if (a > 0.002) { c.globalAlpha = a; c.drawImage(backdrop.night, 0, 0, w, h); }
-    c.globalAlpha = 1;
+    const dpr = platform.pixelRatio();
+    if (!backdrop || backdrop.w !== w || backdrop.h !== h) backdrop = { w, h, day: paintBackdropLayers(off, w, h, false, 5, THEME, dpr), night: null };
+    if (a > 0.002 && !backdrop.night) backdrop.night = paintBackdropLayers(off, w, h, true, 5, THEME, dpr);
+    const dx = cam.x - fitCam.x, dy = cam.y - fitCam.y;
+    if (a < 0.998) drawBackdropLayers(c, backdrop.day, w, h, dx, dy, 1);
+    if (backdrop.night && a > 0.002) drawBackdropLayers(c, backdrop.night, w, h, dx, dy, a < 0.998 ? a : 1);
   };
   const drawOverlay = (c: CanvasRenderingContext2D, _S: unknown, ppm: number) => {
     const u = ppm * 0.1;
