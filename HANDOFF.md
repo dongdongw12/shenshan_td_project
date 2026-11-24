@@ -107,7 +107,7 @@
   - 在 `client/assets/configs/` 落地完整 JSON 配置表，实现厢房建房、添丁成长、族人入驻塔楼羁绊、刀匪/盾牌匪/纵火贼/二当家与大当家 Boss。
 - [ ] **T6 · 下一步建议（按优先级，2026-11-23 整理）**
   1. ~~AI 资产量产 + v2 正式烘培 + 导出~~（2026-11-23 晚完成；鱼梁 2026-11-24 重出完成，见交接日志）。
-  2. **客户端落地方**：选定引擎（直接小游戏 Canvas / Cocos），把 `client/src/render` + `client/src/game` 接进去；真机验证 `wechat.ts`、触屏、图集、接 `wx.createRewardedVideoAd` 到 `adReward`。
+  2. **客户端落地方**：~~选定引擎~~（2026-11-24 用户选定**直接小游戏 Canvas**，不上 Cocos；已能在微信开发者工具模拟器里玩，见交接日志）。剩：**真机预览**（开发者工具「预览」扫码）、接 `wx.createRewardedVideoAd` 到 `adReward`、存档（`wx.setStorage`）、音效、分包加载进度。
   3. **用户（可选，不依赖 T2）**：登录 Colab 后直接跑 `colab_bake_sprites.ipynb`（`TEST_SINGLE=""`、`SCALE=1.0`、`SAMPLES=48`，`PROXY_FALLBACK` 默认开），就能拿到正式比例（128px/m）的全套替身 + 12 个角色。
   4. **Claude**：遮挡排序的空间分桶优化（现 250 物体 0.84ms/帧）、正式 UI 美术、T6 平衡（祠堂 / 滚木塔在 10 夜内很少出现，见 2026-11-23 凌晨日志）。已完成：家族面板（手动分工 / 驻守）、受击闪白 / 逃跑、家人干活、着火 / 血条 / 夜灯 / 炊烟 / 萤火、HUD 图标与缩略图。
 - [ ] **T5 · 资质与软著并行启动**
@@ -263,4 +263,13 @@
 - **`make_characters.py` 重写人物 / 野兽造型**：五官用“贴花”小物体（`obj["feature"]=1`，pass_index 2，进 NoInk 集合不描 Freestyle 线）；`stylize_sprites.py` 识别这层：Kuwahara 之前先用周边颜色填掉、之后把原色贴回，并去掉五官周围的内描线，所以眼睛 / 眉毛 / 嘴不会被抹糊。12 个角色各有表情（`FACE` 表：刀疤、独眼眼罩、络腮胡、八字胡、眯眼坏笑、狂笑；女眷睫毛唇色腮红，孩子大眼笑脸双髻），行走 / 攻击 / 干活嘴型不同；头整体朝镜头转 30°（`HEAD_TURN`），两只眼都看得到。野兽：琥珀狼眼、怒眉、攻击张嘴（下颌骨）、獠牙、猪鼻孔、熊月牙白斑。
 - **四肢**：人物改成肩 / 肘 / 膝关节球 + 锥形上下臂和大小腿（新骨骼 `fore_*` / `shin_*`，走路屈膝、摆臂屈肘），绑腿斜纹、草鞋（村民）/ 黑布鞋（山匪），手有拇指；野兽两段腿（`low_*` 骨）+ 后腿臀部肌肉，狼 / 熊三趾爪，野猪分蹄。
 - **烘培**：Colab L4，提交 `e72c30c`，`SCALE=1.0 SAMPLES=48`，04:00–06:01 UTC，12 个角色 120 张图全部成功；从本机同步的云盘直接拷出导出，图鉴 / 可玩演示无报错，`npm test` 48/48。样张（云盘）：`characters_v3_bake_humans.png`、`characters_v3_bake_bandits_beasts.png`、`characters_v3_bake_actions.png`。
-- **待改进（未做）**：角色在手机画面里显示得比较小，五官主要靠眼睛和嘴的深色点辨认；如还要更清楚，可考虑在游戏里把角色放大 1.2–1.3 倍，或给 Colab 笔记本存一份云盘副本，免去每次挂载云盘的授权点击。
+- **待改进（未做）**：给 Colab 笔记本存一份云盘副本，免去每次挂载云盘的授权点击。（角色放大 1.8 倍试过，用户选定保留 1.45。）
+
+### 2026-11-24 晚 · Claude Opus（微信小游戏落地：画布 UI + 开发者工具跑通）
+- **引擎**：用户选定直接小游戏 Canvas（现有渲染 / 玩法本来就是纯 TS + Canvas2D）。
+- **画布 UI**：小游戏没有 DOM，原 `play.html` 的 HTML 顶栏 / 底栏 / 建筑面板 / 家族面板 / 封面 / 结局横幅全部改画在画布上（`client/src/app/ui.ts` 即时模式控件 + `icons.ts` 资源图标 + `app.ts` 游戏本体），样式照搬原 CSS。浏览器 `play.html` 和小游戏跑同一个 `runApp`。触屏：单指拖动、双指缩放（浏览器滚轮）、点建筑“身子”也能选中（塔楼高，原来只认脚下格子）；面板过长可上下拖动。微信里顶栏让开右上角胶囊按钮、底栏让开 iPhone 底部横条（`platform.safeInsets()`）。
+- **手机版资源**：`pipeline/atlas/make_mobile.py` 从 `assets/dev` 生成 `assets/mobile`（不进 Git）：按并集裁透明边（角色按所有帧并集，帧尺寸 / 锚点统一）+ 缩到 0.75 倍（96 px/m）。解码后显存 386MB → 126MB，PNG 24MB → 17MB；浏览器 `play.html?assets=mobile` 预览，肉眼看不出差别。微信平台像素比上限 2。
+- **打包**：`npm --prefix client run build:minigame` → `client/build/minigame/`（`game.js` 0.11MB 主包 + `assets/` 分包 16.4MB，限 4MB / 合计 30MB）。重新生成手机版资源：`$PY -I pipeline/atlas/make_mobile.py`（Blender 自带 Python）。
+- **开发者工具**：已装 2.02.2609250（`~/Downloads/wechat_devtools/`），用户扫码登录并打开了「设置 → 安全设置 → 服务端口」，命令行可用：`/Applications/wechatwebdevtools.app/Contents/MacOS/cli open --project <仓库>/client/build/minigame`（改完重新 build 后工具自动重编译）。AppID 用**小游戏测试号 `wx16352051ede3d1a1`**（写在 `client/minigame/project.config.json`；环境变量 `WX_APPID` 可覆盖）。注意：游客号 `touristappid` 命令行不认；小程序测试号会被工具强制切成小程序模式（日志 `compileType changed old=game new=weapp`，模拟器报找不到 app.json）——必须是**小游戏**测试号。
+- **验收**：模拟器（iPhone 12/13）里封面 → 开荒 → 选竹箭楼 → 点地放塔（扣钱）→ 拖动地图 → 入夜 → 狼群来袭 → 天亮第二天，全程无报错（控制台只有微信自己 WAGame.js 的 HarmonyOS 兼容提示）。`npm test` 48/48。
+- **未做**：真机预览（需要手机扫码）、激励视频、存档、音效、性能实测（真机帧率 / 内存）。

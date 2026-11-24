@@ -1,7 +1,7 @@
 {
   "description": "深山传家：开荒守寨（微信小游戏）。由 npm run build:minigame 生成，请勿手改 build/ 里的副本，改 client/minigame/ 里的模板。",
   "projectname": "shenshan_td",
-  "appid": "touristappid",
+  "appid": "wx16352051ede3d1a1",
   "compileType": "game",
   "libVersion": "latest",
   "setting": {

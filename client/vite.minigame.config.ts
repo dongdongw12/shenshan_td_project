@@ -7,7 +7,7 @@ import { join, resolve } from "node:path";
  * - game.js：src/minigame/main.ts 打成一个文件（玩法配置 JSON 一起打进去）
  * - assets/：精灵图分包（主包限 4MB，分包合计限 30MB），默认拷 assets/mobile（npm run export:mobile 生成的手机版），
  *   没有就拷 assets/dev
- * - game.json / project.config.json：来自 minigame/ 模板；AppID 默认游客号 touristappid（能在开发者工具里跑，不能真机预览 / 上传）
+ * - game.json / project.config.json：来自 minigame/ 模板；AppID 默认是小游戏测试号 wx16352051ede3d1a1（2026-11-24 申请；能在开发者工具里跑、真机预览，不能上传发布），环境变量 WX_APPID 可覆盖
  */
 function packMinigame(): Plugin {
   const root = __dirname;

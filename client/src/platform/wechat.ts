@@ -15,11 +15,14 @@ interface WxImage {
 interface WxTouch { identifier: number; clientX: number; clientY: number }
 interface WxTouchEvent { changedTouches: WxTouch[]; touches: WxTouch[] }
 interface WxRect { top: number; bottom: number; left: number; right: number; width: number; height: number }
+interface WxWindowInfo { pixelRatio: number; windowWidth: number; windowHeight: number; screenHeight: number; statusBarHeight?: number; safeArea?: WxRect }
 
 interface Wx {
   createCanvas(): HTMLCanvasElement;
   createImage(): WxImage;
-  getSystemInfoSync(): { pixelRatio: number; windowWidth: number; windowHeight: number; screenHeight: number; statusBarHeight?: number; safeArea?: WxRect };
+  /** 新接口（基础库 2.20.1+）：窗口信息；没有时退回已不推荐的 getSystemInfoSync */
+  getWindowInfo?(): WxWindowInfo;
+  getSystemInfoSync(): WxWindowInfo;
   getMenuButtonBoundingClientRect?(): WxRect;
   getFileSystemManager(): {
     readFile(opts: { filePath: string; encoding: "utf8"; success: (r: { data: string }) => void; fail: (e: unknown) => void }): void;
@@ -38,7 +41,7 @@ declare function requestAnimationFrame(cb: (t: number) => void): number;
 export class WechatPlatform implements Platform {
   readonly name = "wechat" as const;
   private canvas: HTMLCanvasElement | null = null;
-  private readonly sys = wx.getSystemInfoSync();
+  private readonly sys = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
   private readonly perf = wx.getPerformance?.();
 
   /** assetRoot：资源在代码包里的目录（分包根目录，见 game.json 的 subpackages） */
