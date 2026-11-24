@@ -4,6 +4,7 @@
  * 操作：底栏选建筑 → 点地块放置（绿色可放、红色不可）；拖动平移、双指 / 滚轮缩放；点“入夜”开战。
  */
 import type { ImageLike, Platform, PointerEvt } from "../platform/platform";
+import type { AdResult, RewardedAds } from "../platform/ads";
 import { IsoProjection, type Vec2 } from "../render/iso";
 import { DEFAULT_GROUND, IsoRenderer, type Camera, type SpriteImages } from "../render/renderer";
 import { Scene } from "../render/scene";
@@ -37,7 +38,17 @@ export interface AppOptions {
   timerFrames?: boolean;
   /** 封面上的操作提示 */
   coverTip?: string;
+  /** 激励视频（微信填了广告位才有）；没有就在游戏里放演示广告（同样要等倒计时结束才给奖励） */
+  ads?: RewardedAds;
 }
+
+/** 演示广告的长度（秒）：真广告 15–30 秒，演示短一点 */
+const DEMO_AD_S = 5;
+/** 看完广告后的提示 */
+const AD_DONE: Record<AdKind, string> = {
+  good_harvest: "风调雨顺：今天各处产出翻倍", rich_peddler: "富商货郎进山：今天卖粮卖木价钱翻倍",
+  double_happiness: "双喜临门：明早厢房添一对双胞胎", last_stand: "绝境死守：主屋修好大半，周围敌人被震晕",
+};
 
 /** 敌人画得比真实比例大一些（手机上要一眼看清是狼是匪），只影响画面不影响判定 */
 const ENEMY_SCALE = 1.7;
@@ -214,6 +225,8 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   let familyOpen = false;
   let bannerText: string | null = null;
   let toastMsg = "", toastT = 0;
+  /** 正在放的激励视频（放的时候玩法暂停）；demo = 游戏里画的演示广告 */
+  let adBusy: { kind: AdKind; t0: number; demo: boolean } | null = null;
   const toast = (msg: string) => { toastMsg = msg; toastT = 2.6; };
   let nightA = 0;
   let clock = 0;
@@ -394,14 +407,51 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     for (const kind of ["good_harvest", "rich_peddler", "double_happiness", "last_stand"] as AdKind[]) {
       const offer = adOffers(g).find((o) => o.kind === kind)!;
       if (!offer.available) continue;
-      out.push({ key: `ad:${kind}`, label: `▶ ${offer.name}`, sub: ["看广告"], primary: kind === "last_stand",
-        onClick: () => { const r = adReward(g, kind); toast(r.ok ? `▶ ${cfg.economy.ads[kind].name}（演示：模拟看完广告）` : r.reason); } });
+      out.push({ key: `ad:${kind}`, label: `▶ ${offer.name}`, sub: ["看广告"], primary: kind === "last_stand", disabled: !!adBusy, onClick: () => requestAd(kind) });
     }
     out.push({ key: "speed", label: `${speed}× 速度`, onClick: () => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; } });
     out.push(day
       ? { key: "night", label: "入夜 ▶", sub: [`还有 ${Math.ceil(g.dayLeft)} 秒天黑`], primary: true, onClick: () => { startNight(g); tool = null; } }
       : { key: "night", label: "守夜中", sub: [`${g.enemies.length + g.spawnQueue.length} 敌`], primary: true, disabled: true, onClick: () => {} });
     return out;
+  };
+
+  // ---------------------------------------------------------------- 激励视频：放完再发奖励，中途关掉不发
+  const finishAd = (kind: AdKind, r: AdResult) => {
+    adBusy = null;
+    if (r === "rewarded") { const res = adReward(g, kind); toast(res.ok ? AD_DONE[kind] : res.reason); }
+    else if (r === "skipped") toast("看完广告才能领奖励");
+    else toast("暂时没有广告，稍后再试");
+  };
+  const requestAd = (kind: AdKind) => {
+    if (adBusy) return;
+    if (!adOffers(g).find((o) => o.kind === kind)?.available) return;
+    adBusy = { kind, t0: clock, demo: !opts.ads };
+    if (opts.ads) opts.ads.show(kind).then((r) => finishAd(kind, r), () => finishAd(kind, "unavailable"));
+  };
+  /** 演示广告：全屏遮罩 + 倒计时；倒计时完了才能领奖励，提前关 = 不领 */
+  const drawDemoAd = (kind: AdKind) => {
+    const c = ui.c, W = ui.w, H = ui.h;
+    ui.block("ad", { x: 0, y: 0, w: W, h: H });
+    c.fillStyle = "rgba(10,12,20,0.88)"; c.fillRect(0, 0, W, H);
+    const left = Math.max(0, DEMO_AD_S - (clock - adBusy!.t0));
+    const cw = Math.min(300, W - 48), ch = 190, cx = W / 2 - cw / 2, cy = H / 2 - ch / 2;
+    ui.panel({ x: cx, y: cy, w: cw, h: ch }, 10, "rgba(241,232,212,0.97)");
+    c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = COLORS.ink;
+    c.font = font(16, true); c.fillText(`▶ ${cfg.economy.ads[kind].name}`, W / 2, cy + 28);
+    c.font = font(12); c.globalAlpha = 0.75;
+    c.fillText("演示广告：正式版这里播放激励视频", W / 2, cy + 56);
+    c.fillText("看完才有奖励，中途关闭不发奖励", W / 2, cy + 74);
+    c.globalAlpha = 1;
+    const bw = cw - 48, bx = W / 2 - bw / 2, by = cy + 96;
+    roundRect(c, bx, by, bw, 8, 4); c.fillStyle = COLORS.hpBack; c.fill();
+    roundRect(c, bx, by, bw * (1 - left / DEMO_AD_S), 8, 4); c.fillStyle = COLORS.cinnabar; c.fill();
+    c.font = font(12); c.fillStyle = COLORS.ink; c.fillText(left > 0 ? `还剩 ${Math.ceil(left)} 秒` : "已看完", W / 2, by + 22);
+    const btn: ButtonSpec = left > 0
+      ? { key: "ad:close", label: "关闭（不领奖励）", size: 13, onClick: () => finishAd(kind, "skipped") }
+      : { key: "ad:claim", label: "领取奖励", size: 14, primary: true, onClick: () => finishAd(kind, "rewarded") };
+    const s = ui.measureButton(btn);
+    ui.button(btn, { x: W / 2 - s.w / 2, y: cy + ch - 18 - s.h, w: s.w, h: s.h });
   };
 
   // ---------------------------------------------------------------- 顶栏
@@ -621,6 +671,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     ui.toast(toastMsg, layout.topBottom + 10, Math.min(1, toastT / 0.3));
     if (!started) drawCover();
     if (bannerText) drawBanner(bannerText);
+    if (adBusy?.demo) drawDemoAd(adBusy.kind);
   };
   /** 只量顶栏 / 底栏位置（相机 fit 要用） */
   const measureUi = () => {
@@ -978,7 +1029,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     last = now;
     clock += dt;
     if (auto && g.phase === "day") { autoTimer -= dt * speed; if (autoTimer <= 0) { botDay(g); autoTimer = 4; } }
-    if (!started || bannerText) { /* 封面 / 结局横幅上：只渲染不推进 */ }
+    if (!started || bannerText || adBusy) { /* 封面 / 结局横幅 / 放广告时：只渲染不推进 */ }
     else if (auto && g.phase === "day" && g.dayLeft > 3 && g.day > 0) step(g, dt * speed * 3); else step(g, dt * speed);
     handleEvents();
     syncVillagers(dt);

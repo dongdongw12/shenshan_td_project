@@ -4,6 +4,8 @@
  */
 import { WechatPlatform } from "../platform/wechat";
 import { drawFatal, runApp } from "../app/app";
+import { WechatRewardedAds } from "../platform/ads";
+import { adUnitFor, REWARDED_AD_UNITS } from "./adUnits";
 
 declare const wx: {
   loadSubpackage(opts: { name: string; success: () => void; fail: (e: unknown) => void }): { onProgressUpdate?(cb: (r: { progress: number }) => void): void };
@@ -19,5 +21,9 @@ function loadAssets(): Promise<void> {
 }
 
 loadAssets()
-  .then(() => runApp(platform, { assetDir: "dev", coverTip: "底栏选建筑 → 点地块放置 · 单指拖动看地图 · 双指缩放 · 点“入夜”开战" }))
+  .then(() => runApp(platform, {
+    assetDir: "dev",
+    // 填了广告位才接真广告；没填就放游戏内演示广告
+    ads: Object.values(REWARDED_AD_UNITS).some(Boolean) ? new WechatRewardedAds(adUnitFor) : undefined,
+    coverTip: "底栏选建筑 → 点地块放置 · 单指拖动看地图 · 双指缩放 · 点“入夜”开战" }))
   .catch((e) => drawFatal(platform, e));

@@ -69,7 +69,7 @@ export class BrowserPlatform implements Platform {
     c.addEventListener("pointerdown", (e) => {
       const id = e.pointerType === "mouse" ? 1 : e.pointerId;
       pressed.add(id);
-      c.setPointerCapture(e.pointerId);
+      try { c.setPointerCapture(e.pointerId); } catch { /* 脚本合成的事件没有活动指针，捕获会抛错；不影响点击 */ }
       cb(at(e, "down"));
     });
     c.addEventListener("pointermove", (e) => cb(at(e, "move")));
