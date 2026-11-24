@@ -7,7 +7,8 @@
 import type { GameConfig } from "./config";
 import { createGame, type Building, type GameState, type Member, type NightStats } from "./sim";
 
-export const SAVE_VERSION = 1;
+/** 2：2026-11-24 地图改版（溪水挪到谷地右边），旧档里鱼梁可能压在旧河道上，作废 */
+export const SAVE_VERSION = 2;
 
 export interface SaveData {
   v: number;

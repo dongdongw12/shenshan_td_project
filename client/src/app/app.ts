@@ -287,15 +287,21 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   const valley = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
   const fit = () => {
     const { w } = platform.screenSize();
-    // 只框住谷地（非山石格），两侧山石让它出画
-    const pts: Vec2[] = [];
-    for (let j = 0; j < map.rows; j++) for (let i = 0; i < map.cols; i++) {
-      if (map.terrain[j]![i] === "r") continue;
-      pts.push(iso.worldToScreen({ x: i * T, y: j * T }), iso.worldToScreen({ x: (i + 1) * T, y: (j + 1) * T }),
-        iso.worldToScreen({ x: (i + 1) * T, y: j * T }), iso.worldToScreen({ x: i * T, y: (j + 1) * T }));
-    }
-    const minX = Math.min(...pts.map((p) => p.x)), maxX = Math.max(...pts.map((p) => p.x));
-    const minY = Math.min(...pts.map((p) => p.y)) - 2 * iso.kz, maxY = Math.max(...pts.map((p) => p.y)) + 0.6 * iso.kz;
+    // 框住谷地（非山石格）；拖动范围也按它算
+    const bbox = (keep: (t: string) => boolean) => {
+      const pts: Vec2[] = [];
+      for (let j = 0; j < map.rows; j++) for (let i = 0; i < map.cols; i++) {
+        if (!keep(map.terrain[j]![i]!)) continue;
+        pts.push(iso.worldToScreen({ x: i * T, y: j * T }), iso.worldToScreen({ x: (i + 1) * T, y: (j + 1) * T }),
+          iso.worldToScreen({ x: (i + 1) * T, y: j * T }), iso.worldToScreen({ x: i * T, y: (j + 1) * T }));
+      }
+      return {
+        minX: Math.min(...pts.map((p) => p.x)), maxX: Math.max(...pts.map((p) => p.x)),
+        minY: Math.min(...pts.map((p) => p.y)) - 2 * iso.kz, maxY: Math.max(...pts.map((p) => p.y)) + 0.6 * iso.kz,
+      };
+    };
+    // 竖屏下缩放由谷地高度决定，横向有富余：按整条谷地（含贴边的溪水）居中，左右两边都露出来
+    const { minX, maxX, minY, maxY } = bbox((t) => t !== "r");
     Object.assign(valley, { minX, maxX, minY, maxY });
     // 可视区 = 顶栏下沿到底栏上沿
     const topY = layout.topBottom + 4, botY = layout.bottomTop - 4;
