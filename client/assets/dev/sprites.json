@@ -308,16 +308,16 @@
       "name": "溪边鱼梁与水车",
       "angle": 0,
       "resolution": [
-        448,
-        344
+        568,
+        416
       ],
       "anchor_uv": [
-        0.45561,
-        0.67243
+        0.46191,
+        0.6551
       ],
       "anchor_px": [
-        204.11,
-        231.32
+        262.37,
+        272.52
       ],
       "px_per_meter": 128.0,
       "camera_elevation_deg": 30.0,
@@ -330,10 +330,10 @@
       "footprint": "2x1",
       "fit_limited_by": "footprint",
       "target_height_m": 2.4,
-      "actual_height_m": 1.07,
+      "actual_height_m": 1.164,
       "actual_size_m": [
-        2.136,
-        1.931
+        3.362,
+        1.92
       ],
       "front_faces": "screen lower-left (Blender -Y / glTF +Z)",
       "mode": "stylized",

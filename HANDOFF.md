@@ -105,7 +105,7 @@
   - [ ] 正式 UI、接 `wx.createRewardedVideoAd`、可操控英雄、家族面板
   - 在 `client/assets/configs/` 落地完整 JSON 配置表，实现厢房建房、添丁成长、族人入驻塔楼羁绊、刀匪/盾牌匪/纵火贼/二当家与大当家 Boss。
 - [ ] **T6 · 下一步建议（按优先级，2026-11-23 整理）**
-  1. ~~AI 资产量产 + v2 正式烘培 + 导出~~（2026-11-23 晚完成，见交接日志）。只剩**鱼梁**在 L4 / A100 上重出一次（日志末尾有步骤）。
+  1. ~~AI 资产量产 + v2 正式烘培 + 导出~~（2026-11-23 晚完成；鱼梁 2026-11-24 重出完成，见交接日志）。
   2. **客户端落地方**：选定引擎（直接小游戏 Canvas / Cocos），把 `client/src/render` + `client/src/game` 接进去；真机验证 `wechat.ts`、触屏、图集、接 `wx.createRewardedVideoAd` 到 `adReward`。
   3. **用户（可选，不依赖 T2）**：登录 Colab 后直接跑 `colab_bake_sprites.ipynb`（`TEST_SINGLE=""`、`SCALE=1.0`、`SAMPLES=48`，`PROXY_FALLBACK` 默认开），就能拿到正式比例（128px/m）的全套替身 + 12 个角色。
   4. **Claude**：遮挡排序的空间分桶优化（现 250 物体 0.84ms/帧）、正式 UI 美术、T6 平衡（祠堂 / 滚木塔在 10 夜内很少出现，见 2026-11-23 凌晨日志）。已完成：家族面板（手动分工 / 驻守）、受击闪白 / 逃跑、家人干活、着火 / 血条 / 夜灯 / 炊烟 / 萤火、HUD 图标与缩略图。
@@ -248,4 +248,10 @@
 - **新工具 `pipeline/colab/run_unattended.py`**：在 Colab 内核里依次执行仓库里 notebook 的代码格（不依赖浏览器排队，网页断开照跑），参数格执行后用 overrides 覆盖，跳过各 notebook 的释放格、全部结束（含失败）后统一释放运行时；进度写云盘 `_unattended.log`。用法见文件头两行。
 - **修**：替身兜底以前不带 `--overwrite`、且把 `proxy_models/` 整个目录重烘 → 换画风后古松 / 竹丛替身不会更新；改为只烘缺的件并跟随 `OVERWRITE`。
 - **Colab 经验**：① 新运行时的“连接到 Google 云端硬盘”弹窗要在几十秒内点完，晚了 `drive.mount` 报 `mount failed`，`run_jobs` 会照常收尾释放 GPU（这次因此重跑了一次）；② 选 A100 / L4 排不到会自动降到 T4 + 普通内存（12.7GB），Hunyuan3D 会 OOM —— 这种情况只做 Blender 烘培，图生 3D 留到有 L4 / A100 时。
-- **未完成**：**鱼梁**仍是带小屋的旧模型（提示词已改成“不要房屋”，`ASSET_IDS=["fish_weir"]`、`REGEN_CONCEPTS=["fish_weir"]`、`OVERWRITE=True` 在 L4 / A100 上跑一次；然后删掉云盘 `baked_sprites/fish_weir_*`，用 `colab_bake_sprites.ipynb`（`TEST_SINGLE=""`、`OVERWRITE=False`、`BAKE_CHARACTERS=False`）补烘——已有的件会自动跳过，只烘鱼梁）。
+- ~~**未完成**：鱼梁仍是带小屋的旧模型~~ → 2026-11-24 已重出，见下一条。
+
+### 2026-11-24 · Claude Opus（角色 v2 导出 + 鱼梁重出）
+- **角色**：12 个角色 108 张序列帧按 v2 导出（`export_chars.py`，`chars.json` 不变），图鉴行走 / 攻击 / 干活正常。
+- **鱼梁**：第一次按“不要房屋”提示词重出，Qwen-Image 4 个种子**全都**在水车旁画了一间磨坊 —— “水车”这个词本身就带出磨坊，公共画风前缀里的“游戏建筑道具 / 黛瓦青灰 / 蛎灰旧白”也在推它。改法：`gen_3d_jobs.json` 里鱼梁单独的 `prefix_zh`（`t2i_concepts.py` 新支持单件覆盖前缀），把水车写成溪中独立的**竹筒车**，反向词加瓦 / 白墙 / 红门 / 台阶，6 个种子 → 6 张全部没有房子（对比图 `docs/art/samples/fish_weir_concepts_noria.jpg`）。人工选 s1234（A 字架筒车、轮廓最清楚），L4 上出模型 + 正式比例烘培，导出 `fish_weir` 568×416、2×1 格、高 1.16m，图鉴 0 警告。旧精灵在云盘 `baked_sprites/_rejected/`。
+- **`run_unattended.py` 新增**：`need_gpu`（显存 / 内存不够直接放弃并释放，防 T4 上 OOM 白烧）、`set_aside_baked`（把 `baked_sprites/<id>_*` 挪进 `_rejected/`，不带 OVERWRITE 的烘培就只补这几件）、`(name, overrides, n)` 在第 n 个代码格前暂停等云盘 `_go`（人工挑概念图；最多等 40 分钟，超时照常继续）。驱动格把 `G`（raw.githubusercontent 的提交 SHA 路径）同时传给 `RAW` 和两个 notebook 的 `GITHUB_RAW`，避开 raw 缓存。
+- **Colab 经验**：① Qwen-Image 从云盘缓存加载约 45 分钟，出图每张只要约 3 分钟 —— 要多出几个候选就一次出够；② 网页前端常卡在“正在恢复执行”看不到输出，内核其实在跑：看云盘 `_unattended.log`，或开底栏「终端」（xterm 只认粘贴事件：往 `.xterm-helper-textarea` 派发 ClipboardEvent('paste')）；③ 在终端 `pkill -INT -f colab_kernel_launcher` 中断时，若正卡在 `!` 子进程里，只会杀掉子进程、本格照常往下跑，要再发一次才会让本格失败；④ “连接到 Google 云端硬盘”之后还有一个账号授权窗口，要点到最后的“允许”，否则 mount 失败、运行时被释放（这次白等了一轮）。
