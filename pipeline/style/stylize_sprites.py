@@ -5,7 +5,7 @@
 输出：<out>/<stem>_day.png、<stem>_night.png、<stem>_shadow.png、<stem>_meta.json
 
 每张图的处理顺序（全部在超采样分辨率上做，最后 Lanczos 缩回目标尺寸）：
-  1. 固有色（Diffuse Color 通道）→ 颜色外扩防黑边 → Kuwahara 平涂（抹掉 AI 贴图斑驳）
+  1. 固有色（Diffuse Color 通道）→ 颜色外扩防黑边 → Kuwahara 平涂（抹掉 AI 贴图斑驳）；物体索引 2 的细节件（五官）不平涂、原样贴回
   2. 矿物色归色：Lab 空间向 style_profile.palette 软吸附 + 提纯度
   3. 光影：Combined / 固有色 = 纯光照 → 色阶化（2–4 阶，软边）→ 亮部暖白、暗部石青冷色（不发灰）
   4. 内墨线：法线夹角 + 深度跳变 → 去噪点 → 定宽
@@ -373,7 +373,13 @@ def stylize_image(passes, day_passes, profile, info, which, debug=None):
     safe_cov = np.maximum(cov, 1e-4)[..., None]
 
     albedo = passes["albedo"][..., :3] / safe_cov
-    albedo_h = harmonize(albedo, obj_hard, profile, px, debug)
+    # 五官等细节件（物体索引 2）：先从周围皮肤 / 皮毛补色再平涂，最后原样贴回 ——
+    # Kuwahara（半径 3.5px × 2 遍）会把几像素大的眼睛、嘴抹掉，调色板吸附也会把眼白拉成肤色
+    feat = ((idx > 1.5) & (idx < 2.5)).astype(np.float32)
+    has_feat = bool(feat.any())
+    albedo_h = harmonize(albedo, obj_hard * (1 - feat) if has_feat else obj_hard, profile, px, debug)
+    if has_feat:
+        albedo_h = albedo_h * (1 - feat[..., None]) + albedo * feat[..., None]
 
     # 纯光照 = 渲染结果 / 固有色（同样按覆盖率预乘，比值与覆盖率无关）
     light_rgb = comb[..., :3] / np.maximum(passes["albedo"][..., :3], 0.02 * safe_cov)
@@ -388,6 +394,8 @@ def stylize_image(passes, day_passes, profile, info, which, debug=None):
     outer_a = np.clip(passes["ink"][..., 3], 0, 1)
     inner = inner_lines(passes["normal"][..., :3] / safe_cov, passes["depth"], obj_hard, ink_cfg, px,
                         info["px_per_meter"], outer_a)
+    if has_feat:  # 细节件自己就是墨色笔画，不再在它们四周描内线（否则一圈黑边糊成一团）
+        inner = inner * (1 - dilate(feat, max(1, int(round(px)))))
 
     if which == "day":
         floor = float(sh.get("shadow_floor", 0.0))

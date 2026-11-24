@@ -43,6 +43,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 SUPPORTED_EXTS = {".glb", ".gltf", ".obj", ".fbx"}
 NO_INK_COLLECTION = "NoInk"
 OBJECT_PASS_INDEX = 1
+FEATURE_PASS_INDEX = 2  # 五官等细节件：不描外轮廓、不平涂（stylize_sprites 原样贴回）
 
 BUILTIN_PROFILE = {
     "scale": {"tile_size_m": 2.0, "px_per_meter": 128, "supersample": 2, "canvas_multiple": 8,

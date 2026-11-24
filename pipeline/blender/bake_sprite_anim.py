@@ -36,8 +36,15 @@ VILLAGERS = {"hero", "wife", "child"}
 ACTION_FPS = {"attack": 12, "work": 8}
 
 
-def actions_for(name):
-    return VILLAGER_ACTIONS if name in VILLAGERS else ACTIONS
+def actions_for(name, only=""):
+    acts = VILLAGER_ACTIONS if name in VILLAGERS else ACTIONS
+    keep = [a for a in only.split(",") if a]
+    return {k: v for k, v in acts.items() if not keep or k in keep}
+
+
+def dirs_for(only=""):
+    keep = [d for d in only.split(",") if d]
+    return {k: v for k, v in DIRS.items() if not keep or k in keep}
 
 
 def parse_args():
@@ -51,6 +58,8 @@ def parse_args():
     p.add_argument("--frames", type=int, default=8)
     p.add_argument("--fps", type=int, default=10)
     p.add_argument("--device", default="auto")
+    p.add_argument("--actions", default="", help="只烘这些动作（逗号分隔，试烘看效果用；默认全部）")
+    p.add_argument("--dirs", default="", help="只烘这些朝向：front,back（默认两个）")
     return p.parse_args(argv)
 
 
@@ -82,8 +91,8 @@ def bake_char(name, out, profile, profile_path, args):
 
     # 先算两个朝向所有帧的联合包围盒，保证两个朝向画布一致
     all_pts = []
-    for action, nfr in actions_for(name).items():
-        for yaw in DIRS.values():
+    for action, nfr in actions_for(name, args.actions).items():
+        for yaw in dirs_for(args.dirs).values():
             bk.reset_scene(True)
             arm, meshes, frames = mc.build(name, nfr, action)
             arm.rotation_euler = Euler((0, 0, math.radians(yaw)), "XYZ")
@@ -91,15 +100,15 @@ def bake_char(name, out, profile, profile_path, args):
             all_pts += frame_bbox(meshes, frames)
 
     meta = None
-    for action, nfr in actions_for(name).items():
-      for dname, yaw in DIRS.items():
+    for action, nfr in actions_for(name, args.actions).items():
+      for dname, yaw in dirs_for(args.dirs).items():
         t0 = time.time()
         scene = bk.reset_scene(True)
         bk.configure_device(scene, args.device)
         bk.ensure_no_ink_collection(scene)
         arm, meshes, frames = mc.build(name, nfr, action)
         for o in meshes:
-            o.pass_index = bk.OBJECT_PASS_INDEX
+            o.pass_index = bk.FEATURE_PASS_INDEX if o.get("feature") else bk.OBJECT_PASS_INDEX
         bk.make_materials_matte(meshes)
         arm.rotation_euler = Euler((0, 0, math.radians(yaw)), "XYZ")
         res_x, res_y, anchor_uv, _ = bk.setup_camera_fixed_scale(
