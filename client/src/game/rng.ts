@@ -17,6 +17,13 @@ export class Rng {
   int(n: number): number {
     return Math.floor(this.next() * n);
   }
+  /** 内部状态（存档用）：存下来再设回去，之后的随机序列完全一样 */
+  get state(): number {
+    return this.s;
+  }
+  set state(v: number) {
+    this.s = v >>> 0;
+  }
   pick<T>(arr: readonly T[]): T {
     return arr[this.int(arr.length)]!;
   }

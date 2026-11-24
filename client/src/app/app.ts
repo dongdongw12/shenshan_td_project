@@ -17,6 +17,7 @@ import {
   canAfford, sellToPeddler, adOffers, adReward, type AdKind, type Building, type GameState,
 } from "../game/sim";
 import { botDay, botFamily } from "../game/bot";
+import { restoreGame, serializeGame, type SaveData } from "../game/save";
 import { drawAnimFrame, facingFromScreenDelta, type AnimImages, type AnimIndex } from "../render/animSprites";
 import {
   drawArrow, drawEnemy, drawFarmDecal, drawFence, drawFloatText, drawFlames, drawHouseLike, drawChimneySmoke, drawFireflies, drawHpBar, drawLampGlow, drawSmoke, drawTrapDecal, drawWeirDecal,
@@ -39,6 +40,8 @@ export interface AppOptions {
   timerFrames?: boolean;
   /** 封面上的操作提示 */
   coverTip?: string;
+  /** 存档的本地存储 key；不给就不存（自动演示 / 截图模式） */
+  saveKey?: string;
   /** 激励视频（微信填了广告位才有）；没有就在游戏里放演示广告（同样要等倒计时结束才给奖励） */
   ads?: RewardedAds;
 }
@@ -231,6 +234,25 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   let speed = opts.speed ?? 1;
   // 封面：自动模式直接开始；否则点“开荒”前模拟不走（画面照常渲染当背景）
   let started = auto;
+  // ---------------------------------------------------------------- 存档：白天每 5 秒、每个黎明、切到后台时存；赢了 / 输了清掉
+  const SAVE_KEY = auto ? undefined : opts.saveKey;
+  let saved: SaveData | null = null;
+  if (SAVE_KEY) {
+    try {
+      const raw = platform.storageGet(SAVE_KEY);
+      const d = raw ? (JSON.parse(raw) as SaveData) : null;
+      if (d && restoreGame(cfg, d)) saved = d;
+      else if (raw) platform.storageRemove(SAVE_KEY); // 坏档 / 旧版本：丢掉
+    } catch { saved = null; }
+  }
+  let saveT = 0;
+  const saveNow = () => {
+    if (!SAVE_KEY || !started || bannerText) return;
+    const d = serializeGame(g);
+    if (d) { platform.storageSet(SAVE_KEY, JSON.stringify(d)); saveT = 5; }
+  };
+  const clearSave = () => { if (SAVE_KEY) platform.storageRemove(SAVE_KEY); saved = null; };
+  platform.onHide(saveNow);
   let familyOpen = false;
   let bannerText: string | null = null;
   let toastMsg = "", toastT = 0;
@@ -609,6 +631,16 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     }
   };
 
+  /** 读档：换掉局面，表现层（家人位置、特效、朝向缓存）全部重置 */
+  const continueSaved = (d: SaveData) => {
+    const r = restoreGame(cfg, d);
+    if (!r) { clearSave(); toast("存档读不出来，重新开局"); return; }
+    g = r;
+    villagers.clear(); fx.length = 0; lastPos.clear(); facing.clear(); animFacing.clear(); hitAt.clear();
+    tool = null; selected = null; nightA = 0;
+    toast(`接着上回 · 第${NUM[g.day] ?? g.day}天`);
+  };
+
   // ---------------------------------------------------------------- 封面 / 结局横幅
   const drawCover = () => {
     const c = ui.c, W = ui.w, H = ui.h;
@@ -619,7 +651,8 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     const cw = W * 0.74, innerW = cw - 36;
     const lines = wrapRich(c, ["流落深山，白天开荒种田、攒钱娶妻生子；", "\n", "入夜举家上楼，守住这一方寨子。"], 14, innerW);
     const tip = wrapRich(c, [opts.coverTip ?? "底栏选建筑 → 点地块放置 · 拖动看地图 · 点“入夜”开战"], 11, innerW);
-    const ch = 26 + 52 + 22 + lines.length * 25 + 14 + 42 + 12 + tip.length * 15 + 18;
+    const extra = saved ? 46 : 0; // 有存档：多一行“新开一局”
+    const ch = 26 + 52 + 22 + lines.length * 25 + 14 + 42 + extra + 12 + tip.length * 15 + 18;
     const cx = W / 2 - cw / 2, cy = H / 2 - ch / 2;
     c.save();
     c.shadowColor = "rgba(0,0,0,0.35)"; c.shadowBlur = 30; c.shadowOffsetY = 10;
@@ -642,14 +675,27 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     let y = cy + 26 + 52 + 22;
     for (const l of lines) { const lw = richW(c, l, 14); drawRich(c, l, W / 2 - lw / 2, y + 12, 14, COLORS.ink); y += 25; }
     y += 14;
-    const bw = 132, bh = 40;
+    const sv = saved;
+    const bw = sv ? 168 : 132, bh = 40;
     const br = { x: W / 2 - bw / 2, y, w: bw, h: bh };
-    ui.button({ key: "cover:start", label: "", onClick: () => { started = true; } }, br);
+    ui.button({ key: "cover:start", label: "", onClick: () => { if (sv) continueSaved(sv); started = true; } }, br);
     roundRect(c, br.x, br.y + 2, bw, bh, 10); c.fillStyle = COLORS.ink; c.fill();
     roundRect(c, br.x, br.y, bw, bh, 10); c.fillStyle = COLORS.cinnabar; c.fill(); c.lineWidth = 2; c.strokeStyle = COLORS.ink; c.stroke();
     if (ui.isPressed("cover:start")) { c.fillStyle = "rgba(28,21,16,0.14)"; c.fill(); }
-    c.font = `17px ${FONT}`; c.fillStyle = COLORS.cream; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("开 荒 ▶", W / 2, br.y + bh / 2 + 0.5);
+    c.font = `17px ${FONT}`; c.fillStyle = COLORS.cream; c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillText(sv ? `继续 · 第${NUM[sv.day] ?? sv.day}天 ▶` : "开 荒 ▶", W / 2, br.y + bh / 2 + 0.5);
     y += bh + 12;
+    if (sv) {
+      const ago = Math.max(0, Date.now() - sv.savedAt) / 60000;
+      const when = ago < 1 ? "刚刚" : ago < 60 ? `${Math.round(ago)} 分钟前` : ago < 60 * 24 ? `${Math.round(ago / 60)} 小时前` : `${Math.round(ago / 1440)} 天前`;
+      const nb: ButtonSpec = { key: "cover:new", label: "新开一局（放弃存档）", size: 12, onClick: () => { clearSave(); started = true; } };
+      const s2 = ui.measureButton(nb);
+      ui.button(nb, { x: W / 2 - s2.w / 2, y: y - 4, w: s2.w, h: s2.h });
+      c.font = font(10); c.fillStyle = COLORS.ink; c.globalAlpha = 0.55; c.textAlign = "center"; c.textBaseline = "middle";
+      c.fillText(`存档于${when}`, W / 2, y - 4 + s2.h + 9);
+      c.globalAlpha = 1;
+      y += extra;
+    }
     c.globalAlpha = 0.65;
     for (const l of tip) { const lw = richW(c, l, 11); drawRich(c, l, W / 2 - lw / 2, y + 7, 11, COLORS.ink); y += 15; }
     c.globalAlpha = 1;
@@ -1025,9 +1071,9 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
       else if (e.type === "birth") toast(`厢房添丁：${e.name}`);
       else if (e.type === "grownUp") toast(`${e.name}长成少年：${cfg.family.roles[e.role]?.name}`);
       else if (e.type === "buildingDestroyed") toast(`${cfg.defense.towers[e.kind]?.name ?? cfg.economy.buildings[e.kind]?.name ?? cfg.defense.walls[e.kind]?.name ?? "建筑"}被毁！`);
-      else if (e.type === "dawn") toast(`天亮了 · 收获 ${costPlain(e.reward)}${e.starved ? " · 口粮不够！" : ""}`);
-      else if (e.type === "victory") bannerText = "击退黑风大当家\n深山传家 · 大获全胜";
-      else if (e.type === "defeat") bannerText = `第${NUM[e.night] ?? e.night}夜 · 寨破`;
+      else if (e.type === "dawn") { toast(`天亮了 · 收获 ${costPlain(e.reward)}${e.starved ? " · 口粮不够！" : ""}`); saveT = 0; }
+      else if (e.type === "victory") { bannerText = "击退黑风大当家\n深山传家 · 大获全胜"; clearSave(); }
+      else if (e.type === "defeat") { bannerText = `第${NUM[e.night] ?? e.night}夜 · 寨破`; clearSave(); }
     }
   };
 
@@ -1035,6 +1081,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   const nextFrame = (cb: (t: number) => void) => (opts.timerFrames ? setTimeout(() => cb(platform.now()), 60) : platform.requestFrame(cb));
   resize();
   let last = platform.now();
+  const lastSize = { ...platform.screenSize() };
   const frame = (now: number) => {
     // requestAnimationFrame 给的时间戳和 now() 可能不是同一个钟（小游戏），统一用 now()
     now = platform.now();
@@ -1052,8 +1099,12 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     if (g.phase !== "day") tool = null;
     syncScene();
     const { w, h } = platform.screenSize();
+    // 屏幕尺寸变了但没收到 resize 事件（横竖屏切换、开发台缩放时偶尔漏发）：自己补一次
+    if (w !== lastSize.w || h !== lastSize.h) { lastSize.w = w; lastSize.h = h; resize(); }
     renderer.render(scene, cam, nightA, { w, h, dpr: platform.pixelRatio() }, { ground, paper, paperAlpha: THEME === "aged" ? 1 : undefined, drawDecals, drawOverlay, drawBackdrop });
     if (toastT > 0) toastT -= dt;
+    // 白天每 5 秒自动存一次（天亮时 saveT 清零 → 马上存）
+    if (started && !bannerText && g.phase === "day") { saveT -= dt; if (saveT <= 0) saveNow(); }
     drawUi();
     nextFrame(frame);
   };

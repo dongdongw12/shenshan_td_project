@@ -32,6 +32,10 @@ interface Wx {
   onTouchEnd(cb: (e: WxTouchEvent) => void): void;
   onTouchCancel(cb: (e: WxTouchEvent) => void): void;
   onWindowResize?(cb: () => void): void;
+  onHide(cb: () => void): void;
+  getStorageSync(key: string): unknown;
+  setStorageSync(key: string, value: string): void;
+  removeStorageSync(key: string): void;
   getPerformance?(): { now(): number };
 }
 
@@ -133,5 +137,22 @@ export class WechatPlatform implements Platform {
 
   onResize(cb: () => void): void {
     wx.onWindowResize?.(cb);
+  }
+
+  onHide(cb: () => void): void {
+    wx.onHide(cb);
+  }
+
+  // 小游戏本地缓存：单个 key 上限 1MB、总共 10MB（存档只有几 KB）
+  storageGet(key: string): string | null {
+    try { const v = wx.getStorageSync(key); return typeof v === "string" && v ? v : null; } catch { return null; }
+  }
+
+  storageSet(key: string, value: string): void {
+    try { wx.setStorageSync(key, value); } catch (e) { console.warn("存档写入失败", e); }
+  }
+
+  storageRemove(key: string): void {
+    try { wx.removeStorageSync(key); } catch { /* 忽略 */ }
   }
 }

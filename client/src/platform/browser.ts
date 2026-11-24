@@ -93,4 +93,22 @@ export class BrowserPlatform implements Platform {
   onResize(cb: () => void): void {
     window.addEventListener("resize", cb);
   }
+
+  onHide(cb: () => void): void {
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") cb(); });
+    window.addEventListener("pagehide", cb);
+  }
+
+  // 隐私模式 / 禁用存储时 localStorage 会抛错：一律当没有
+  storageGet(key: string): string | null {
+    try { return localStorage.getItem(key); } catch { return null; }
+  }
+
+  storageSet(key: string, value: string): void {
+    try { localStorage.setItem(key, value); } catch { /* 存不了就算了 */ }
+  }
+
+  storageRemove(key: string): void {
+    try { localStorage.removeItem(key); } catch { /* 同上 */ }
+  }
 }

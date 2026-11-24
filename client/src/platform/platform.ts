@@ -38,4 +38,10 @@ export interface Platform {
   /** 鼠标滚轮缩放（只有浏览器有） */
   onWheel(cb: (x: number, y: number, deltaY: number) => void): void;
   onResize(cb: () => void): void;
+  /** 切到后台 / 关页面 / 小游戏被收起时（来得及同步存一下档） */
+  onHide(cb: () => void): void;
+  /** 本地存储（同步；拿不到就返回 null，写失败静默） */
+  storageGet(key: string): string | null;
+  storageSet(key: string, value: string): void;
+  storageRemove(key: string): void;
 }

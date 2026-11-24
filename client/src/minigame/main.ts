@@ -23,6 +23,7 @@ function loadAssets(): Promise<void> {
 loadAssets()
   .then(() => runApp(platform, {
     assetDir: "dev",
+    saveKey: "shenshan_save",
     // 填了广告位才接真广告；没填就放游戏内演示广告
     ads: Object.values(REWARDED_AD_UNITS).some(Boolean) ? new WechatRewardedAds(adUnitFor) : undefined,
     coverTip: "底栏选建筑 → 点地块放置 · 单指拖动看地图 · 双指缩放 · 点“入夜”开战" }))
