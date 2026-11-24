@@ -24,8 +24,8 @@ loadAssets()
   .then(() => runApp(platform, {
     assetDir: "dev",
     saveKey: "shenshan_save",
-    // 2026-11-24 排查真机没声音：预览包先显示排查信息，修好后关掉
-    diag: true,
+    // 排查真机问题时改成 true：屏幕上显示系统 / 帧时间 / 声音状态和声音测试按钮
+    diag: false,
     // 填了广告位才接真广告；没填就放游戏内演示广告
     ads: Object.values(REWARDED_AD_UNITS).some(Boolean) ? new WechatRewardedAds(adUnitFor) : undefined,
     coverTip: "底栏选建筑 → 点地块放置 · 单指拖动看地图 · 双指缩放 · 点“入夜”开战" }))

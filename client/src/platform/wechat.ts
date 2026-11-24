@@ -232,7 +232,6 @@ export class WechatPlatform implements Platform {
         const dst = `${wx.env?.USER_DATA_PATH ?? ""}/bgm_day_test.mp3`;
         fs.copyFile({ srcPath: this.asset("audio/bgm_day.mp3"), destPath: dst, success: () => inner(dst, "复制的音乐"), fail: (e) => log(`复制失败 ${JSON.stringify(e)}`) });
       },
-      "音乐-m4a": () => inner(this.asset("audio/bgm_day_test.m4a"), "m4a 音乐"),
     };
   }
 
