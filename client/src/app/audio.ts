@@ -82,10 +82,17 @@ export class Mixer {
     } catch { /* 声音出错不影响游戏 */ }
   }
 
+  /** 排查用：一行声音状态 */
+  diag(): string {
+    const tr = [...this.tracks.entries()].map(([n, t]) => `${n}:${t.playing ? "放" : "停"}${t.vol.toFixed(2)}`).join(" ");
+    return `声音 ${this.muted ? "静音" : "开"}${this.hidden ? "·后台" : ""} 淡入${this.fades ? "开" : "关"} 曲=${this.current ?? "-"} [${tr}] 音效声道${this.pool.length}`;
+  }
+
   /** 切到这首背景音乐（同一首不重来）；null = 停 */
   music(name: string | null): void {
     if (name === this.current) return;
     this.current = name;
+    console.log("[声音] 背景音乐 →", name, this.muted ? "（静音中）" : "", this.hidden ? "（后台）" : "");
     for (const [n, t] of this.tracks) {
       t.target = n === name ? MUSIC_VOL : 0;
       // 不淡入淡出的平台：别的曲子马上停

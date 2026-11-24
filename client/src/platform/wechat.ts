@@ -35,7 +35,12 @@ interface Wx {
   onWindowResize?(cb: () => void): void;
   onHide(cb: () => void): void;
   onShow(cb: () => void): void;
-  createInnerAudioContext(): Voice & { onError(cb: (e: { errCode: number; errMsg: string }) => void): void };
+  createInnerAudioContext(): Voice & {
+    onError(cb: (e: { errCode: number; errMsg: string }) => void): void;
+    onCanplay(cb: () => void): void; onPlay(cb: () => void): void; onPause(cb: () => void): void;
+    onStop(cb: () => void): void; onWaiting(cb: () => void): void; onEnded(cb: () => void): void;
+  };
+  setInnerAudioOption?(opts: { mixWithOther?: boolean; obeyMuteSwitch?: boolean; success?: () => void; fail?: (e: unknown) => void }): void;
   getStorageSync(key: string): unknown;
   setStorageSync(key: string, value: string): void;
   removeStorageSync(key: string): void;
@@ -120,8 +125,12 @@ export class WechatPlatform implements Platform {
     requestAnimationFrame(cb);
   }
 
+  /**
+   * 毫秒时间。注意：wx.getPerformance().now() 返回的是**微秒**（2026-11-24 真机上游戏 1 倍速却快好几倍就是因为当成毫秒用了），
+   * 所以除以 1000；没有它就用 Date.now()。
+   */
   now(): number {
-    return this.perf ? this.perf.now() : Date.now();
+    return this.perf ? this.perf.now() / 1000 : Date.now();
   }
 
   onPointer(cb: (e: PointerEvt) => void): void {
@@ -152,11 +161,40 @@ export class WechatPlatform implements Platform {
 
   /** InnerAudioContext 本身就有 src / volume / loop / play / stop / pause；默认跟随 iPhone 静音键 */
   makeVoice(): Voice {
+    if (!this.audioOptionSet) {
+      this.audioOptionSet = true;
+      // 和别的音频混播（不打断微信里正在放的东西）；跟随 iPhone 静音键
+      wx.setInnerAudioOption?.({ mixWithOther: true, obeyMuteSwitch: true, fail: (e) => console.warn("setInnerAudioOption 失败", e) });
+    }
     const ctx = wx.createInnerAudioContext();
-    // 出错只记日志（真机调试的控制台能看到），不打断游戏
-    ctx.onError((e) => console.warn("音频出错", ctx.src, e?.errCode, e?.errMsg));
+    const n = ++this.voiceCount;
+    // 出错 / 状态变化只记日志（真机调试的控制台能看到），不打断游戏；背景音乐（loop）的每个事件都打出来
+    const tag = () => `[音频#${n}] ${String(ctx.src).split("/").pop()}`;
+    const note = (msg: string, always = false) => {
+      if (!ctx.loop && !always) return;
+      const line = `${tag()} ${msg}`;
+      console.log(line);
+      this.audioLog.push(line);
+      if (this.audioLog.length > 6) this.audioLog.shift();
+    };
+    ctx.onError((e) => note(`出错 ${e?.errCode} ${e?.errMsg}`, true));
+    ctx.onCanplay(() => note("可以播放"));
+    ctx.onPlay(() => note(`开始播放 vol=${ctx.volume}`));
+    ctx.onPause(() => note("暂停"));
+    ctx.onStop(() => note("停止"));
+    ctx.onWaiting(() => note("缓冲中"));
     return ctx;
   }
+  private audioOptionSet = false;
+  private audioLog: string[] = [];
+
+  diagnostics(): string[] {
+    const s = this.sys as unknown as { system?: string; platform?: string; version?: string; SDKVersion?: string; brand?: string; model?: string };
+    const base = (wx as unknown as { getAppBaseInfo?: () => { SDKVersion?: string; version?: string } }).getAppBaseInfo?.();
+    const dev = (wx as unknown as { getDeviceInfo?: () => { system?: string; model?: string } }).getDeviceInfo?.();
+    return [`${dev?.model ?? s.model ?? "?"} · ${dev?.system ?? s.system ?? "?"} · 微信 ${base?.version ?? s.version ?? "?"} · 基础库 ${base?.SDKVersion ?? s.SDKVersion ?? "?"}`, ...this.audioLog];
+  }
+  private voiceCount = 0;
 
   // 小游戏本地缓存：单个 key 上限 1MB、总共 10MB（存档只有几 KB）
   storageGet(key: string): string | null {

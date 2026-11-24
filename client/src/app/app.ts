@@ -41,6 +41,8 @@ export interface AppOptions {
   timerFrames?: boolean;
   /** 封面上的操作提示 */
   coverTip?: string;
+  /** 屏幕左下角显示几行排查信息（系统、帧时间、声音状态） */
+  diag?: boolean;
   /** 存档的本地存储 key；不给就不存（自动演示 / 截图模式） */
   saveKey?: string;
   /** 激励视频（微信填了广告位才有）；没有就在游戏里放演示广告（同样要等倒计时结束才给奖励） */
@@ -751,6 +753,14 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     if (bannerText) drawBanner(bannerText);
     if (adBusy?.demo) drawDemoAd(adBusy.kind);
     if (started && !bannerText && !adBusy) drawMuteButton();
+    if (opts.diag) {
+      const lines = [...(platform.diagnostics?.() ?? []), `帧 ${(fpsDt * 1000).toFixed(0)}ms · 游戏时间 ${g.t.toFixed(1)}s · ${speed}×`, audio.diag()];
+      ctx.save(); ctx.font = font(9); ctx.textAlign = "left"; ctx.textBaseline = "top";
+      const y0 = layout.bottomTop - 6 - lines.length * 12;
+      ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(4, y0 - 2, ui.w - 8, lines.length * 12 + 4);
+      ctx.fillStyle = "#e8ffd0"; lines.forEach((l, k) => ctx.fillText(l, 7, y0 + k * 12));
+      ctx.restore();
+    }
   };
   /** 右上角（顶栏下方）一个圆形小按钮：开 / 关声音 */
   const drawMuteButton = () => {
@@ -1142,6 +1152,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   const nextFrame = (cb: (t: number) => void) => (opts.timerFrames ? setTimeout(() => cb(platform.now()), 60) : platform.requestFrame(cb));
   resize();
   let last = platform.now();
+  let fpsDt = 0;
   const lastSize = { ...platform.screenSize() };
   const frame = (now: number) => {
     // requestAnimationFrame 给的时间戳和 now() 可能不是同一个钟（小游戏），统一用 now()
@@ -1149,6 +1160,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     // 自动模式允许大步长（后台标签页被降帧时也能推进；模拟内部仍按 1/30 秒定步长）
     const dt = Math.max(0, Math.min(auto ? 1.0 : 0.1, (now - last) / 1000));
     last = now;
+    fpsDt = fpsDt * 0.9 + dt * 0.1;
     clock += dt;
     if (auto && g.phase === "day") { autoTimer -= dt * speed; if (autoTimer <= 0) { botDay(g); autoTimer = 4; } }
     if (!started || bannerText || adBusy) { /* 封面 / 结局横幅 / 放广告时：只渲染不推进 */ }

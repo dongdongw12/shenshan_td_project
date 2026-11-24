@@ -44,6 +44,8 @@ export interface Platform {
   onHide(cb: () => void): void;
   /** 回到前台 */
   onShow(cb: () => void): void;
+  /** 排查用的几行状态（系统、音频事件……），没有就不显示 */
+  diagnostics?(): string[];
   /** 一个声道（音乐 / 音效播放器） */
   makeVoice(): Voice;
   /** 本地存储（同步；拿不到就返回 null，写失败静默） */
