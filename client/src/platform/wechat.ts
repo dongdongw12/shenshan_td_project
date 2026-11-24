@@ -4,7 +4,7 @@
  */
 import type { ImageLike, Platform, PointerEvt } from "./platform";
 import type { Voice } from "../app/audio";
-import { WebAudioVoice, webAudioAvailable } from "./wechatWebAudio";
+import { WebAudioVoice, unlockWebAudio, webAudioAvailable, webAudioState } from "./wechatWebAudio";
 
 interface WxImage {
   width: number;
@@ -149,7 +149,8 @@ export class WechatPlatform implements Platform {
     const emit = (type: PointerEvt["type"], pressed: boolean) => (e: WxTouchEvent) => {
       for (const t of e.changedTouches) cb({ type, id: t.identifier, x: t.clientX, y: t.clientY, pressed });
     };
-    wx.onTouchStart(emit("down", true));
+    // 每次按下都顺手解锁一下 WebAudio（iOS 只认触摸回调里的 resume）
+    wx.onTouchStart((e) => { unlockWebAudio(); emit("down", true)(e); });
     wx.onTouchMove(emit("move", true));
     wx.onTouchEnd(emit("up", false));
     wx.onTouchCancel(emit("cancel", false));
@@ -219,7 +220,7 @@ export class WechatPlatform implements Platform {
     const s = this.sys as unknown as { system?: string; platform?: string; version?: string; SDKVersion?: string; brand?: string; model?: string };
     const base = (wx as unknown as { getAppBaseInfo?: () => { SDKVersion?: string; version?: string } }).getAppBaseInfo?.();
     const dev = (wx as unknown as { getDeviceInfo?: () => { system?: string; model?: string } }).getDeviceInfo?.();
-    return [`${dev?.model ?? s.model ?? "?"} · ${dev?.system ?? s.system ?? "?"} · 微信 ${base?.version ?? s.version ?? "?"} · 基础库 ${base?.SDKVersion ?? s.SDKVersion ?? "?"}`, ...this.audioLog];
+    return [`${dev?.model ?? s.model ?? "?"} · ${dev?.system ?? s.system ?? "?"} · 微信 ${base?.version ?? s.version ?? "?"} · 基础库 ${base?.SDKVersion ?? s.SDKVersion ?? "?"} · ${webAudioState()}`, ...this.audioLog];
   }
   private voiceCount = 0;
 

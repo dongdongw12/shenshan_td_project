@@ -35,6 +35,24 @@ function context(): WaContext {
   return shared;
 }
 
+/**
+ * iOS 上 WebAudio 的上下文一开始是 suspended，只有在用户触摸的回调里 resume 才算数（在游戏循环里 resume 无效 → 一直没声）。
+ * 平台层在每次 touchstart 里调这个（便宜：已经 running 就什么都不做）。
+ */
+export function unlockWebAudio(): void {
+  if (!webAudioAvailable()) return;
+  const ctx = context();
+  if (ctx.state !== "running") {
+    try { void Promise.resolve(ctx.resume?.()).catch(() => {}); } catch { /* 忽略 */ }
+  }
+}
+
+/** 排查用：上下文状态 + 当前时间 */
+export function webAudioState(): string {
+  if (!shared) return "WebAudio 未创建";
+  return `WebAudio ${shared.state ?? "?"} t=${shared.currentTime.toFixed(1)}`;
+}
+
 /** 解码缓存：同一首只读一次、解一次 */
 const buffers = new Map<string, Promise<WaBuffer>>();
 function load(src: string): Promise<WaBuffer> {
