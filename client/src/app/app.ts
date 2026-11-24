@@ -177,8 +177,9 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   // 声音（audio.ts）：背景音乐 + 音效；按钮点一下“嗒”一声
   const audio = new Mixer({
     makeVoice: () => platform.makeVoice(), url: (n) => platform.asset(`audio/${n}.mp3`),
+    makeMusicVoice: platform.makeMusicVoice ? () => platform.makeMusicVoice!() : undefined,
     storageGet: (k) => platform.storageGet(k), storageSet: (k, v) => platform.storageSet(k, v),
-    fades: platform.name !== "wechat",
+    fades: platform.musicCanFade ? platform.musicCanFade() : platform.name !== "wechat",
   });
   ui.onTap = () => audio.sfx("ui_tap");
   platform.onHide(() => audio.setHidden(true));

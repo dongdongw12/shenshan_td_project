@@ -18,6 +18,8 @@ export interface Voice {
 
 export interface AudioHost {
   makeVoice(): Voice;
+  /** 背景音乐专用声道（可选） */
+  makeMusicVoice?(): Voice;
   url(name: string): string;
   storageGet(key: string): string | null;
   storageSet(key: string, value: string): void;
@@ -101,7 +103,7 @@ export class Mixer {
     if (!name) return;
     let t = this.tracks.get(name);
     if (!t) {
-      const voice = this.host.makeVoice();
+      const voice = this.host.makeMusicVoice ? this.host.makeMusicVoice() : this.host.makeVoice();
       voice.src = this.host.url(`bgm_${name}`);
       voice.loop = true;
       t = { voice, vol: this.fades ? 0 : MUSIC_VOL, target: MUSIC_VOL, playing: false };

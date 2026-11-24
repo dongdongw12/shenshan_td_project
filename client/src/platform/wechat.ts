@@ -4,6 +4,7 @@
  */
 import type { ImageLike, Platform, PointerEvt } from "./platform";
 import type { Voice } from "../app/audio";
+import { WebAudioVoice, webAudioAvailable } from "./wechatWebAudio";
 
 interface WxImage {
   width: number;
@@ -126,11 +127,22 @@ export class WechatPlatform implements Platform {
   }
 
   /**
-   * 毫秒时间。注意：wx.getPerformance().now() 返回的是**微秒**（2026-11-24 真机上游戏 1 倍速却快好几倍就是因为当成毫秒用了），
-   * 所以除以 1000；没有它就用 Date.now()。
+   * 毫秒时间。wx.getPerformance().now() 的单位各端不一样：iPhone 真机是**微秒**（2026-11-24 真机上 1 倍速快好几倍就是当成毫秒用了），
+   * 开发者工具模拟器是毫秒。所以开头 250ms 先用 Date.now()，同时和 performance 对一下表，按比例（≈1 或 ≈1000）定单位，
+   * 之后用 performance（更平滑），并且接在 Date.now() 的读数后面，不会跳。
    */
+  private readonly p0 = this.perf ? this.perf.now() : 0;
+  private readonly d0 = Date.now();
+  private perfScale: number | null = null;
   now(): number {
-    return this.perf ? this.perf.now() / 1000 : Date.now();
+    if (!this.perf) return Date.now();
+    if (this.perfScale === null) {
+      const dd = Date.now() - this.d0;
+      if (dd < 250) return Date.now();
+      const ratio = (this.perf.now() - this.p0) / dd;
+      this.perfScale = ratio > 100 ? 1000 : 1;
+    }
+    return this.d0 + (this.perf.now() - this.p0) / this.perfScale;
   }
 
   onPointer(cb: (e: PointerEvt) => void): void {
@@ -172,10 +184,7 @@ export class WechatPlatform implements Platform {
     const tag = () => `[音频#${n}] ${String(ctx.src).split("/").pop()}`;
     const note = (msg: string, always = false) => {
       if (!ctx.loop && !always) return;
-      const line = `${tag()} ${msg}`;
-      console.log(line);
-      this.audioLog.push(line);
-      if (this.audioLog.length > 6) this.audioLog.shift();
+      this.logAudio(`${tag()} ${msg}`);
     };
     ctx.onError((e) => note(`出错 ${e?.errCode} ${e?.errMsg}`, true));
     ctx.onCanplay(() => note("可以播放"));
@@ -187,6 +196,24 @@ export class WechatPlatform implements Platform {
   }
   private audioOptionSet = false;
   private audioLog: string[] = [];
+
+  private logAudio(line: string): void {
+    console.log(line);
+    this.audioLog.push(line);
+    if (this.audioLog.length > 6) this.audioLog.shift();
+  }
+
+  /** 背景音乐走 WebAudio（InnerAudioContext 在 iOS 上放 1MB 的曲子会一直“缓冲中”），没有 WebAudio 才退回 InnerAudioContext */
+  makeMusicVoice(): Voice {
+    if (!webAudioAvailable()) return this.makeVoice();
+    const n = ++this.voiceCount;
+    const v: WebAudioVoice = new WebAudioVoice((msg) => this.logAudio(`[音乐#${n}] ${String(v.src).split("/").pop()} ${msg}`));
+    return v;
+  }
+
+  musicCanFade(): boolean {
+    return webAudioAvailable();
+  }
 
   diagnostics(): string[] {
     const s = this.sys as unknown as { system?: string; platform?: string; version?: string; SDKVersion?: string; brand?: string; model?: string };

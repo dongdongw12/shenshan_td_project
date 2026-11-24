@@ -48,6 +48,10 @@ export interface Platform {
   diagnostics?(): string[];
   /** 一个声道（音乐 / 音效播放器） */
   makeVoice(): Voice;
+  /** 背景音乐专用的声道（没有就用 makeVoice） */
+  makeMusicVoice?(): Voice;
+  /** 背景音乐能不能边放边调音量（淡入淡出）；不给就按“浏览器能、小游戏不能” */
+  musicCanFade?(): boolean;
   /** 本地存储（同步；拿不到就返回 null，写失败静默） */
   storageGet(key: string): string | null;
   storageSet(key: string, value: string): void;
