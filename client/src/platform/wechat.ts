@@ -174,12 +174,17 @@ export class WechatPlatform implements Platform {
   }
 
   /** InnerAudioContext 本身就有 src / volume / loop / play / stop / pause；默认跟随 iPhone 静音键 */
-  makeVoice(): Voice {
+  private applyAudioOption(): void {
     if (!this.audioOptionSet) {
       this.audioOptionSet = true;
-      // 和别的音频混播（不打断微信里正在放的东西）；跟随 iPhone 静音键
-      wx.setInnerAudioOption?.({ mixWithOther: true, obeyMuteSwitch: true, fail: (e) => console.warn("setInnerAudioOption 失败", e) });
+      // 和别的音频混播（不打断微信里正在放的东西）；**不跟随 iPhone 静音模式**（2026-11-24 用户决定：静音模式下 QQ 音乐、
+      // 微信语音都照样响，玩家不会意识到是静音导致游戏没声；想安静用游戏里右上角的喇叭按钮）
+      wx.setInnerAudioOption?.({ mixWithOther: true, obeyMuteSwitch: false, fail: (e) => console.warn("setInnerAudioOption 失败", e) });
     }
+  }
+
+  makeVoice(): Voice {
+    this.applyAudioOption();
     const ctx = wx.createInnerAudioContext();
     const n = ++this.voiceCount;
     // 出错 / 状态变化只记日志（真机调试的控制台能看到），不打断游戏；背景音乐（loop）的每个事件都打出来
@@ -207,6 +212,7 @@ export class WechatPlatform implements Platform {
 
   /** 背景音乐走 WebAudio（InnerAudioContext 在 iOS 上放 1MB 的曲子会一直“缓冲中”），没有 WebAudio 才退回 InnerAudioContext */
   makeMusicVoice(): Voice {
+    this.applyAudioOption();
     if (!webAudioAvailable()) return this.makeVoice();
     const n = ++this.voiceCount;
     const v: WebAudioVoice = new WebAudioVoice((msg) => this.logAudio(`[音乐#${n}] ${String(v.src).split("/").pop()} ${msg}`));

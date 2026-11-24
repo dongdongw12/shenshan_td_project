@@ -316,7 +316,7 @@
 - **手机上听不到背景音乐（用户反馈，音效正常、电脑正常）**：推测是微信 iOS 的 InnerAudioContext 开播后再改 `volume` 不一定生效——原来背景音乐从音量 0 开播再每帧淡入，于是一直是静音；音效是开播前就定好音量所以有声。修法：`Mixer` 加 `fades` 开关，小游戏里（`platform.name === "wechat"`）背景音乐开播前就设好音量、不淡入淡出、昼夜直接切；浏览器照旧交叉淡化。同时：背景音乐音量 0.45 → 0.75；两首循环重新导出，低切（白天 90Hz / 夜里 100Hz，手机喇叭放不出的低音切掉）+ 软限幅，RMS 从 -21 / -19 拉到 -15 / -14 dBFS（`make_loop.py` 新加 `--highpass`）；音效声道 8 → 6（播放器总数不超过 8）；小游戏播放器出错会在控制台打“音频出错”（真机调试可见）。**待用户真机确认。**
 - **真机声音排查结论（2026-11-24 晚，iPhone 15 Pro Max · iOS 27.2 · 微信 8.0.80 · 基础库 3.18.0）**：
   - **游戏 1 倍速却快好几倍**：`wx.getPerformance().now()` 在 iPhone 真机上是**微秒**、在开发者工具模拟器里是毫秒。`WechatPlatform.now()` 开头 250ms 用 `Date.now()` 对表、按比例定单位（≈1 / ≈1000），之后无缝接上。用户确认速度正常。
-  - **全程没声音的最终原因是手机开着静音模式**（iPhone 15 Pro Max 用操作按钮 / 控制中心的铃铛）：小游戏默认遵循静音（`obeyMuteSwitch: true`），WebAudio 同样静音。关掉静音后全部有声。我们保持遵循静音（符合 iOS 习惯），不改 `obeyMuteSwitch`。
+  - **全程没声音的最终原因是手机开着静音模式**（iPhone 15 Pro Max 用操作按钮 / 控制中心的铃铛）：小游戏默认遵循静音（`obeyMuteSwitch: true`），WebAudio 同样静音。关掉静音后全部有声。用户指出静音模式下 QQ 音乐、微信语音照样响，玩家不会意识到是静音 → **用户决定静音模式下也出声**：`wx.setInnerAudioOption({ mixWithOther: true, obeyMuteSwitch: false })`，在第一个声道创建前设好；想安静用游戏右上角喇叭按钮（记住设置）。WebAudio 是否也跟着不受静音影响，待真机确认。
   - 排查过程中做的改动都保留：背景音乐改走 **WebAudio**（`client/src/platform/wechatWebAudio.ts`：读包内文件 → `decodeAudioData` → `AudioBufferSourceNode` 循环，采样级无缝；每次开播新建增益节点、开播前定好音量；每次 touchstart 都 `resume` 一下上下文，iOS 只认触摸回调里的 resume），音效仍用 InnerAudioContext；小游戏里背景音乐不淡入淡出（昼夜直接切）；音乐响度 -15 / -14 dBFS、音量 0.75。之前看到的 InnerAudio 播 1MB 背景音乐“一直缓冲中”，当时手机是否静音没确认，所以不确定是不是真问题——WebAudio 方案两种情况都没问题。
   - **排查面板**：`client/src/minigame/main.ts` 里 `diag: true` 就会在屏幕上显示机型 / 系统 / 微信版本 / WebAudio 状态 / 音频事件日志 / 帧时间，外加 4 个声音测试按钮（哔、音效、WA音效、音乐-复制）。平时 `false`。
   - 以后用户说“没声音”，先问静音模式和音量。
