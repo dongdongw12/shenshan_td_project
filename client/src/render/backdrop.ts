@@ -20,6 +20,8 @@ export interface BackdropLayer {
   margin: number;
   /** 画布像素 / 逻辑像素 */
   scale: number;
+  /** 画布比屏幕上下各高出的逻辑像素（竖向视差 / 缩放时不露边） */
+  vpad: number;
 }
 
 function rng(seed: number): () => number {
@@ -156,6 +158,8 @@ function makeGeo(w: number, h: number, margin: number, seed: number): Geo {
     { group: 0, edgeTop: 0.09, midTop: 0.16, foot: 0.34, width: 0.3, mistH: 0.12, kind: 1, trees: 0 },
     { group: 0, edgeTop: 0.1, midTop: 0.23, foot: 0.44, width: 0.32, mistH: 0.13, kind: 0, trees: 0 },
     { group: 1, edgeTop: 0.08, midTop: 0.31, foot: 0.56, width: 0.36, mistH: 0.15, kind: 0, trees: 0.12 },
+    // 谷底一层矮的圆山（带一排远树），地图缩小时露出来的地方不再是一片空白雾
+    { group: 1, edgeTop: 0.46, midTop: 0.54, foot: 0.92, width: 0.24, mistH: 0.17, kind: 1, trees: 0.5 },
     { group: 1, edgeTop: 0.05, midTop: 0.5, foot: 0.86, width: 0.4, mistH: 0.2, kind: 1, trees: 0.2, sides: true },
     { group: 2, edgeTop: 0.62, midTop: 0.7, foot: 1.1, width: 0.5, mistH: 0.06, kind: 2, trees: 0.7 },
   ];
@@ -219,6 +223,7 @@ const AGED_DAY: Pal = {
     { top: "#7e8f8e", mid: "#8d9a8f", foot: "#b9b296", shade: "#5c6c72", ink: 0.16 },
     { top: "#62797a", mid: "#6f8573", foot: "#a7a17f", shade: "#47585f", ink: 0.24 },
     { top: "#4b6669", mid: "#557055", foot: "#857559", shade: "#33454c", ink: 0.36 },
+    { top: "#4a6560", mid: "#4b654b", foot: "#736a50", shade: "#2f413f", ink: 0.42 },
     { top: "#3a5654", mid: "#425d40", foot: "#5f5641", shade: "#263639", ink: 0.48 },
     { top: "#2c4233", mid: "#2a3d2c", foot: "#2a3426", shade: "#1a2620", ink: 0.55 },
   ],
@@ -234,6 +239,7 @@ const AGED_NIGHT: Pal = {
     { top: "#2e3650", mid: "#2f384f", foot: "#363d55", shade: "#232a40", ink: 0.14 },
     { top: "#283149", mid: "#29334a", foot: "#2f364d", shade: "#1d2336", ink: 0.2 },
     { top: "#212b40", mid: "#212c3c", foot: "#262b3c", shade: "#171d2c", ink: 0.28 },
+    { top: "#1d2738", mid: "#1d2734", foot: "#222633", shade: "#141a27", ink: 0.31 },
     { top: "#1a2333", mid: "#19222f", foot: "#1d212d", shade: "#111622", ink: 0.34 },
     { top: "#131a26", mid: "#111822", foot: "#10141c", shade: "#0b0f17", ink: 0.4 },
   ],
@@ -250,6 +256,7 @@ const QINGLV_DAY: Pal = {
     { top: "#7f9fae", mid: "#8faea6", foot: "#c1cfc4", shade: "#5f7f92", ink: 0.16 },
     { top: "#5f8ea0", mid: "#6c9a86", foot: "#b0c2ae", shade: "#466f84", ink: 0.24 },
     { top: "#447f95", mid: "#4f8a62", foot: "#9a8a62", shade: "#2f5d70", ink: 0.36 },
+    { top: "#3c7286", mid: "#467f56", foot: "#7e7150", shade: "#2a5566", ink: 0.42 },
     { top: "#33677a", mid: "#3d7048", foot: "#6a5d40", shade: "#22495a", ink: 0.48 },
     { top: "#244a3a", mid: "#24432f", foot: "#26382a", shade: "#163024", ink: 0.55 },
   ],
@@ -336,7 +343,7 @@ function drawPeak(ctx: Ctx, pk: Peak, col: LayerColor, pal: Pal, li: number, sca
   }
   // 山头松
   if (pk.trees.length) {
-    const s = (li >= 4 ? 13 : li >= 3 ? 8 : 5) * scaleW;
+    const s = (li >= 5 ? 13 : li === 4 ? 8 : li === 3 ? 5.5 : 5) * scaleW;
     for (const t of pk.trees) drawPine(ctx, t, s * (0.8 + ((t.x * 7.3) % 1) * 0.4), pal.tree);
   }
 }
@@ -376,7 +383,7 @@ function paintGroup(ctx: Ctx, geo: Geo, pal: Pal, group: 0 | 1 | 2): void {
     const g = ctx.createLinearGradient(0, 0, 0, h * 0.6);
     g.addColorStop(0, pal.sky[0]); g.addColorStop(1, pal.sky[1]);
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, h);
+    ctx.fillRect(0, -h, W, h * 3); // 上下都铺满（画布比屏幕高）
     if (pal.night) {
       ctx.fillStyle = "rgba(230,226,205,0.55)";
       for (const s of geo.stars) { ctx.beginPath(); ctx.arc(s.x, s.y, 0.6 + ((s.x * 13) % 1) * 0.6, 0, Math.PI * 2); ctx.fill(); }
@@ -398,7 +405,7 @@ function paintGroup(ctx: Ctx, geo: Geo, pal: Pal, group: 0 | 1 | 2): void {
     const col = pal.layers[L.idx]!;
     for (const pk of L.peaks) drawPeak(ctx, pk, col, pal, L.idx, scaleW);
     // 山脚入雾（最近一层压在画面底下，不加雾，免得把底部洗白）
-    if (L.idx < 4) drawMist(ctx, L.foot - L.mistH, L.foot + h * 0.02, 0, W, pal.mist, pal.night ? 0.75 : 0.88);
+    if (L.idx < 5) drawMist(ctx, L.foot - L.mistH, L.foot + h * 0.02, 0, W, pal.mist, pal.night ? 0.75 : 0.88);
     // 山脚以下到下一层之间：同色雾一直铺下去（云海），不留硬边
     if (L.idx === 2) { ctx.fillStyle = `rgb(${pal.mist})`; ctx.fillRect(0, L.foot + h * 0.02 - 1, W, h * 0.3); }
     if (L.idx === 2 && geo.fall) {
@@ -436,12 +443,13 @@ export function paintBackdropLayers(createCanvas: (w: number, h: number) => HTML
     { group: 2, depth: 0.3, scale: Math.min(dpr, 1.75) },
   ];
   return plan.map(({ group, depth, scale }) => {
-    const c = createCanvas(Math.round((w + margin * 2) * scale), Math.round(h * scale));
+    const vpad = Math.round(h * 0.1);
+    const c = createCanvas(Math.round((w + margin * 2) * scale), Math.round((h + vpad * 2) * scale));
     const ctx = c.getContext("2d")!;
-    ctx.setTransform(scale, 0, 0, scale, 0, 0);
-    ctx.clearRect(0, 0, w + margin * 2, h);
+    ctx.setTransform(scale, 0, 0, scale, 0, vpad * scale);
+    ctx.clearRect(0, -vpad, w + margin * 2, h + vpad * 2);
     paintGroup(ctx, geo, pal, group);
-    return { canvas: c, depth, margin, scale };
+    return { canvas: c, depth, margin, scale, vpad };
   });
 }
 
@@ -450,9 +458,9 @@ export function drawBackdropLayers(ctx: Ctx, layers: BackdropLayer[], w: number,
   if (alpha <= 0.002) return;
   for (const L of layers) {
     const ox = Math.max(-L.margin, Math.min(L.margin, dx * L.depth));
-    const oy = Math.max(-h * 0.06, Math.min(h * 0.06, dy * L.depth * 0.6));
+    const oy = Math.max(-L.vpad * 0.9, Math.min(L.vpad * 0.9, dy * L.depth * 0.6));
     ctx.globalAlpha = alpha;
-    ctx.drawImage(L.canvas, -L.margin + ox, oy, w + L.margin * 2, h);
+    ctx.drawImage(L.canvas, -L.margin + ox, -L.vpad + oy, w + L.margin * 2, h + L.vpad * 2);
   }
   ctx.globalAlpha = 1;
 }

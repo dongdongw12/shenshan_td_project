@@ -283,6 +283,8 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   let fitZoom = 1;
   /** 刚框好地图时的相机位置：远山视差按相对它的平移量算 */
   const fitCam = { x: 0, y: 0 };
+  /** 谷地（非山石格）在投影坐标里的包围盒：限制拖动范围用 */
+  const valley = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
   const fit = () => {
     const { w } = platform.screenSize();
     // 只框住谷地（非山石格），两侧山石让它出画
@@ -294,6 +296,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     }
     const minX = Math.min(...pts.map((p) => p.x)), maxX = Math.max(...pts.map((p) => p.x));
     const minY = Math.min(...pts.map((p) => p.y)) - 2 * iso.kz, maxY = Math.max(...pts.map((p) => p.y)) + 0.6 * iso.kz;
+    Object.assign(valley, { minX, maxX, minY, maxY });
     // 可视区 = 顶栏下沿到底栏上沿
     const topY = layout.topBottom + 4, botY = layout.bottomTop - 4;
     const usableH = Math.max(100, botY - topY);
@@ -744,10 +747,28 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   let drag: { x: number; y: number; cx: number; cy: number; moved: boolean } | null = null;
   let pinch: { d0: number; zoom0: number; mx: number; my: number; cx: number; cy: number } | null = null;
   const toTile = (x: number, y: number) => iso.screenToTile({ x: (x - cam.x) / cam.zoom, y: (y - cam.y) / cam.zoom });
+  /**
+   * 拖动 / 缩放后把相机拉回来：谷地必须一直盖住屏幕中间一块（横向中间 40%、纵向可视区中间 40%，地图比这块小时就盖住中心点），
+   * 免得把地图拖出屏幕、只剩背景（缩小后背景下半截是雾，会显得空）。
+   */
+  const clampCam = () => {
+    const { w } = platform.screenSize();
+    const z = cam.zoom;
+    const axis = (lo0: number, hi0: number, min: number, max: number, cur: number) => {
+      const mid = (lo0 + hi0) / 2, k = Math.min((hi0 - lo0) * 0.2, ((max - min) * z) / 2);
+      const lo = mid - k, hi = mid + k;
+      // 需要：cur + min*z <= lo 且 cur + max*z >= hi
+      const a = hi - max * z, b = lo - min * z;
+      return a <= b ? Math.max(a, Math.min(b, cur)) : (a + b) / 2;
+    };
+    cam.x = axis(0, w, valley.minX, valley.maxX, cam.x);
+    cam.y = axis(layout.topBottom, layout.bottomTop, valley.minY, valley.maxY, cam.y);
+  };
   const zoomAt = (mx: number, my: number, z: number, from = { zoom: cam.zoom, cx: cam.x, cy: cam.y, mx, my }) => {
     const nz = Math.max(fitZoom * 0.7, Math.min(fitZoom * 3, z));
     const k = nz / from.zoom;
     cam.x = mx - (from.mx - from.cx) * k; cam.y = my - (from.my - from.cy) * k; cam.zoom = nz;
+    clampCam();
   };
   const tap = (x: number, y: number) => {
     const t = toTile(x, y);
@@ -797,7 +818,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
       } else if (drag) {
         const dx = e.x - drag.x, dy = e.y - drag.y;
         if (Math.hypot(dx, dy) > 6) drag.moved = true;
-        if (drag.moved) { cam.x = drag.cx + dx; cam.y = drag.cy + dy; }
+        if (drag.moved) { cam.x = drag.cx + dx; cam.y = drag.cy + dy; clampCam(); }
         else hoverTile = toTile(e.x, e.y);
       }
       return;
