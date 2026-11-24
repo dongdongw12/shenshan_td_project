@@ -169,10 +169,18 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
   const renderer = new IsoRenderer(ctx, iso, images, { ...DEFAULT_GROUND, sky: THEME_SKY[THEME] });
   const ui = new Ui();
 
-  // 山石上点缀几棵古松（纯装饰，不进玩法）
+  // 山石上点缀几棵古松（纯装饰，不进玩法）。2026-11-24 用户嫌田边树太多：紧挨谷地的一圈不种，
+  // 隔一格的那圈只留一半，松树都往山里退，把田地露出来
+  const openDist = (i: number, j: number) => {
+    let best = 99;
+    for (let y = 0; y < map.rows; y++) for (let x = 0; x < map.cols; x++) if (map.terrain[y]![x] !== "r") best = Math.min(best, Math.max(Math.abs(x - i), Math.abs(y - j)));
+    return best;
+  };
   const decor: { i: number; j: number }[] = [];
   for (let j = 0; j < map.rows; j++) for (let i = 0; i < map.cols; i++) {
-    if (map.terrain[j]![i] === "r" && (i * 7 + j * 13) % 5 === 0) decor.push({ i, j });
+    if (map.terrain[j]![i] !== "r" || (i * 7 + j * 13) % 5 !== 0) continue;
+    const d = openDist(i, j);
+    if (d >= 3 || (d === 2 && (i + j) % 2 === 0)) decor.push({ i, j });
   }
 
   // 路的两头：村口山石上一对石灯，谷口山石上一座烽火盆
@@ -212,7 +220,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
     const h = cfg.map.house;
     edge.sort((a, b) => (a.i - h.i) ** 2 + (a.j - h.j) ** 2 - ((b.i - h.i) ** 2 + (b.j - h.j) ** 2));
     plum = edge.shift() ?? null;
-    bamboo.push(...edge.filter((_, n) => n % 3 === 1));
+    bamboo.push(...edge.filter((_, n) => n % 6 === 1)); // 翠竹也减半（原来每 3 块边石一丛）
   }
 
   // ---------------------------------------------------------------- 状态
