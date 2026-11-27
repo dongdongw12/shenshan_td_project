@@ -52,6 +52,8 @@ export interface AppOptions {
   saveKey?: string;
   /** 激励视频（微信填了广告位才有）；没有就在游戏里放演示广告（同样要等倒计时结束才给奖励） */
   ads?: RewardedAds;
+  /** 没接真广告时要不要放“演示广告”（开发调试用；正式小游戏没广告位时设 false，广告按钮整个不出现） */
+  demoAds?: boolean;
 }
 
 /** 演示广告的长度（秒）：真广告 15–30 秒，演示短一点 */
@@ -443,7 +445,7 @@ export async function runApp(platform: Platform, opts: AppOptions = {}): Promise
       },
     });
     // 激励视频（演示里直接模拟看完；接 wx.createRewardedVideoAd 时改这里）
-    for (const kind of ["good_harvest", "rich_peddler", "double_happiness", "last_stand"] as AdKind[]) {
+    if (opts.ads || opts.demoAds !== false) for (const kind of ["good_harvest", "rich_peddler", "double_happiness", "last_stand"] as AdKind[]) {
       const offer = adOffers(g).find((o) => o.kind === kind)!;
       if (!offer.available) continue;
       out.push({ key: `ad:${kind}`, label: `▶ ${offer.name}`, sub: ["看广告"], primary: kind === "last_stand", disabled: !!adBusy, onClick: () => requestAd(kind) });

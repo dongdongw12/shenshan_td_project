@@ -107,5 +107,15 @@ export class LoadingScreen {
     ctx.fillStyle = "rgba(28,21,16,0.72)"; ctx.fill();
     ctx.fillStyle = COLORS.toastText;
     ctx.fillText(tip, w / 2, h * 0.78 + 0.5);
+
+    // 健康游戏忠告（游戏上线惯例：启动画面底部显示）
+    const bottom = h - Math.max(10, p.safeInsets().bottom) - 6;
+    ctx.globalAlpha = 0.7; ctx.fillStyle = COLORS.ink;
+    ctx.font = font(10, true);
+    ctx.fillText("健康游戏忠告", w / 2, bottom - 28);
+    ctx.font = font(10);
+    ctx.fillText("抵制不良游戏，拒绝盗版游戏。注意自我保护，谨防受骗上当。", w / 2, bottom - 14);
+    ctx.fillText("适度游戏益脑，沉迷游戏伤身。合理安排时间，享受健康生活。", w / 2, bottom);
+    ctx.globalAlpha = 1;
   }
 }

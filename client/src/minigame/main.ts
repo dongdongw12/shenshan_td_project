@@ -50,8 +50,10 @@ function start(): void {
       loadingFrom: DOWNLOAD_PART,
       // 排查真机问题时改成 true：屏幕上显示系统 / 帧时间 / 声音状态和声音测试按钮
       diag: false,
-      // 填了广告位才接真广告；没填就放游戏内演示广告
+      // 填了广告位才接真广告；没填就不出现广告按钮
       ads: Object.values(REWARDED_AD_UNITS).some(Boolean) ? new WechatRewardedAds(adUnitFor) : undefined,
+      // 正式包不放演示广告（审核员看到“演示广告”会当成未完成）；排查广告流程时改成 true
+      demoAds: false,
       coverTip: "底栏选建筑 → 点地块放置 · 单指拖动看地图 · 双指缩放 · 点“入夜”开战",
     }))
     .catch((e) => {
